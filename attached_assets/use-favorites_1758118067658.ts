@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Favorite } from "@shared/schema";
+import type { Favorite } from "shared/schema";
 
 // Hook to check if an item is favorited
 export function useIsFavorite(userId: string | undefined, boxId: string) {

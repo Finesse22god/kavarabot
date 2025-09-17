@@ -1,43 +1,64 @@
-import { Home, ShoppingBag, User, Heart, HelpCircle } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
+import { Home, ShoppingCart, User, ShoppingBag } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useTelegram } from "@/hooks/use-telegram";
 
-const navigation = [
-  { name: "Главная", href: "/", icon: Home },
-  { name: "Каталог", href: "/catalog", icon: ShoppingBag },
-  { name: "Избранное", href: "/favorites", icon: Heart },
-  { name: "О нас", href: "/about", icon: HelpCircle },
-  { name: "Профиль", href: "/profile", icon: User },
+const menuItems = [
+  { path: "/", icon: Home, label: "ГЛАВНАЯ" },
+  { path: "/catalog", icon: ShoppingBag, label: "КАТАЛОГ" },
+  { path: "/cart", icon: ShoppingCart, label: "КОРЗИНА" },
+  { path: "/profile", icon: User, label: "ПРОФИЛЬ" },
 ];
 
 export default function BottomNav() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { user } = useTelegram();
+
+  const { data: cartItems } = useQuery<any[]>({
+    queryKey: [`/api/cart/${user?.id}`],
+    enabled: !!user?.id,
+  });
+
+  const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="flex justify-around py-2">
-        {navigation.map((item) => {
-          const isActive = location === item.href;
-          const Icon = item.icon;
-          
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black px-2 py-3 max-w-md mx-auto">
+      <div className="flex items-center justify-around">
+        {menuItems.map((item) => {
+          const isActive = location === item.path || 
+            (item.path !== "/" && location.startsWith(item.path));
+
+          const IconComponent = item.icon;
+
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex flex-col items-center py-2 px-1 min-w-0 ${
+            <button
+              key={item.path}
+              onClick={() => setLocation(item.path)}
+              className={`flex flex-col items-center space-y-1 px-1 py-1 transition-colors relative ${
                 isActive 
-                  ? "text-primary" 
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "text-black" 
+                  : "text-gray-500 hover:text-black"
               }`}
-              data-testid={`nav-${item.href.slice(1) || 'home'}`}
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs mt-1 text-center leading-tight">
-                {item.name}
+              <div className="relative">
+                <IconComponent 
+                  className={`w-6 h-6 ${isActive ? "stroke-2" : "stroke-1"}`} 
+                />
+                {item.path === "/cart" && cartItemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                    {cartItemCount > 99 ? "99+" : cartItemCount}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] font-bold tracking-wide ${
+                isActive ? "text-black" : "text-gray-500"
+              }`}>
+                {item.label}
               </span>
-            </Link>
+            </button>
           );
         })}
       </div>
-    </nav>
+    </div>
   );
 }

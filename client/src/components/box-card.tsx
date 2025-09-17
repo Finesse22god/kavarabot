@@ -1,242 +1,117 @@
-import { useState } from "react";
-import { Heart, Star, ShoppingCart, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { ShoppingCart } from "lucide-react";
 import type { Box } from "@shared/schema";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { useLocation } from "wouter";
 
 interface BoxCardProps {
-  box: Box;
-  onSelect?: (box: Box) => void;
-  onNotify?: (box: Box) => void;
+  box: Box | any; // Allow both Box and Product types
+  onSelect?: (box: Box | any) => void;
+  onNotify?: (box: Box | any) => void;
+  onAddToCart?: (box: Box | any) => void;
   variant?: "default" | "coming-soon";
   userId?: string;
 }
 
-export default function BoxCard({ 
-  box, 
-  onSelect, 
-  onNotify, 
-  variant = "default",
-  userId 
-}: BoxCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const favoriteMutation = useMutation({
-    mutationFn: async (isFav: boolean) => {
-      const method = isFav ? "POST" : "DELETE";
-      const response = await fetch("/api/favorites", {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, boxId: box.id }),
-      });
-      if (!response.ok) throw new Error("Failed to update favorite");
-      return response.json();
-    },
-    onSuccess: (_, isFav) => {
-      setIsFavorited(isFav);
-      queryClient.invalidateQueries({ queryKey: [`/api/favorites/${userId}`] });
-      toast({
-        title: isFav ? "Добавлено в избранное" : "Удалено из избранного",
-        description: isFav ? "Товар добавлен в избранное" : "Товар удален из избранного",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось обновить избранное",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!userId) {
-      toast({
-        title: "Требуется авторизация",
-        description: "Для добавления в избранное нужно войти в систему",
-        variant: "destructive",
-      });
-      return;
-    }
-    favoriteMutation.mutate(!isFavorited);
-  };
-
-  const handleSelect = () => {
-    if (onSelect && variant !== "coming-soon") {
-      onSelect(box);
-    }
-  };
-
-  const handleNotify = () => {
-    if (onNotify) {
-      onNotify(box);
-    }
-  };
-
+export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant = "default", userId }: BoxCardProps) {
   const isComingSoon = variant === "coming-soon" || !box.isAvailable;
+  const [, setLocation] = useLocation();
+
+  const handleCardClick = () => {
+    if (!isComingSoon) {
+      // Check if this is a Product (has sizes array) or Box (has contents array)
+      if (box.sizes && Array.isArray(box.sizes)) {
+        // This is a Product - redirect to product page
+        setLocation(`/product/${box.id}`);
+      } else {
+        // This is a Box - redirect to box page
+        setLocation(`/box/${box.id}`);
+      }
+    }
+  };
 
   return (
-    <div className={`bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 ${
-      !isComingSoon ? 'hover:shadow-xl cursor-pointer' : 'opacity-75'
-    }`}>
-      <div className="relative">
+    <div className={`border-2 border-black bg-white rounded-2xl overflow-hidden ${isComingSoon ? "opacity-60" : "cursor-pointer"}`} onClick={handleCardClick}>
+      <div className="aspect-[4/3] relative overflow-hidden">
         <img 
           src={box.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={box.name}
-          className="w-full h-48 object-cover"
-          onClick={handleSelect}
+          className={`w-full h-full object-cover ${isComingSoon ? "grayscale" : ""}`}
         />
-        
         {/* Favorite Button */}
-        <button
-          onClick={handleFavoriteToggle}
-          disabled={favoriteMutation.isPending}
-          className="absolute top-3 right-3 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md hover:bg-white transition-all"
-        >
-          <Heart 
-            className={`w-5 h-5 ${
-              isFavorited ? 'fill-red-500 text-red-500' : 'text-gray-600'
-            }`} 
+        <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+          <FavoriteButton 
+            boxId={box.id} 
+            userId={userId} 
+            size="sm" 
+            variant="ghost"
+            className="bg-white/80 hover:bg-white/90 backdrop-blur-sm rounded-full"
           />
-        </button>
-
-        {/* Coming Soon Badge */}
+        </div>
         {isComingSoon && (
-          <div className="absolute top-3 left-3">
-            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-              Скоро в продаже
-            </Badge>
-          </div>
-        )}
-
-        {/* Discount Badge */}
-        {box.originalPrice && Number(box.originalPrice) > Number(box.price) && (
-          <div className="absolute bottom-3 left-3">
-            <Badge variant="destructive" className="bg-red-500 text-white">
-              -{Math.round(((Number(box.originalPrice) - Number(box.price)) / Number(box.originalPrice)) * 100)}%
-            </Badge>
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <span className="text-white font-bold text-lg tracking-wide">СКОРО</span>
           </div>
         )}
       </div>
-
-      <div className="p-6" onClick={handleSelect}>
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h3 className="text-lg font-bold text-black mb-1 line-clamp-2">
-              {box.name}
-            </h3>
-            <p className="text-gray-600 text-sm line-clamp-2">
-              {box.description}
-            </p>
-          </div>
-        </div>
-
-        {/* Contents Preview */}
-        {box.contents && Array.isArray(box.contents) && box.contents.length > 0 && (
-          <div className="mb-4">
-            <div className="flex flex-wrap gap-1">
-              {box.contents.slice(0, 3).map((item: any, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {typeof item === 'string' ? item : JSON.stringify(item)}
-                </Badge>
+      
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-black mb-2 tracking-wide">{box.name.toUpperCase()}</h3>
+        <p className="text-gray-600 mb-4 text-sm">{box.description}</p>
+        
+        {box.contents && box.contents.length > 0 && !isComingSoon && (
+          <div className="mb-6">
+            <div className="text-xs font-bold text-black mb-2 tracking-wide">СОСТАВ:</div>
+            <ul className="text-sm text-gray-700 space-y-1">
+              {box.contents.map((item, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="text-black mr-2">•</span>
+                  <span>{item}</span>
+                </li>
               ))}
-              {box.contents.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{box.contents.length - 3} товара
-                </Badge>
-              )}
-            </div>
+            </ul>
           </div>
         )}
-
-        {/* Sizes */}
-        {box.availableSizes && box.availableSizes.length > 0 && (
-          <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-2">Доступные размеры:</p>
-            <div className="flex flex-wrap gap-1">
-              {box.availableSizes.map((size: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {size}
-                </Badge>
-              ))}
+        
+        <div className="border-t border-gray-200 pt-4">
+          {isComingSoon ? (
+            <button 
+              className="w-full border border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors rounded-xl"
+              onClick={() => onNotify?.(box)}
+            >
+              УВЕДОМИТЬ О ПОСТУПЛЕНИИ
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-2xl font-bold text-black text-center">
+                {typeof box.price === 'string' ? parseFloat(box.price).toLocaleString('ru-RU') : box.price.toLocaleString('ru-RU')} ₽
+              </div>
+              <div className="flex gap-2">
+                {onAddToCart && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddToCart(box);
+                    }}
+                    className="flex-1 border border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2 rounded-xl"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    В КОРЗИНУ
+                  </button>
+                )}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelect?.(box);
+                  }}
+                  className="flex-1 bg-black text-white py-3 font-semibold tracking-wide hover:bg-gray-900 transition-colors rounded-xl"
+                >
+                  ВЫБРАТЬ
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Rating */}
-        {box.rating && (
-          <div className="flex items-center mb-3">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${
-                    i < Math.floor(Number(box.rating) || 0)
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-600 ml-2">
-              ({Number(box.rating || 0).toFixed(1)})
-            </span>
-          </div>
-        )}
-
-        {/* Price */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl font-bold text-black">
-              {Number(box.price).toLocaleString('ru-RU')}₽
-            </span>
-            {box.originalPrice && box.originalPrice > box.price && (
-              <span className="text-sm text-gray-500 line-through">
-                {Number(box.originalPrice).toLocaleString('ru-RU')}₽
-              </span>
-            )}
-          </div>
-          {box.category && (
-            <Badge variant="outline" className="text-xs">
-              {box.category === 'ready' ? 'Готовый' : 
-               box.category === 'personal' ? 'Персональный' : 
-               box.category}
-            </Badge>
           )}
         </div>
-
-        {/* Action Button */}
-        {isComingSoon ? (
-          <Button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleNotify();
-            }}
-            variant="outline" 
-            className="w-full"
-            disabled={!onNotify}
-          >
-            <Bell className="w-4 h-4 mr-2" />
-            Уведомить о поступлении
-          </Button>
-        ) : (
-          <Button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSelect();
-            }}
-            className="w-full bg-black text-white hover:bg-gray-800"
-            disabled={!onSelect}
-          >
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Выбрать бокс
-          </Button>
-        )}
       </div>
     </div>
   );
