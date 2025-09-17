@@ -63,7 +63,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <div className="mb-6">
             <div className="text-xs font-bold text-black mb-2 tracking-wide">СОСТАВ:</div>
             <ul className="text-sm text-gray-700 space-y-1">
-              {box.contents.map((item, index) => (
+              {box.contents.map((item: string, index: number) => (
                 <li key={index} className="flex items-start">
                   <span className="text-black mr-2">•</span>
                   <span>{item}</span>

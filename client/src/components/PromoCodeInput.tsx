@@ -33,8 +33,10 @@ export default function PromoCodeInput({
 
     setIsValidating(true);
     try {
-      const response = await apiRequest("POST", "/api/promo-codes/validate", {
-        code: promoCode.trim()
+      const response = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() })
       });
       const result = await response.json();
 

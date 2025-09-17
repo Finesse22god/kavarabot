@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { QuizResponse, InsertQuizResponse } from "@shared/schema";
 
 export interface QuizData {
+  size?: string;
+  height?: number;
+  weight?: number;
+  goals?: string[];
+  budget?: string;
+}
+
+interface InsertQuizResponse {
+  userId: string;
   size?: string;
   height?: number;
   weight?: number;
