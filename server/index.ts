@@ -2,13 +2,14 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
+import routes from './routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function createServer() {
   const app = express();
-  const port = Number(process.env.PORT) || 80;
+  const port = Number(process.env.PORT) || 5000;
   const isProduction = process.env.NODE_ENV === 'production';
 
   // Middleware
@@ -18,6 +19,9 @@ async function createServer() {
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'KAVARA API is running' });
   });
+  
+  // Connect all routes
+  app.use(routes);
 
   if (isProduction) {
     // Production: serve static files
