@@ -9,8 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import LoadingOverlay from "@/components/loading-overlay";
-import { PromoCodeInput } from "@/components/PromoCodeInput";
-import { LoyaltyPointsInput } from "@/components/LoyaltyPointsInput";
+import PromoCodeInput from "@/components/PromoCodeInput";
+import LoyaltyPointsInput from "@/components/LoyaltyPointsInput";
 import type { Box, Order } from "@shared/schema";
 import { useTelegram } from "@/hooks/use-telegram";
 
