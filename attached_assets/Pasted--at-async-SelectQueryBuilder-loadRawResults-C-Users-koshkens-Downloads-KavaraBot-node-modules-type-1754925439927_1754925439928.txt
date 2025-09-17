@@ -1,0 +1,71 @@
+ at async SelectQueryBuilder.loadRawResults (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:3808:25)
+    at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:3554:26)
+    at async SelectQueryBuilder.getRawAndEntities (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:1671:29)
+    at async SelectQueryBuilder.getOne (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:1698:25)
+    at async DatabaseStorage.getQuizResponse (C:\Users\koshkens\Downloads\KavaraBot\server\storage.ts:77:12)
+    at async <anonymous> (C:\Users\koshkens\Downloads\KavaraBot\server\routes.ts:88:22) {
+  query: 'SELECT "QuizResponse"."id" AS "QuizResponse_id", "QuizResponse"."createdAt" AS "QuizResponse_createdAt", "QuizResponse"."userId" AS "QuizResponse_userId", "QuizResponse"."size" AS "QuizResponse_size", "QuizResponse"."height" AS "QuizResponse_height", "QuizResponse"."weight" AS "QuizResponse_weight", "QuizResponse"."goals" AS "QuizResponse_goals", "QuizResponse"."budget" AS "QuizResponse_budget" FROM "quiz_responses" "QuizResponse" WHERE (("QuizResponse"."userId" = $1)) LIMIT 1',
+  parameters: [ '315811964' ],
+  driverError: error: invalid input syntax for type uuid: "315811964"
+      at C:\Users\koshkens\Downloads\KavaraBot\node_modules\pg\lib\client.js:545:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async PostgresQueryRunner.query (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:254:25)
+      at async SelectQueryBuilder.loadRawResults (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:3808:25)
+      at async SelectQueryBuilder.executeEntitiesAndRawResults (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:3554:26)
+      at async SelectQueryBuilder.getRawAndEntities (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:1671:29)
+      at async SelectQueryBuilder.getOne (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\SelectQueryBuilder.ts:1698:25)
+      at async DatabaseStorage.getQuizResponse (C:\Users\koshkens\Downloads\KavaraBot\server\storage.ts:77:12)
+      at async <anonymous> (C:\Users\koshkens\Downloads\KavaraBot\server\routes.ts:88:22) {
+    length: 141,
+    severity: 'ERROR',
+    code: '22P02',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: "unnamed portal parameter $1 = '...'",
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'uuid.c',
+    line: '133',
+    routine: 'string_to_uuid'
+  },
+  length: 141,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: "unnamed portal parameter $1 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'uuid.c',
+  line: '133',
+  routine: 'string_to_uuid'
+}
+7:16:36 PM [express] GET /api/quiz-responses/user/315811964 500 in 33ms :: {"error":"Internal server…
+query: START TRANSACTION
+query: INSERT INTO "quiz_responses"("id", "createdAt", "userId", "size", "height", "weight", "goals", "budget") VALUES (DEFAULT, DEFAULT, $1, $2, $3, $4, $5, $6) RETURNING "id", "createdAt" -- PARAMETERS: ["315811964","XS",12,12,"running","5000"]      
+query failed: INSERT INTO "quiz_responses"("id", "createdAt", "userId", "size", "height", "weight", "goals", "budget") VALUES (DEFAULT, DEFAULT, $1, $2, $3, $4, $5, $6) RETURNING "id", "createdAt" -- PARAMETERS: ["315811964","XS",12,12,"running","5000"]
+error: error: invalid input syntax for type uuid: "315811964"
+query: ROLLBACK
+Error creating quiz response: QueryFailedError: invalid input syntax for type uuid: "315811964"
+    at PostgresQueryRunner.query (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async InsertQueryBuilder.execute (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-builder\src\query-builder\InsertQueryBuilder.ts:164:33)
+    at async SubjectExecutor.executeInsertOperations (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\persistence\src\persistence\SubjectExecutor.ts:435:42)
+    at async SubjectExecutor.execute (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\persistence\src\persistence\SubjectExecutor.ts:137:9)
+    at async EntityPersistExecutor.execute (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\persistence\src\persistence\EntityPersistExecutor.ts:182:21)
+    at async DatabaseStorage.createQuizResponse (C:\Users\koshkens\Downloads\KavaraBot\server\storage.ts:89:12)
+    at async <anonymous> (C:\Users\koshkens\Downloads\KavaraBot\server\routes.ts:102:22) {
+  query: 'INSERT INTO "quiz_responses"("id", "createdAt", "userId", "size", "height", "weight", "goals", "budget") VALUES (DEFAULT, DEFAULT, $1, $2, $3, $4, $5, $6) RETURNING "id", "createdAt"',
+  parameters: [ '315811964', 'XS', 12, 12, 'running', '5000' ],

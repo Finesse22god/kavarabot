@@ -1,0 +1,120 @@
+Database connection failed: QueryFailedError: column "name" of relation "boxes" contains null values
+    at PostgresQueryRunner.query (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PostgresQueryRunner.executeQueries (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-runner\src\query-runner\BaseQueryRunner.ts:681:13)
+    at async PostgresQueryRunner.addColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1160:9)
+    at async PostgresQueryRunner.changeColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1245:13)
+    at async PostgresQueryRunner.changeColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:2319:13)
+    at async RdbmsSchemaBuilder.updateExistColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:969:13)
+    at async RdbmsSchemaBuilder.executeSchemaSyncOperationsInProperOrder (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:229:9)
+    at async RdbmsSchemaBuilder.build (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:95:13)
+    at async DataSource.synchronize (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\data-source\src\data-source\DataSource.ts:340:9) {
+  query: 'ALTER TABLE "boxes" ADD "name" character varying NOT NULL',
+  parameters: undefined,
+  driverError: error: column "name" of relation "boxes" contains null values
+      at C:\Users\koshkens\Downloads\KavaraBot\node_modules\pg\lib\client.js:545:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async PostgresQueryRunner.query (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:254:25)
+      at async PostgresQueryRunner.executeQueries (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-runner\src\query-runner\BaseQueryRunner.ts:681:13)
+      at async PostgresQueryRunner.addColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1160:9)
+      at async PostgresQueryRunner.changeColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1245:13)
+      at async PostgresQueryRunner.changeColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:2319:13)
+      at async RdbmsSchemaBuilder.updateExistColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:969:13)
+      at async RdbmsSchemaBuilder.executeSchemaSyncOperationsInProperOrder (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:229:9)
+      at async RdbmsSchemaBuilder.build (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:95:13) {
+    length: 138,
+    severity: 'ERROR',
+    code: '23502',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'boxes',
+    column: 'name',
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '6049',
+    routine: 'ATRewriteTable'
+  },
+  length: 138,
+  severity: 'ERROR',
+  code: '23502',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'boxes',
+  column: 'name',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'tablecmds.c',
+  line: '6049',
+  routine: 'ATRewriteTable'
+}
+Failed to start application: QueryFailedError: column "name" of relation "boxes" contains null values
+    at PostgresQueryRunner.query (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:325:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PostgresQueryRunner.executeQueries (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-runner\src\query-runner\BaseQueryRunner.ts:681:13)
+    at async PostgresQueryRunner.addColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1160:9)
+    at async PostgresQueryRunner.changeColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1245:13)
+    at async PostgresQueryRunner.changeColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:2319:13)
+    at async RdbmsSchemaBuilder.updateExistColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:969:13)
+    at async RdbmsSchemaBuilder.executeSchemaSyncOperationsInProperOrder (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:229:9)
+    at async RdbmsSchemaBuilder.build (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:95:13)
+    at async DataSource.synchronize (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\data-source\src\data-source\DataSource.ts:340:9) {
+  query: 'ALTER TABLE "boxes" ADD "name" character varying NOT NULL',
+  parameters: undefined,
+  driverError: error: column "name" of relation "boxes" contains null values
+      at C:\Users\koshkens\Downloads\KavaraBot\node_modules\pg\lib\client.js:545:17
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async PostgresQueryRunner.query (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:254:25)
+      at async PostgresQueryRunner.executeQueries (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\query-runner\src\query-runner\BaseQueryRunner.ts:681:13)
+      at async PostgresQueryRunner.addColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1160:9)
+      at async PostgresQueryRunner.changeColumn (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:1245:13)
+      at async PostgresQueryRunner.changeColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\driver\src\driver\postgres\PostgresQueryRunner.ts:2319:13)
+      at async RdbmsSchemaBuilder.updateExistColumns (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:969:13)
+      at async RdbmsSchemaBuilder.executeSchemaSyncOperationsInProperOrder (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:229:9)
+      at async RdbmsSchemaBuilder.build (C:\Users\koshkens\Downloads\KavaraBot\node_modules\typeorm\schema-builder\src\schema-builder\RdbmsSchemaBuilder.ts:95:13) {
+    length: 138,
+    severity: 'ERROR',
+    code: '23502',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'boxes',
+    column: 'name',
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '6049',
+    routine: 'ATRewriteTable'
+  },
+  length: 138,
+  severity: 'ERROR',
+  code: '23502',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'boxes',
+  column: 'name',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'tablecmds.c',
+  line: '6049',
+  routine: 'ATRewriteTable'
+}
