@@ -86,7 +86,7 @@ export default function BoxCard({
     }`}>
       <div className="relative">
         <img 
-          src={box.imageUrl} 
+          src={box.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={box.name}
           className="w-full h-48 object-cover"
           onClick={handleSelect}
