@@ -45,41 +45,41 @@ export default function Profile() {
     message: ""
   });
 
+  // Fetch user data from our database including referral code
+  const { data: userData } = useQuery<{id: string; telegramId: string; firstName?: string; lastName?: string; referralCode?: string; loyaltyPoints: number}>({
+    queryKey: [`/api/users/telegram/${user?.id?.toString()}`],
+    enabled: !!user?.id,
+  });
+
   const { data: quizResponse } = useQuery<QuizResponse>({
-    queryKey: ["/api/quiz-responses/user", user?.id],
+    queryKey: ["/api/quiz-responses/user", userData?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/quiz-responses/user/${user?.id}`);
+      const response = await fetch(`/api/quiz-responses/user/${userData?.id}`);
       if (!response.ok) {
         if (response.status === 404) return null;
         throw new Error("Failed to fetch quiz response");
       }
       return response.json();
     },
-    enabled: !!user?.id,
-  });
-
-  // Fetch user data from our database including referral code
-  const { data: userData } = useQuery({
-    queryKey: [`/api/users/telegram/${user?.id?.toString()}`],
-    enabled: !!user?.id,
+    enabled: !!userData?.id,
   });
 
   // Fetch user measurements from database
-  const { data: userMeasurements } = useQuery({
-    queryKey: [`/api/users/measurements/${user?.id?.toString()}`],
-    enabled: !!user?.id,
+  const { data: userMeasurements } = useQuery<{height?: string; weight?: string; preferredSize?: string; chestSize?: string; waistSize?: string; hipSize?: string; sleeveLength?: string}>({
+    queryKey: [`/api/users/measurements/${userData?.id}`],
+    enabled: !!userData?.id,
     retry: 1,
   });
 
   // Fetch loyalty stats
-  const { data: loyaltyStats, isLoading: statsLoading } = useQuery({
+  const { data: loyaltyStats, isLoading: statsLoading } = useQuery<{totalPoints: number; totalEarned: number; totalRedeemed: number}>({
     queryKey: [`/api/loyalty/${userData?.id}/stats`],
     enabled: !!userData?.id,
     retry: 1,
   });
 
   // Fetch loyalty transactions
-  const { data: transactions, isLoading: transactionsLoading } = useQuery({
+  const { data: transactions, isLoading: transactionsLoading } = useQuery<any[]>({
     queryKey: [`/api/loyalty/${userData?.id}/transactions`],
     enabled: !!userData?.id,
     retry: 1,
@@ -187,7 +187,7 @@ export default function Profile() {
 
   const handleSaveProfile = async () => {
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await fetch(`/api/users/${userData?.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -229,8 +229,8 @@ export default function Profile() {
 
   const OrdersSection = () => {
     const { data: orders, isLoading: ordersLoading } = useQuery({
-      queryKey: [`/api/orders/user/${user?.id}`],
-      enabled: !!user?.id,
+      queryKey: [`/api/orders/user/${userData?.id}`],
+      enabled: !!userData?.id,
     });
 
     if (ordersLoading) {
@@ -252,9 +252,9 @@ export default function Profile() {
             Мои заказы
           </h3>
           
-          {orders && orders.length > 0 ? (
+          {orders && (orders as any[]).length > 0 ? (
             <div className="space-y-4">
-              {orders.map((order: any) => (
+              {(orders as any[]).map((order: any) => (
                 <div key={order.id} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -503,7 +503,7 @@ export default function Profile() {
                   </div>
                 ) : userFavorites && userFavorites.length > 0 ? (
                   <div className="space-y-4">
-                    {userFavorites.map((favorite) => (
+                    {userFavorites.map((favorite: any) => (
                       <div key={favorite.id} className="border border-gray-200 rounded-lg overflow-hidden">
                         <BoxCard
                           box={favorite.box}

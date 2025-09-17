@@ -19,33 +19,54 @@ interface InsertQuizResponse {
   budget?: string;
 }
 
-export function useQuiz(userId?: string) {
+export function useQuiz(telegramUserId?: string) {
   const [currentStep, setCurrentStep] = useState(1);
   const [quizData, setQuizData] = useState<QuizData>({});
   const queryClient = useQueryClient();
 
+  // Get database user by telegram ID first
+  const { data: dbUser } = useQuery({
+    queryKey: [`/api/users/telegram/${telegramUserId}`],
+    enabled: !!telegramUserId
+  });
+
   const { data: existingResponse } = useQuery({
-    queryKey: ["/api/quiz-responses/user", userId],
-    enabled: !!userId,
+    queryKey: ["/api/quiz-responses/user", dbUser?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/quiz-responses/user/${dbUser?.id}`);
+      if (!response.ok) throw new Error("Failed to fetch quiz response");
+      return response.json();
+    },
+    enabled: !!dbUser?.id,
   });
 
   const createQuizResponse = useMutation({
     mutationFn: async (data: InsertQuizResponse) => {
-      const response = await apiRequest("POST", "/api/quiz-responses", data);
+      const response = await fetch("/api/quiz-responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/quiz-responses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quiz-responses/user", dbUser?.id] });
     },
   });
 
   const updateQuizResponse = useMutation({
     mutationFn: async (data: Partial<InsertQuizResponse>) => {
-      const response = await apiRequest("PUT", `/api/quiz-responses/user/${userId}`, data);
+      const response = await fetch(`/api/quiz-responses/user/${dbUser?.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/quiz-responses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/quiz-responses/user", dbUser?.id] });
     },
   });
 
@@ -66,10 +87,10 @@ export function useQuiz(userId?: string) {
   };
 
   const submitQuiz = async () => {
-    if (!userId) throw new Error("User ID required");
+    if (!dbUser?.id) throw new Error("User ID required");
 
     const quizResponse: InsertQuizResponse = {
-      userId,
+      userId: dbUser.id,
       size: quizData.size,
       height: quizData.height,
       weight: quizData.weight,

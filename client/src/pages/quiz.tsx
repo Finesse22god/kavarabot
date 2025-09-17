@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import AppHeader from "@/components/app-header";
 import { useQuiz } from "@/hooks/use-quiz";
 import { useTelegram } from "@/hooks/use-telegram";
 
