@@ -31,8 +31,11 @@ async function createServer() {
     const { createServer: createViteServer } = await import('vite');
     
     const vite = await createViteServer({
-      server: { middlewareMode: true },
       appType: 'custom',
+      server: {
+        middlewareMode: true,
+        allowedHosts: true,
+      },
     });
     
     app.use(vite.middlewares);
