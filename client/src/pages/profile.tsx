@@ -1,0 +1,729 @@
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { User, Edit, Settings, Heart, Bell, Gift, Copy, Star, Trophy, Clock, Phone, MessageCircle, RotateCcw, FileText, HelpCircle, Users, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useTelegram } from "@/hooks/use-telegram";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import { useUserFavorites } from "@/hooks/use-favorites";
+import BoxCard from "@/components/box-card";
+import type { QuizResponse } from "@shared/schema";
+
+export default function Profile() {
+  const { user, isInTelegram } = useTelegram();
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+  
+  // Get tab from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabFromUrl = urlParams.get('tab') || 'personal';
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: user?.first_name || "",
+    lastName: user?.last_name || ""
+  });
+  const [notifications, setNotifications] = useState({
+    orders: true,
+    promotions: false,
+    newBoxes: true,
+  });
+  const [contactForm, setContactForm] = useState({
+    message: ""
+  });
+  const [feedbackForm, setFeedbackForm] = useState({
+    type: "",
+    message: ""
+  });
+
+  const { data: quizResponse } = useQuery<QuizResponse>({
+    queryKey: ["/api/quiz-responses/user", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/quiz-responses/user/${user?.id}`);
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error("Failed to fetch quiz response");
+      }
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch user data from our database including referral code
+  const { data: userData } = useQuery({
+    queryKey: [`/api/users/telegram/${user?.id?.toString()}`],
+    enabled: !!user?.id,
+  });
+
+  // Fetch user measurements from database
+  const { data: userMeasurements } = useQuery({
+    queryKey: [`/api/users/measurements/${user?.id?.toString()}`],
+    enabled: !!user?.id,
+    retry: 1,
+  });
+
+  // Fetch loyalty stats
+  const { data: loyaltyStats, isLoading: statsLoading } = useQuery({
+    queryKey: [`/api/loyalty/${userData?.id}/stats`],
+    enabled: !!userData?.id,
+    retry: 1,
+  });
+
+  // Fetch loyalty transactions
+  const { data: transactions, isLoading: transactionsLoading } = useQuery({
+    queryKey: [`/api/loyalty/${userData?.id}/transactions`],
+    enabled: !!userData?.id,
+    retry: 1,
+  });
+
+  // Fetch user favorites
+  const { data: userFavorites, isLoading: favoritesLoading } = useUserFavorites(userData?.id);
+
+  // Generate referral code mutation
+  const generateReferralCodeMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/loyalty/${userData?.id}/generate-referral-code`, {
+        method: "POST",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to generate referral code");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/users/telegram/${user?.id?.toString()}`] });
+      toast({
+        title: "Успех",
+        description: "Промокод создан!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать промокод",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // FAQ data
+  const faqData = [
+    {
+      question: "Как работает подбор боксов?",
+      answer: "Наши стилисты анализируют ваши ответы в анкете о размерах, целях тренировок и бюджете, чтобы подобрать идеальный комплект спортивной одежды."
+    },
+    {
+      question: "Можно ли вернуть или обменять товар?",
+      answer: "Да, у вас есть 14 дней для возврата или обмена товара в оригинальной упаковке и без следов использования."
+    },
+    {
+      question: "Какие способы доставки доступны?",
+      answer: "Мы предлагаем доставку курьером по Москве (300₽), СДЭК по России (от 250₽) и самовывоз (бесплатно)."
+    },
+    {
+      question: "Как часто выходят новые боксы?",
+      answer: "Новые коллекции выходят ежемесячно. Подпишитесь на уведомления, чтобы не пропустить!"
+    },
+    {
+      question: "Можно ли изменить состав бокса?",
+      answer: "Готовые боксы имеют фиксированный состав, но вы можете пройти персональный опрос для индивидуального подбора."
+    }
+  ];
+
+  // Handle feedback submission
+  const handleFeedbackSubmit = () => {
+    if (!feedbackForm.message.trim()) {
+      alert('Пожалуйста, опишите ваше обращение');
+      return;
+    }
+    
+    if (!feedbackForm.type) {
+      alert('Пожалуйста, выберите тип обращения');
+      return;
+    }
+    
+    // Send feedback to admin Telegram channel
+    fetch('/api/send-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: feedbackForm.type,
+        message: feedbackForm.message,
+        username: user?.username || 'Аноним'
+      })
+    }).then(() => {
+      alert('Отзыв отправлен! Спасибо за обратную связь.');
+      setFeedbackForm({ type: "", message: "" });
+    }).catch(() => {
+      // Fallback to Telegram
+      const message = `Тип: ${feedbackForm.type}\n\nСообщение: ${feedbackForm.message}`;
+      window.open(`https://t.me/finessgod?text=${encodeURIComponent(message)}`, '_blank');
+    });
+  };
+
+  // Check authentication
+  if (!isInTelegram || !user) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-black mb-4">Доступ запрещен</h1>
+          <p className="text-gray-600 mb-6">
+            Профиль доступен только пользователям Telegram
+          </p>
+          <Button onClick={() => window.location.href = "/"}>На главную</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSaveProfile = async () => {
+    try {
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const updatedUser = await response.json();
+      
+      // Update local state
+      setFormData({
+        firstName: updatedUser.firstName || "",
+        lastName: updatedUser.lastName || ""
+      });
+      
+      toast({
+        title: "Успех",
+        description: "Данные профиля обновлены"
+      });
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить данные профиля. Попробуйте еще раз.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSelectBox = (box: any) => {
+    sessionStorage.setItem("selectedBox", JSON.stringify(box));
+    setLocation("/order");
+  };
+
+  const OrdersSection = () => {
+    const { data: orders, isLoading: ordersLoading } = useQuery({
+      queryKey: [`/api/orders/user/${user?.id}`],
+      enabled: !!user?.id,
+    });
+
+    if (ordersLoading) {
+      return (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600">Загружаем заказы...</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <h3 className="font-semibold mb-4 flex items-center">
+            <Package className="w-5 h-5 mr-2 text-blue-500" />
+            Мои заказы
+          </h3>
+          
+          {orders && orders.length > 0 ? (
+            <div className="space-y-4">
+              {orders.map((order: any) => (
+                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-semibold">Заказ #{order.orderNumber}</p>
+                      <p className="text-sm text-gray-600">
+                        {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">{order.totalPrice.toLocaleString()}₽</p>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        order.status === 'paid' ? 'bg-green-100 text-green-800' :
+                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.status === 'paid' ? 'Оплачен' :
+                         order.status === 'pending' ? 'Ожидает оплаты' :
+                         order.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <p>{order.customerName || 'Не указано'}</p>
+                    <p>Доставка: {order.deliveryMethod}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">У вас пока нет заказов</p>
+              <Button 
+                variant="outline"
+                onClick={() => setLocation("/catalog")}
+              >
+                Перейти в каталог
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="p-4 bg-black text-white">
+        <div className="flex items-center space-x-3">
+          <div className="text-2xl">👤</div>
+          <div>
+            <h2 className="font-semibold">Профиль</h2>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <Tabs defaultValue={tabFromUrl} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 text-xs">
+            <TabsTrigger value="personal">Данные</TabsTrigger>
+            <TabsTrigger value="orders">Заказы</TabsTrigger>
+            <TabsTrigger value="favorites">Избранное</TabsTrigger>
+            <TabsTrigger value="loyalty">Лояльность</TabsTrigger>
+            <TabsTrigger value="contacts">Контакты</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="personal" className="mt-4">
+            <div className="space-y-4">
+              {/* Личные данные */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold">Личные данные</h3>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    {isEditing ? "Сохранить" : "Редактировать"}
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="firstName">Имя</Label>
+                    {isEditing ? (
+                      <Input
+                        id="firstName"
+                        value={formData.firstName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+                        placeholder="Введите ваше имя"
+                      />
+                    ) : (
+                      <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
+                        {formData.firstName || "Не указано"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName">Фамилия</Label>
+                    {isEditing ? (
+                      <Input
+                        id="lastName"
+                        value={formData.lastName}
+                        onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+                        placeholder="Введите вашу фамилию"
+                      />
+                    ) : (
+                      <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
+                        {formData.lastName || "Не указано"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={user?.username || ""}
+                      disabled={true}
+                      className="bg-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Username из Telegram нельзя изменить</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Размеры */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold mb-4">Размеры и параметры</h3>
+                
+                {userMeasurements || quizResponse ? (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Предпочитаемый размер</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          {userMeasurements?.preferredSize || quizResponse?.size || "Не указан"}
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Рост</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          {userMeasurements?.height ? `${userMeasurements.height} см` : 
+                           quizResponse?.height ? `${quizResponse.height} см` : "Не указан"}
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Вес</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          {userMeasurements?.weight ? `${userMeasurements.weight} кг` : 
+                           quizResponse?.weight ? `${quizResponse.weight} кг` : "Не указан"}
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Длина рукава</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          {userMeasurements?.sleeveLength ? `${userMeasurements.sleeveLength} см` : "Не указана"}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {userMeasurements && (userMeasurements.chestSize || userMeasurements.waistSize || userMeasurements.hipSize) && (
+                      <div>
+                        <Label className="mb-2 block">Обхваты</Label>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label className="text-xs text-gray-600">Грудь</Label>
+                            <div className="p-2 bg-gray-50 rounded text-sm">
+                              {userMeasurements.chestSize ? `${userMeasurements.chestSize} см` : "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600">Талия</Label>
+                            <div className="p-2 bg-gray-50 rounded text-sm">
+                              {userMeasurements.waistSize ? `${userMeasurements.waistSize} см` : "—"}
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-gray-600">Бедра</Label>
+                            <div className="p-2 bg-gray-50 rounded text-sm">
+                              {userMeasurements.hipSize ? `${userMeasurements.hipSize} см` : "—"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setLocation("/catalog")}
+                      >
+                        Обновить в каталоге
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setLocation("/quiz")}
+                      >
+                        Пройти опрос
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">Размеры и параметры не указаны</p>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setLocation("/catalog")}
+                      >
+                        Указать в каталоге
+                      </Button>
+                      <Button 
+                        className="flex-1"
+                        onClick={() => setLocation("/quiz")}
+                      >
+                        Пройти опрос
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="orders" className="mt-4">
+            <OrdersSection />
+          </TabsContent>
+
+          <TabsContent value="favorites" className="mt-4">
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold mb-4 flex items-center">
+                  <Heart className="w-5 h-5 mr-2 text-red-500" />
+                  Избранное
+                </h3>
+                
+                {favoritesLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-600">Загружаем избранное...</p>
+                  </div>
+                ) : userFavorites && userFavorites.length > 0 ? (
+                  <div className="space-y-4">
+                    {userFavorites.map((favorite) => (
+                      <div key={favorite.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <BoxCard
+                          box={favorite.box}
+                          onSelect={handleSelectBox}
+                          userId={userData?.id}
+                          variant="default"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">У вас пока нет избранных товаров</p>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setLocation("/catalog")}
+                    >
+                      Перейти в каталог
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="loyalty" className="mt-4">
+            <div className="space-y-6">
+              {/* Points Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Star className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+                    <div className="text-2xl font-bold">
+                      {statsLoading ? (
+                        <div className="animate-pulse bg-gray-200 h-8 w-16 rounded mx-auto"></div>
+                      ) : (
+                        loyaltyStats?.totalPoints || 0
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Доступных баллов</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
+                    <div className="text-2xl font-bold">
+                      {statsLoading ? (
+                        <div className="animate-pulse bg-gray-200 h-8 w-16 rounded mx-auto"></div>
+                      ) : (
+                        loyaltyStats?.totalEarned || 0
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Всего заработано</p>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-6 text-center">
+                    <Clock className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                    <div className="text-2xl font-bold">
+                      {statsLoading ? (
+                        <div className="animate-pulse bg-gray-200 h-8 w-16 rounded mx-auto"></div>
+                      ) : (
+                        loyaltyStats?.totalRedeemed || 0
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Потрачено баллов</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Your Personal Promo Code */}
+              <Card className="bg-gradient-to-br from-red-50 to-black/5 border border-red-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-red-600">
+                    <Gift className="h-5 w-5" />
+                    Ваш промокод
+                  </CardTitle>
+                  <CardDescription>
+                    Делитесь своим кодом с друзьями и получайте 10% баллами от их покупок
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {userData?.referralCode ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-white border border-red-200 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600 mb-1">Ваш промокод:</p>
+                            <p className="text-2xl font-bold font-mono text-red-600">{userData.referralCode}</p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              navigator.clipboard.writeText(userData.referralCode || "");
+                              toast({
+                                title: "Скопировано!",
+                                description: "Промокод скопирован в буфер обмена",
+                              });
+                            }}
+                            className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+                          >
+                            <Gift className="h-4 w-4" />
+                            Копировать
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Gift className="w-16 h-16 text-red-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Создайте свой промокод</h3>
+                      <p className="text-gray-600 mb-6">Получите персональный промокод для приглашения друзей</p>
+                      <Button 
+                        onClick={() => generateReferralCodeMutation.mutate()}
+                        disabled={generateReferralCodeMutation.isPending}
+                        className="bg-red-600 hover:bg-red-700"
+                      >
+                        {generateReferralCodeMutation.isPending ? "Создание..." : "Создать промокод"}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="contacts" className="mt-4">
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <HelpCircle className="w-6 h-6 text-primary" />
+                  <h3 className="font-semibold">Частые вопросы</h3>
+                </div>
+                
+                <Accordion type="single" collapsible className="space-y-2">
+                  {faqData.map((item, index) => (
+                    <AccordionItem key={index} value={`item-${index}`}>
+                      <AccordionTrigger className="text-left">
+                        {item.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-gray-600">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <MessageCircle className="w-6 h-6 text-primary" />
+                  <h3 className="font-semibold">Связь с оператором</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="message">Ваше сообщение</Label>
+                    <Textarea
+                      id="message"
+                      placeholder="Опишите ваш вопрос..."
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
+                      rows={6}
+                    />
+                  </div>
+                  
+                  <Button 
+                    className="w-full bg-primary text-white"
+                    onClick={() => {
+                      if (!contactForm.message.trim()) {
+                        alert('Пожалуйста, введите ваше сообщение');
+                        return;
+                      }
+                      
+                      const telegramUrl = `https://t.me/finessgod?text=${encodeURIComponent(contactForm.message)}`;
+                      window.open(telegramUrl, '_blank');
+                      
+                      // Clear the form
+                      setContactForm(prev => ({ ...prev, message: "" }));
+                    }}
+                  >
+                    Отправить сообщение
+                  </Button>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h4 className="font-semibold mb-3">Другие способы связи</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <Phone className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium">По вопросам заказа и возврата</p>
+                      <p className="text-sm text-gray-600">+7 925 131-51-01</p>
+                      <p className="text-sm text-gray-600">sales@kavarabrand.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <MessageCircle className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium">По вопросам сотрудничества</p>
+                      <p className="text-sm text-gray-600">+7 916 091-56-54</p>
+                      <p className="text-sm text-gray-600">info@kavarabrand.com</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
+                    <MessageCircle className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium">Telegram канал</p>
+                      <p className="text-sm text-gray-600">@kavarabrand</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
