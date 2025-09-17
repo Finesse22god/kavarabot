@@ -1,27 +1,59 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { promises as fs } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const port = parseInt(process.env.PORT || '3000', 10);
+async function createServer() {
+  const app = express();
+  const port = Number(process.env.PORT) || 80;
+  const isProduction = process.env.NODE_ENV === 'production';
 
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '../dist/public')));
+  // Middleware
+  app.use(express.json());
 
-// API Routes
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'KAVARA API is running' });
-});
+  // API Routes
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'KAVARA API is running' });
+  });
 
-// Serve the React app for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/public/index.html'));
-});
+  if (isProduction) {
+    // Production: serve static files
+    app.use(express.static(path.join(__dirname, '../dist/public')));
+    
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../dist/public/index.html'));
+    });
+  } else {
+    // Development: integrate with Vite
+    const { createServer: createViteServer } = await import('vite');
+    
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'custom',
+    });
+    
+    app.use(vite.middlewares);
+    
+    // Serve HTML for all other routes
+    const indexHtmlPath = path.resolve(__dirname, '../client/index.html');
+    app.use('*', async (req, res, next) => {
+      try {
+        let html = await fs.readFile(indexHtmlPath, 'utf-8');
+        html = await vite.transformIndexHtml(req.originalUrl, html);
+        res.status(200).set({'Content-Type': 'text/html'}).end(html);
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
+  }
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 KAVARA server running on port ${port}`);
-});
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
+  });
+}
+
+createServer().catch(console.error);
