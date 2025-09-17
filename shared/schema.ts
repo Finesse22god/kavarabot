@@ -18,7 +18,7 @@ export const users = pgTable("users", {
 // User size profiles table
 export const userSizes = pgTable("user_sizes", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id).notNull(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
   height: integer("height"),
   weight: integer("weight"),
   chestSize: varchar("chest_size", { length: 10 }),
@@ -35,11 +35,8 @@ export type UserSize = typeof userSizes.$inferSelect;
 export type InsertUserSize = typeof userSizes.$inferInsert;
 
 // Relations
-export const usersRelations = relations(users, ({ one }) => ({
-  sizes: one(userSizes, {
-    fields: [users.id],
-    references: [userSizes.userId],
-  }),
+export const usersRelations = relations(users, ({ many }) => ({
+  sizes: many(userSizes),
 }));
 
 export const userSizesRelations = relations(userSizes, ({ one }) => ({
