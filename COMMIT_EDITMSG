@@ -1,0 +1,8 @@
+Update order creation to consolidate cart items into a single order
+
+Refactors the order creation process from handling individual cart items to consolidating them into a single order with a combined total price. Updates the `Order` entity and `CreateOrderDto` to support `productId`, `selectedSize`, and `cartItems` for this consolidated order structure.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 78561ca5-8785-4eda-8613-28200fd30f00
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/b5c2b040-9060-4c94-bc16-e4271d93d2af/78561ca5-8785-4eda-8613-28200fd30f00/4RZwFS6
