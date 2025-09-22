@@ -1250,11 +1250,11 @@ router.get("/api/catalog", async (req, res) => {
   try {
     const { sportType, minPrice, maxPrice } = req.query;
     
-    // Получаем только отдельные товары (Products), НЕ боксы
-    let allProducts = await storage.getAllProducts();
+    // Получаем все боксы как каталог товаров
+    let allProducts = await storage.getAllBoxes();
     
     // Применяем фильтры
-    if (sportType && typeof sportType === "string") {
+    if (sportType && typeof sportType === "string" && sportType !== "Все виды спорта") {
       allProducts = allProducts.filter(product => 
         product.sportTypes && product.sportTypes.includes(sportType)
       );
