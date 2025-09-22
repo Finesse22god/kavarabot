@@ -2,7 +2,17 @@ import { QueryClient } from "@tanstack/react-query";
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: readonly unknown[] }) => {
   const url = `${queryKey[0]}`;
-  const response = await fetch(url);
+  const headers: HeadersInit = {};
+  
+  // Add admin token for admin routes
+  if (url.includes('/api/admin/')) {
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+  }
+  
+  const response = await fetch(url, { headers });
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
   }
@@ -25,13 +35,23 @@ export const queryClient = new QueryClient({
   },
 });
 
-export const apiRequest = async (url: string, options: RequestInit = {}) => {
+export const apiRequest = async (method: string, url: string, data?: any) => {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Add admin token for admin routes
+  if (url.includes('/api/admin/')) {
+    const adminToken = localStorage.getItem('adminToken');
+    if (adminToken) {
+      headers['Authorization'] = `Bearer ${adminToken}`;
+    }
+  }
+
   const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
+    method,
+    headers,
+    body: data ? JSON.stringify(data) : undefined,
   });
 
   if (!response.ok) {

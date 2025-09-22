@@ -391,7 +391,7 @@ router.get("/api/orders/number/:orderNumber", async (req, res) => {
   }
 });
 
-router.post("/api/orders/update-status", async (req, res) => {
+router.post("/api/orders/update-status", verifyAdminToken, async (req, res) => {
   try {
     const { orderNumber, status } = req.body;
     const order = await storage.updateOrderStatus(orderNumber, status);
@@ -641,7 +641,7 @@ router.post("/api/admin/login", async (req, res) => {
 });
 
 // Admin routes
-router.get("/api/admin/orders", async (req, res) => {
+router.get("/api/admin/orders", verifyAdminToken, async (req, res) => {
   try {
     const orders = await storage.getAllOrders();
     
@@ -685,7 +685,7 @@ router.get("/api/admin/orders", async (req, res) => {
   }
 });
 
-router.get("/api/admin/users", async (req, res) => {
+router.get("/api/admin/users", verifyAdminToken, async (req, res) => {
   try {
     const users = await storage.getAllUsers();
     res.json(users);
@@ -696,7 +696,7 @@ router.get("/api/admin/users", async (req, res) => {
 });
 
 // Admin user details
-router.get("/api/admin/users/:id/orders", async (req, res) => {
+router.get("/api/admin/users/:id/orders", verifyAdminToken, async (req, res) => {
   try {
     const orders = await storage.getOrdersByUserId(req.params.id);
     res.json(orders);
@@ -706,7 +706,7 @@ router.get("/api/admin/users/:id/orders", async (req, res) => {
   }
 });
 
-router.get("/api/admin/users/:id/loyalty", async (req, res) => {
+router.get("/api/admin/users/:id/loyalty", verifyAdminToken, async (req, res) => {
   try {
     const loyaltyStats = await storage.getLoyaltyStatsByUserId(req.params.id);
     res.json(loyaltyStats);
@@ -716,7 +716,7 @@ router.get("/api/admin/users/:id/loyalty", async (req, res) => {
   }
 });
 
-router.get("/api/admin/boxes", async (req, res) => {
+router.get("/api/admin/boxes", verifyAdminToken, async (req, res) => {
   try {
     const boxes = await storage.getAllBoxes();
     res.json(boxes);
@@ -726,7 +726,7 @@ router.get("/api/admin/boxes", async (req, res) => {
   }
 });
 
-router.post("/api/admin/boxes", async (req, res) => {
+router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
   try {
     const createData = req.body;
     
@@ -749,7 +749,7 @@ router.post("/api/admin/boxes", async (req, res) => {
   }
 });
 
-router.put("/api/admin/boxes/:id", async (req, res) => {
+router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
@@ -775,7 +775,7 @@ router.put("/api/admin/boxes/:id", async (req, res) => {
   }
 });
 
-router.delete("/api/admin/boxes/:id", async (req, res) => {
+router.delete("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     await storage.deleteBox(id);
@@ -786,7 +786,7 @@ router.delete("/api/admin/boxes/:id", async (req, res) => {
   }
 });
 
-router.get("/api/admin/products", async (req, res) => {
+router.get("/api/admin/products", verifyAdminToken, async (req, res) => {
   try {
     const products = await storage.getAllProducts();
     res.json(products);
@@ -796,7 +796,7 @@ router.get("/api/admin/products", async (req, res) => {
   }
 });
 
-router.delete("/api/admin/products/:id", async (req, res) => {
+router.delete("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     await storage.deleteProduct(id);
@@ -808,7 +808,7 @@ router.delete("/api/admin/products/:id", async (req, res) => {
 });
 
 // Promo codes admin endpoints
-router.get('/api/admin/promo-codes', async (req, res) => {
+router.get('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
   try {
     const promoCodes = await storage.getAllPromoCodes();
     res.json(promoCodes);
@@ -818,7 +818,7 @@ router.get('/api/admin/promo-codes', async (req, res) => {
   }
 });
 
-router.post('/api/admin/promo-codes', async (req, res) => {
+router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
   try {
     const { code, discountPercent, maxUses, partnerName, partnerContact, expiresAt } = req.body;
     
@@ -844,7 +844,7 @@ router.post('/api/admin/promo-codes', async (req, res) => {
   }
 });
 
-router.put('/api/admin/promo-codes/:id/toggle', async (req, res) => {
+router.put('/api/admin/promo-codes/:id/toggle', verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { isActive } = req.body;
@@ -861,7 +861,7 @@ router.put('/api/admin/promo-codes/:id/toggle', async (req, res) => {
   }
 });
 
-router.get('/api/admin/promo-codes/:id/orders', async (req, res) => {
+router.get('/api/admin/promo-codes/:id/orders', verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     const orders = await storage.getOrdersByPromoCodeId(id);
