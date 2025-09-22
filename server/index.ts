@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import routes from './routes.js';
+import { initializeDatabase } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,9 @@ async function createServer() {
   const app = express();
   const port = Number(process.env.PORT) || 5000;
   const isProduction = process.env.NODE_ENV === 'production';
+
+  // Initialize TypeORM database
+  await initializeDatabase();
 
   // Middleware
   app.use(express.json());
