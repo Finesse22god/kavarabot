@@ -1,0 +1,915 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAVARA - Персональный стилист спортивной одежды</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        secondary: '#007AFF',
+                        gray: {
+                            50: '#F8F9FA',
+                            100: '#E9ECEF',
+                            500: '#6C757D',
+                            900: '#212529'
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="font-inter bg-gray-50 min-h-screen">
+    <!-- @COMPONENT: TelegramWebApp [Main container for Telegram WebApp] -->
+    <div class="max-w-md mx-auto bg-white min-h-screen relative">
+        
+        <!-- @COMPONENT: AppHeader [Brand header with logo] -->
+        <header class="bg-gradient-to-r from-primary to-secondary text-white p-4 sticky top-0 z-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                        <span class="text-primary font-bold text-sm">K</span>
+                    </div>
+                    <h1 class="text-xl font-bold">KAVARA</h1>
+                </div>
+                <button class="p-2" data-event="click:openMenu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- @COMPONENT: MainMenu [Primary navigation screen] -->
+        <div id="main-menu" class="screen active">
+            <!-- Welcome Message -->
+            <div class="p-4 bg-gradient-to-br from-blue-50 to-orange-50">
+                <div class="text-center py-6">
+                    <div class="text-4xl mb-3">👋</div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">Добро пожаловать в KAVARA</h2>
+                    <p class="text-gray-600">Твой персональный стилист спортивной одежды!</p>
+                </div>
+            </div>
+
+            <!-- Main Menu Options -->
+            <div class="p-4 space-y-4">
+                <!-- Custom Box Option -->
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100" data-event="click:startQuiz">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-3xl">🎯</div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-lg text-gray-900">Собрать бокс самостоятельно</h3>
+                            <p class="text-gray-600 text-sm">Персональный подбор под твои потребности</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Ready Boxes Option -->
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100" data-event="click:showReadyBoxes">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-3xl">📦</div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-lg text-gray-900">Выбрать готовый бокс</h3>
+                            <p class="text-gray-600 text-sm">Готовые комплекты от наших стилистов</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- About KAVARA Option -->
+                <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-100" data-event="click:showAbout">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-3xl">❓</div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-lg text-gray-900">Что такое KAVARA</h3>
+                            <p class="text-gray-600 text-sm">История бренда и наша философия</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: QualificationQuiz [Multi-step questionnaire] -->
+        <div id="qualification-quiz" class="screen hidden">
+            <!-- Quiz Header -->
+            <div class="p-4 bg-secondary text-white">
+                <div class="flex items-center space-x-3">
+                    <button class="p-2" data-event="click:goBack">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-semibold">Квалификационный опрос</h2>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                                <div class="w-2 h-2 bg-white/30 rounded-full"></div>
+                                <div class="w-2 h-2 bg-white/30 rounded-full"></div>
+                            </div>
+                            <span class="text-sm text-white/80">Шаг 1 из 3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Step 1: Sizes -->
+            <div class="quiz-step active" data-step="1">
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold mb-4">Укажите ваши размеры</h3>
+                    
+                    <!-- Size Selection -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Размер одежды</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button class="size-btn p-3 border border-gray-300 rounded-lg text-center hover:border-primary hover:bg-primary/5" data-value="XS">XS</button>
+                            <button class="size-btn p-3 border border-gray-300 rounded-lg text-center hover:border-primary hover:bg-primary/5" data-value="S">S</button>
+                            <button class="size-btn p-3 border border-gray-300 rounded-lg text-center hover:border-primary hover:bg-primary/5" data-value="M">M</button>
+                            <button class="size-btn p-3 border border-gray-300 rounded-lg text-center hover:border-primary hover:bg-primary/5" data-value="L">L</button>
+                            <button class="size-btn p-3 border border-gray-300 rounded-lg text-center hover:border-primary hover:bg-primary/5" data-value="XL">XL</button>
+                            <button class="size-btn p-3 border border-gray-300 rounded-lg text-center hover:border-primary hover:bg-primary/5" data-value="XXL">XXL</button>
+                        </div>
+                    </div>
+
+                    <!-- Height Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Рост (см)</label>
+                        <input type="number" placeholder="175" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" data-mock="true">
+                    </div>
+
+                    <!-- Weight Input -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Вес (кг)</label>
+                        <input type="number" placeholder="70" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" data-mock="true">
+                    </div>
+
+                    <button class="w-full bg-primary text-white p-4 rounded-lg font-semibold" data-event="click:nextStep">
+                        Далее
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Step 2: Goals -->
+            <div class="quiz-step hidden" data-step="2">
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold mb-4">Цели покупки</h3>
+                    
+                    <div class="space-y-3">
+                        <button class="goal-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-value="running">
+                            <span class="text-xl">🏃‍♂️</span>
+                            <span>Бег/кардио</span>
+                        </button>
+                        <button class="goal-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-value="strength">
+                            <span class="text-xl">💪</span>
+                            <span>Силовые тренировки</span>
+                        </button>
+                        <button class="goal-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-value="yoga">
+                            <span class="text-xl">🧘‍♀️</span>
+                            <span>Йога/пилатес</span>
+                        </button>
+                        <button class="goal-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-value="cycling">
+                            <span class="text-xl">🚴‍♂️</span>
+                            <span>Велоспорт</span>
+                        </button>
+                        <button class="goal-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-value="team-sports">
+                            <span class="text-xl">🏀</span>
+                            <span>Командные виды спорта</span>
+                        </button>
+                        <button class="goal-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-value="casual">
+                            <span class="text-xl">🌟</span>
+                            <span>Повседневная носка</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-6 flex space-x-3">
+                        <button class="flex-1 bg-gray-200 text-gray-700 p-4 rounded-lg font-semibold" data-event="click:prevStep">
+                            Назад
+                        </button>
+                        <button class="flex-1 bg-primary text-white p-4 rounded-lg font-semibold" data-event="click:nextStep">
+                            Далее
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Step 3: Budget -->
+            <div class="quiz-step hidden" data-step="3">
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold mb-4">Ваш бюджет</h3>
+                    
+                    <div class="space-y-3">
+                        <button class="budget-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center justify-between" data-value="5000">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xl">💰</span>
+                                <span>До 5000₽</span>
+                            </div>
+                        </button>
+                        <button class="budget-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center justify-between" data-value="10000">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xl">💰💰</span>
+                                <span>5000-10000₽</span>
+                            </div>
+                        </button>
+                        <button class="budget-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center justify-between" data-value="15000">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xl">💰💰💰</span>
+                                <span>10000-15000₽</span>
+                            </div>
+                        </button>
+                        <button class="budget-btn w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center justify-between" data-value="15000+">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xl">💰💰💰💰</span>
+                                <span>Свыше 15000₽</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="mt-6 flex space-x-3">
+                        <button class="flex-1 bg-gray-200 text-gray-700 p-4 rounded-lg font-semibold" data-event="click:prevStep">
+                            Назад
+                        </button>
+                        <button class="flex-1 bg-primary text-white p-4 rounded-lg font-semibold" data-event="click:showPersonalBoxes">
+                            Подобрать боксы
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: PersonalBoxes [Personalized box recommendations] -->
+        <div id="personal-boxes" class="screen hidden">
+            <div class="p-4 bg-secondary text-white">
+                <div class="flex items-center space-x-3">
+                    <button class="p-2" data-event="click:goBack">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-semibold">Подбор боксов</h2>
+                        <p class="text-sm text-white/80">3 варианта для вас</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-4">
+                <!-- @MAP: personalBoxes.map(box => ( -->
+                <!-- Box 1 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                    <!-- Комплект спортивной одежды с топом и леггинсами для фитнеса -->
+                    <img src="https://pixabay.com/get/g549d4f6282073777c8f6d42415ed1a1d140291f35b2ab6c610fb01f665dae6e89491805b59b5a0c0e43380ff8b92dc0b95254d99e9059cf59a7ef624944fe1b3_1280.jpg" alt="Комплект для фитнеса" class="w-full h-48 object-cover" data-mock-image="true">
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="box.name">ФИТНЕС КОМФОРТ</h3>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="box.description">Идеальный набор для кардио и силовых тренировок</p>
+                        <div class="mb-3">
+                            <span class="text-xs text-gray-500">В составе:</span>
+                            <ul class="text-sm text-gray-700 mt-1" data-mock="true">
+                                <li>• Спортивный топ</li>
+                                <li>• Леггинсы high-waist</li>
+                                <li>• Спортивные кроссовки</li>
+                            </ul>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold text-primary" data-bind="box.price">8,990₽</span>
+                            <button class="bg-primary text-white px-6 py-2 rounded-lg font-medium" data-event="click:selectBox" data-box-id="1">
+                                Выбрать этот бокс
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box 2 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                    <!-- Модная спортивная одежда для бега и активного отдыха -->
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" alt="Комплект для бега" class="w-full h-48 object-cover" data-mock-image="true">
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="box.name">АКТИВНЫЙ СТИЛЬ</h3>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="box.description">Стильный комплект для бега и активного образа жизни</p>
+                        <div class="mb-3">
+                            <span class="text-xs text-gray-500">В составе:</span>
+                            <ul class="text-sm text-gray-700 mt-1" data-mock="true">
+                                <li>• Беговая футболка</li>
+                                <li>• Спортивные шорты</li>
+                                <li>• Беговые кроссовки</li>
+                            </ul>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold text-primary" data-bind="box.price">7,490₽</span>
+                            <button class="bg-primary text-white px-6 py-2 rounded-lg font-medium" data-event="click:selectBox" data-box-id="2">
+                                Выбрать этот бокс
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Box 3 -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                    <!-- Спортивная одежда премиум качества для тренировок -->
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" alt="Премиум комплект" class="w-full h-48 object-cover" data-mock-image="true">
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2" data-bind="box.name">ПРЕМИУМ ФИТНЕС</h3>
+                        <p class="text-gray-600 text-sm mb-3" data-bind="box.description">Профессиональный набор из премиальных материалов</p>
+                        <div class="mb-3">
+                            <span class="text-xs text-gray-500">В составе:</span>
+                            <ul class="text-sm text-gray-700 mt-1" data-mock="true">
+                                <li>• Компрессионный топ</li>
+                                <li>• Премиум леггинсы</li>
+                                <li>• Профессиональные кроссовки</li>
+                            </ul>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xl font-bold text-primary" data-bind="box.price">12,990₽</span>
+                            <button class="bg-primary text-white px-6 py-2 rounded-lg font-medium" data-event="click:selectBox" data-box-id="3">
+                                Выбрать этот бокс
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+
+        <!-- @COMPONENT: ReadyBoxes [Pre-made box catalog] -->
+        <div id="ready-boxes" class="screen hidden">
+            <div class="p-4 bg-secondary text-white">
+                <div class="flex items-center space-x-3">
+                    <button class="p-2" data-event="click:goBack">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-semibold">Готовые боксы</h2>
+                        <p class="text-sm text-white/80">Выберите готовый комплект</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4">
+                <!-- Current Boxes Section -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Текущие боксы</h3>
+                    <div class="space-y-4">
+                        <!-- БОКС ОГОНЬ -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                            <!-- Яркий спортивный комплект с огненными оттенками -->
+                            <img src="https://pixabay.com/get/g89ffc0d9f97f055e2920a72a9a641edde93a1dd2b23a5b5168e54ccfa353f950167094499e7a7cba8c195e3315c4ecd1760d79f9e0a6c01c70d401a6fcf33521_1280.jpg" alt="Бокс Огонь" class="w-full h-48 object-cover" data-mock-image="true">
+                            <div class="p-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-2xl">🔥</span>
+                                    <h4 class="font-semibold text-lg">БОКС ОГОНЬ</h4>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">Для комфортных занятий с максимальной производительностью</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl font-bold text-primary">9,990₽</span>
+                                    <button class="bg-primary text-white px-6 py-2 rounded-lg font-medium" data-event="click:selectReadyBox" data-box-id="fire">
+                                        Выбрать
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- БОКС ЛЁДЕК -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                            <!-- Спортивная одежда в холодных голубых тонах -->
+                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" alt="Бокс Лёдек" class="w-full h-48 object-cover" data-mock-image="true">
+                            <div class="p-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-2xl">❄️</span>
+                                    <h4 class="font-semibold text-lg">БОКС ЛЁДЕК</h4>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">Для комфортных занятий в прохладной цветовой гамме</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl font-bold text-primary">8,490₽</span>
+                                    <button class="bg-primary text-white px-6 py-2 rounded-lg font-medium" data-event="click:selectReadyBox" data-box-id="ice">
+                                        Выбрать
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- БОКС СТАРТ -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+                            <!-- Базовый набор спортивной одежды для начинающих -->
+                            <img src="https://pixabay.com/get/g9fb8f309c541fd6bfe1866bf7a08f14e14f67a2d2307c967cb6f2bbe50c6ba501639d8fbd68ad75730483d665e39c56ded796a57db8835336d8396afa295232c_1280.jpg" alt="Бокс Старт" class="w-full h-48 object-cover" data-mock-image="true">
+                            <div class="p-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-2xl">🌟</span>
+                                    <h4 class="font-semibold text-lg">БОКС СТАРТ</h4>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">Идеальный набор для новичков в спорте</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xl font-bold text-primary">6,990₽</span>
+                                    <button class="bg-primary text-white px-6 py-2 rounded-lg font-medium" data-event="click:selectReadyBox" data-box-id="start">
+                                        Выбрать
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coming Soon Section -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Скоро в продаже</h3>
+                    <div class="space-y-4">
+                        <!-- БОКС ШТОРМ -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 opacity-75">
+                            <!-- Темная спортивная одежда в стиле шторм -->
+                            <img src="https://pixabay.com/get/gb499e604eb520ec1f6da0cebb35ada632e21a097de6cf5b7c89ecc9b9e0ac6f0bc1209414db1cfaee886f49e11f50260bdf3490144fc883b2946015e7548f8d9_1280.jpg" alt="Бокс Шторм" class="w-full h-48 object-cover grayscale" data-mock-image="true">
+                            <div class="p-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-2xl">⛈️</span>
+                                    <h4 class="font-semibold text-lg">БОКС ШТОРМ</h4>
+                                </div>
+                                <button class="w-full bg-gray-200 text-gray-700 py-2 rounded-lg font-medium" data-event="click:notifyMe" data-box-id="storm">
+                                    Уведомить о поступлении
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- БОКС КОЛД -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 opacity-75">
+                            <!-- Спортивная одежда для холодной погоды -->
+                            <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" alt="Бокс Колд" class="w-full h-48 object-cover grayscale" data-mock-image="true">
+                            <div class="p-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-2xl">🧊</span>
+                                    <h4 class="font-semibold text-lg">БОКС КОЛД</h4>
+                                </div>
+                                <button class="w-full bg-gray-200 text-gray-700 py-2 rounded-lg font-medium" data-event="click:notifyMe" data-box-id="cold">
+                                    Уведомить о поступлении
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- БОКС БЕГ -->
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 opacity-75">
+                            <!-- Специализированная одежда для бега -->
+                            <img src="https://pixabay.com/get/g14819e0b66419541a806b8bab5a33a98d0cd1beb056c4fe6e442ef833379fbce8c67d62870d23019fe01cdacf3ac043a23651c6a2a246f2d9e2f931384fbc01f_1280.jpg" alt="Бокс Бег" class="w-full h-48 object-cover grayscale" data-mock-image="true">
+                            <div class="p-4">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <span class="text-2xl">🏃‍♂️</span>
+                                    <h4 class="font-semibold text-lg">БОКС БЕГ</h4>
+                                </div>
+                                <button class="w-full bg-gray-200 text-gray-700 py-2 rounded-lg font-medium" data-event="click:notifyMe" data-box-id="run">
+                                    Уведомить о поступлении
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: AboutPage [Brand information] -->
+        <div id="about-page" class="screen hidden">
+            <div class="p-4 bg-secondary text-white">
+                <div class="flex items-center space-x-3">
+                    <button class="p-2" data-event="click:goBack">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-semibold">Что такое KAVARA</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-6">
+                <!-- Brand Story -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center">
+                        <span class="text-2xl mr-2">📖</span>
+                        История бренда
+                    </h3>
+                    <p class="text-gray-600 leading-relaxed" data-mock="true">
+                        KAVARA родился из желания сделать спорт доступным и стильным для каждого. 
+                        Наша команда профессиональных стилистов тщательно подбирает комплекты, 
+                        учитывая не только функциональность, но и модные тенденции.
+                    </p>
+                </div>
+
+                <!-- Philosophy -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center">
+                        <span class="text-2xl mr-2">💡</span>
+                        Философия
+                    </h3>
+                    <p class="text-gray-600 leading-relaxed" data-mock="true">
+                        Мы верим, что правильная спортивная одежда должна не только обеспечивать комфорт 
+                        во время тренировок, но и вдохновлять на активный образ жизни. Каждый бокс KAVARA 
+                        создается с любовью к деталям и пониманием потребностей современных спортсменов.
+                    </p>
+                </div>
+
+                <!-- Advantages -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-3 flex items-center">
+                        <span class="text-2xl mr-2">⭐</span>
+                        Преимущества
+                    </h3>
+                    <div class="space-y-3" data-mock="true">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-2 h-2 bg-primary rounded-full"></div>
+                            <span class="text-gray-700">Персональный подбор под ваши цели</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-2 h-2 bg-primary rounded-full"></div>
+                            <span class="text-gray-700">Только качественные бренды</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-2 h-2 bg-primary rounded-full"></div>
+                            <span class="text-gray-700">Экономия времени на поиск</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-2 h-2 bg-primary rounded-full"></div>
+                            <span class="text-gray-700">Стильные комплекты от профессионалов</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="w-full bg-primary text-white p-4 rounded-lg font-semibold" data-event="click:startShopping">
+                    Начать покупки
+                </button>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: OrderForm [Order processing] -->
+        <div id="order-form" class="screen hidden">
+            <!-- @STATE: selectedBox:object = null -->
+            <div class="p-4 bg-secondary text-white">
+                <div class="flex items-center space-x-3">
+                    <button class="p-2" data-event="click:goBack">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-semibold">Оформление заказа</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Confirmation -->
+            <div class="p-4 bg-gradient-to-br from-orange-50 to-blue-50">
+                <div class="bg-white rounded-xl p-4 shadow-lg">
+                    <h3 class="font-semibold mb-3">Подтверждение выбора</h3>
+                    <div class="flex items-center space-x-4">
+                        <!-- Выбранный комплект спортивной одежды -->
+                        <img src="https://pixabay.com/get/g9176a17855f4d2ab57fd78b80d669fcd260f98598e6bef497dc029940ef3f895bb95e25c567a46e32101a25bc70819d8730ade276ad089edbda41d4ec334f25a_1280.jpg" alt="Выбранный бокс" class="w-20 h-20 object-cover rounded-lg" data-bind="selectedBox.image" data-mock-image="true">
+                        <div class="flex-1">
+                            <h4 class="font-semibold" data-bind="selectedBox.name">ФИТНЕС КОМФОРТ</h4>
+                            <p class="text-sm text-gray-600" data-bind="selectedBox.description">Идеальный набор для кардио</p>
+                            <p class="text-lg font-bold text-primary mt-1" data-bind="selectedBox.price">8,990₽</p>
+                        </div>
+                    </div>
+                    <button class="w-full mt-4 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium" data-event="click:changeSelection">
+                        Изменить выбор
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="p-4">
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-4">
+                    <h3 class="font-semibold mb-4">Контактные данные</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Имя *</label>
+                            <input type="text" placeholder="Ваше имя" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" data-mock="true" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Телефон *</label>
+                            <input type="tel" placeholder="+7 (999) 999-99-99" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" data-mock="true" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email (опционально)</label>
+                            <input type="email" placeholder="email@example.com" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" data-mock="true">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Options -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-4">
+                    <h3 class="font-semibold mb-4">Доставка</h3>
+                    <div class="space-y-3">
+                        <label class="delivery-option flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-primary">
+                            <input type="radio" name="delivery" value="courier" class="mr-3" data-mock="true">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xl">🚚</span>
+                                <div>
+                                    <span class="font-medium">Курьер по Москве</span>
+                                    <div class="text-sm text-gray-600">300₽</div>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="delivery-option flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-primary">
+                            <input type="radio" name="delivery" value="cdek" class="mr-3" data-mock="true">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xl">📦</span>
+                                <div>
+                                    <span class="font-medium">СДЭК</span>
+                                    <div class="text-sm text-gray-600">от 250₽</div>
+                                </div>
+                            </div>
+                        </label>
+                        <label class="delivery-option flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-primary">
+                            <input type="radio" name="delivery" value="pickup" class="mr-3" data-mock="true">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xl">🏪</span>
+                                <div>
+                                    <span class="font-medium">Самовывоз</span>
+                                    <div class="text-sm text-gray-600">бесплатно</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Payment Options -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-4">
+                    <h3 class="font-semibold mb-4">Оплата</h3>
+                    <div class="space-y-3">
+                        <label class="payment-option flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-primary">
+                            <input type="radio" name="payment" value="card" class="mr-3" data-mock="true">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xl">💳</span>
+                                <span class="font-medium">Банковская карта</span>
+                            </div>
+                        </label>
+                        <label class="payment-option flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-primary">
+                            <input type="radio" name="payment" value="sbp" class="mr-3" data-mock="true">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xl">📱</span>
+                                <span class="font-medium">СБП</span>
+                            </div>
+                        </label>
+                        <label class="payment-option flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:border-primary">
+                            <input type="radio" name="payment" value="cash" class="mr-3" data-mock="true">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xl">💰</span>
+                                <div>
+                                    <span class="font-medium">При получении</span>
+                                    <div class="text-sm text-gray-600">+200₽</div>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Final Order Button -->
+                <button class="w-full bg-primary text-white p-4 rounded-lg font-semibold text-lg" data-event="click:processOrder">
+                    Оформить заказ
+                </button>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: OrderSuccess [Order confirmation screen] -->
+        <div id="order-success" class="screen hidden">
+            <div class="p-4 bg-gradient-to-br from-green-400 to-blue-500 text-white text-center">
+                <div class="py-8">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h2 class="text-2xl font-bold mb-2">Заказ оформлен!</h2>
+                    <p class="text-lg">Номер: <span class="font-bold" data-bind="order.number">#KB001234</span></p>
+                </div>
+            </div>
+
+            <div class="p-4 space-y-4">
+                <!-- Activities -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="font-semibold mb-4">Что дальше?</h3>
+                    <div class="space-y-3">
+                        <button class="w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-event="click:viewOtherBoxes">
+                            <span class="text-xl">📦</span>
+                            <span>Другие боксы KAVARA</span>
+                        </button>
+                        <button class="w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-event="click:inviteFriend">
+                            <span class="text-xl">👥</span>
+                            <span>Пригласить друга (-10% каждому)</span>
+                        </button>
+                        <button class="w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-event="click:workoutTogether">
+                            <span class="text-xl">🏃‍♂️</span>
+                            <span>Потренить вместе</span>
+                        </button>
+                        <button class="w-full p-4 border border-gray-300 rounded-lg text-left hover:border-primary hover:bg-primary/5 flex items-center space-x-3" data-event="click:joinCommunity">
+                            <span class="text-xl">🏆</span>
+                            <span>КАВАРАКЛАН (сообщество)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button class="w-full bg-primary text-white p-4 rounded-lg font-semibold" data-event="click:backToMain">
+                    Вернуться на главную
+                </button>
+            </div>
+        </div>
+
+        <!-- @COMPONENT: BottomNavigation [Optional persistent navigation] -->
+        <nav class="bottom-nav fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 hidden">
+            <div class="max-w-md mx-auto flex">
+                <button class="flex-1 p-3 text-center" data-event="click:goHome">
+                    <div class="text-xl mb-1">🏠</div>
+                    <div class="text-xs text-gray-600">Главная</div>
+                </button>
+                <button class="flex-1 p-3 text-center" data-event="click:viewOrders">
+                    <div class="text-xl mb-1">📦</div>
+                    <div class="text-xs text-gray-600">Заказы</div>
+                </button>
+                <button class="flex-1 p-3 text-center" data-event="click:viewProfile">
+                    <div class="text-xl mb-1">👤</div>
+                    <div class="text-xs text-gray-600">Профиль</div>
+                </button>
+                <button class="flex-1 p-3 text-center" data-event="click:contactSupport">
+                    <div class="text-xl mb-1">📞</div>
+                    <div class="text-xs text-gray-600">Поддержка</div>
+                </button>
+            </div>
+        </nav>
+
+        <!-- @COMPONENT: LoadingOverlay [Loading states] -->
+        <div id="loading-overlay" class="loading-overlay fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 text-center">
+                <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p class="text-gray-700">Обрабатываем ваш заказ...</p>
+            </div>
+        </div>
+
+    </div>
+    <!-- @END_COMPONENT: TelegramWebApp -->
+
+    <script>
+        // TODO: Implement Telegram WebApp API integration
+        // TODO: Add state management for user selections
+        // TODO: Implement form validation and error handling
+        
+        (function() {
+            'use strict';
+            
+            // Simple screen navigation system
+            const screens = document.querySelectorAll('.screen');
+            let currentScreen = 'main-menu';
+            
+            function showScreen(screenId) {
+                screens.forEach(screen => {
+                    screen.classList.add('hidden');
+                    screen.classList.remove('active');
+                });
+                
+                const targetScreen = document.getElementById(screenId);
+                if (targetScreen) {
+                    targetScreen.classList.remove('hidden');
+                    targetScreen.classList.add('active');
+                    currentScreen = screenId;
+                }
+            }
+            
+            // Quiz navigation
+            let currentQuizStep = 1;
+            const maxQuizSteps = 3;
+            
+            function showQuizStep(step) {
+                const steps = document.querySelectorAll('.quiz-step');
+                steps.forEach(stepEl => stepEl.classList.add('hidden'));
+                
+                const targetStep = document.querySelector(`[data-step="${step}"]`);
+                if (targetStep) {
+                    targetStep.classList.remove('hidden');
+                    currentQuizStep = step;
+                    
+                    // Update progress indicator
+                    updateProgressIndicator(step);
+                }
+            }
+            
+            function updateProgressIndicator(step) {
+                // TODO: Update progress dots based on current step
+            }
+            
+            // Selection handlers
+            function handleSizeSelection(button) {
+                document.querySelectorAll('.size-btn').forEach(btn => {
+                    btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+                    btn.classList.add('border-gray-300');
+                });
+                button.classList.add('bg-primary', 'text-white', 'border-primary');
+                button.classList.remove('border-gray-300');
+            }
+            
+            function handleGoalSelection(button) {
+                document.querySelectorAll('.goal-btn').forEach(btn => {
+                    btn.classList.remove('bg-primary/10', 'border-primary');
+                    btn.classList.add('border-gray-300');
+                });
+                button.classList.add('bg-primary/10', 'border-primary');
+                button.classList.remove('border-gray-300');
+            }
+            
+            function handleBudgetSelection(button) {
+                document.querySelectorAll('.budget-btn').forEach(btn => {
+                    btn.classList.remove('bg-primary/10', 'border-primary');
+                    btn.classList.add('border-gray-300');
+                });
+                button.classList.add('bg-primary/10', 'border-primary');
+                button.classList.remove('border-gray-300');
+            }
+            
+            // Event delegation for dynamic content
+            document.addEventListener('click', function(e) {
+                const target = e.target.closest('[data-event]');
+                if (!target) return;
+                
+                const eventType = target.getAttribute('data-event');
+                
+                switch(eventType) {
+                    case 'click:startQuiz':
+                        showScreen('qualification-quiz');
+                        showQuizStep(1);
+                        break;
+                        
+                    case 'click:showReadyBoxes':
+                        showScreen('ready-boxes');
+                        break;
+                        
+                    case 'click:showAbout':
+                        showScreen('about-page');
+                        break;
+                        
+                    case 'click:goBack':
+                        // TODO: Implement proper navigation history
+                        showScreen('main-menu');
+                        break;
+                        
+                    case 'click:nextStep':
+                        if (currentQuizStep < maxQuizSteps) {
+                            showQuizStep(currentQuizStep + 1);
+                        }
+                        break;
+                        
+                    case 'click:prevStep':
+                        if (currentQuizStep > 1) {
+                            showQuizStep(currentQuizStep - 1);
+                        }
+                        break;
+                        
+                    case 'click:showPersonalBoxes':
+                        showScreen('personal-boxes');
+                        break;
+                        
+                    case 'click:selectBox':
+                    case 'click:selectReadyBox':
+                        // TODO: Store selected box data
+                        showScreen('order-form');
+                        break;
+                        
+                    case 'click:processOrder':
+                        // TODO: Validate form and process order
+                        document.getElementById('loading-overlay').classList.remove('hidden');
+                        setTimeout(() => {
+                            document.getElementById('loading-overlay').classList.add('hidden');
+                            showScreen('order-success');
+                        }, 2000);
+                        break;
+                        
+                    case 'click:backToMain':
+                    case 'click:startShopping':
+                        showScreen('main-menu');
+                        break;
+                        
+                    case 'click:notifyMe':
+                        // TODO: Handle notification requests
+                        alert('Мы уведомим вас о поступлении товара!');
+                        break;
+                }
+            });
+            
+            // Selection handlers
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.size-btn')) {
+                    handleSizeSelection(e.target.closest('.size-btn'));
+                }
+                if (e.target.closest('.goal-btn')) {
+                    handleGoalSelection(e.target.closest('.goal-btn'));
+                }
+                if (e.target.closest('.budget-btn')) {
+                    handleBudgetSelection(e.target.closest('.budget-btn'));
+                }
+            });
+            
+            // Form validation
+            document.addEventListener('change', function(e) {
+                if (e.target.closest('.delivery-option input')) {
+                    // TODO: Update delivery cost calculation
+                }
+                if (e.target.closest('.payment-option input')) {
+                    // TODO: Update payment method handling
+                }
+            });
+            
+            // Initialize app
+            showScreen('main-menu');
+            
+        })();
+    </script>
+</body>
+</html>
