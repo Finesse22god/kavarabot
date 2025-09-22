@@ -1,22 +1,46 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function AdminLogin() {
-  const [password, setPassword] = useState("");
+  const [, setLocation] = useLocation();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  });
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      // TODO: Implement admin login logic
-      console.log("Admin login:", password);
-    } catch (error) {
-      console.error("Login error:", error);
+      const response = await apiRequest("POST", "/api/admin/login", formData);
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store admin token
+        localStorage.setItem("adminToken", data.token);
+        toast({
+          title: "Успех",
+          description: "Вход выполнен успешно"
+        });
+        setLocation("/admin/dashboard");
+      } else {
+        throw new Error(data.message || "Неверные данные");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Ошибка входа",
+        description: error.message || "Неверное имя пользователя или пароль",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -25,19 +49,34 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">KAVARA Admin</CardTitle>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">KAVARA Admin</CardTitle>
+          <CardDescription>
+            Войдите в административную панель
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="username">Имя пользователя</Label>
+              <Input
+                id="username"
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                required
+                placeholder="admin"
+              />
+            </div>
             <div>
               <Label htmlFor="password">Пароль</Label>
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                 required
+                placeholder="••••••••"
               />
             </div>
             <Button 

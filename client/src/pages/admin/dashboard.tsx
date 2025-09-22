@@ -1,71 +1,624 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square } from "lucide-react";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import OrderDetails from "./order-details";
+import EditProduct from "./edit-product";
+import UserProfile from "./user-profile";
+import PromoCodes from "./promo-codes";
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  status: string;
+  totalPrice: number;
+  deliveryMethod: string;
+  deliveryAddress?: string;
+  createdAt: string;
+  boxId?: string;
+  boxName?: string;
+  userInfo?: {
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    telegramId?: string;
+  };
+}
+
+interface User {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  telegramId: string;
+  createdAt: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category: string;
+  createdAt: string;
+}
+
+interface Box {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image: string;
+  imageUrl?: string;
+}
 
 export default function AdminDashboard() {
-  const [stats] = useState({
-    totalOrders: 42,
-    totalUsers: 156,
-    totalRevenue: 125000,
-    activeBoxes: 8
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Box | null | undefined>(undefined);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showPromoCodes, setShowPromoCodes] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [showMassActions, setShowMassActions] = useState(false);
+
+  const handleImportCatalog = async () => {
+    setIsImporting(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/admin/import-catalog', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast({
+          title: "Каталог обновлен!",
+          description: `Успешно импортировано ${result.imported} товаров с сайта kavarabrand.com`
+        });
+        // Обновляем список товаров
+        window.location.reload();
+      } else {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось импортировать каталог",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка импорта:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при импорте каталога",
+        variant: "destructive"
+      });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // Check if admin is authenticated
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      setLocation("/admin/login");
+    }
+  }, [setLocation]);
+
+  const { data: orders, isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ["/api/admin/orders"],
+    retry: false,
   });
 
+  const { data: users, isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+    retry: false,
+  });
+
+  const { data: boxes, isLoading: boxesLoading } = useQuery<Box[]>({
+    queryKey: ["/api/admin/boxes"],
+    retry: false,
+  });
+
+  const { data: trainers, isLoading: trainersLoading } = useQuery({
+    queryKey: ["/api/admin/trainers"],
+    retry: false,
+  });
+
+  const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/admin/products"],
+    retry: false,
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    toast({
+      title: "Выход выполнен",
+      description: "Вы вышли из админ панели"
+    });
+    setLocation("/admin/login");
+  };
+
+  const handleDeleteBox = async (boxId: string) => {
+    if (!confirm('Вы уверены, что хотите удалить этот бокс?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/boxes/${boxId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Бокс удален",
+          description: "Бокс успешно удален из системы"
+        });
+        window.location.reload();
+      } else {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось удалить бокс",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка удаления:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при удалении бокса",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleSelectItem = (itemId: string) => {
+    setSelectedItems(prev => 
+      prev.includes(itemId) 
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId]
+    );
+  };
+
+  const handleSelectAll = (items: any[]) => {
+    const allIds = items.map(item => item.id);
+    setSelectedItems(prev => 
+      prev.length === allIds.length ? [] : allIds
+    );
+  };
+
+  // Show order details modal
+  if (selectedOrder) {
+    return <OrderDetails order={selectedOrder} onBack={() => setSelectedOrder(null)} />;
+  }
+
+  // Show product edit modal
+  if (editingProduct !== undefined) {
+    return <EditProduct product={editingProduct} onBack={() => setEditingProduct(undefined)} />;
+  }
+
+  // Show user profile modal
+  if (selectedUser) {
+    return <UserProfile user={selectedUser} onBack={() => setSelectedUser(null)} />;
+  }
+
+  // Show promo codes modal
+  if (showPromoCodes) {
+    return <PromoCodes onBack={() => setShowPromoCodes(false)} />;
+  }
+
+  const stats = {
+    totalOrders: orders?.length || 0,
+    totalUsers: users?.length || 0,
+    totalRevenue: orders?.reduce((sum, order) => sum + order.totalPrice, 0) || 0,
+    activeBoxes: boxes?.length || 0
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">KAVARA Admin Dashboard</h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Заказы</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Пользователи</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Выручка</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString('ru-RU')}₽</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Активные боксы</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeBoxes}</div>
-            </CardContent>
-          </Card>
+    <div className="w-full min-h-screen bg-gray-50">
+      <div className="w-full">
+        {/* Header */}
+        <div className="bg-white border-b p-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">KAVARA Admin</h1>
+              <p className="text-gray-600 mt-1">Панель управления</p>
+            </div>
+            <Button 
+              onClick={handleLogout}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Выйти
+            </Button>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Управление</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">Заказы</Badge>
-              <Badge variant="outline">Пользователи</Badge>
-              <Badge variant="outline">Боксы</Badge>
-              <Badge variant="outline">Статистика</Badge>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="p-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Заказы</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalOrders}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Пользователи</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Выручка</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString('ru-RU')}₽</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Активные боксы</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.activeBoxes}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <Tabs defaultValue="orders" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="orders">Заказы</TabsTrigger>
+              <TabsTrigger value="users">Пользователи</TabsTrigger>
+              <TabsTrigger value="products">Каталог</TabsTrigger>
+              <TabsTrigger value="management">Управление</TabsTrigger>
+            </TabsList>
+
+            {/* Orders Tab */}
+            <TabsContent value="orders">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Заказы</CardTitle>
+                  <CardDescription>
+                    Управление заказами клиентов
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {ordersLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="text-gray-500">Загрузка заказов...</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders && orders.length > 0 ? (
+                        orders.map((order) => (
+                          <div
+                            key={order.id}
+                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <div>
+                                  <p className="font-medium">#{order.orderNumber}</p>
+                                  <p className="text-sm text-gray-600">
+                                    {order.customerName || order.userInfo?.firstName + ' ' + order.userInfo?.lastName || 'Неизвестно'}
+                                  </p>
+                                </div>
+                                <Badge variant={order.status === 'paid' ? 'default' : 'secondary'}>
+                                  {order.status === 'paid' ? 'Оплачен' : 
+                                   order.status === 'pending' ? 'Ожидает оплаты' : order.status}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">{order.totalPrice.toLocaleString('ru-RU')}₽</p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedOrder(order)}
+                                className="mt-2"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Детали
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          Заказов пока нет
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Users Tab */}
+            <TabsContent value="users">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Пользователи</CardTitle>
+                  <CardDescription>
+                    Управление пользователями системы
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {usersLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="text-gray-500">Загрузка пользователей...</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {users && users.length > 0 ? (
+                        users.map((user) => (
+                          <div
+                            key={user.id}
+                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <div>
+                                  <p className="font-medium">
+                                    {user.firstName && user.lastName ? 
+                                      `${user.firstName} ${user.lastName}` : 
+                                      user.username || 'Неизвестно'
+                                    }
+                                  </p>
+                                  <p className="text-sm text-gray-600">
+                                    @{user.username || 'без_username'}
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="text-sm text-gray-500 mt-1">
+                                Telegram ID: {user.telegramId}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                Регистрация: {new Date(user.createdAt).toLocaleDateString('ru-RU')}
+                              </p>
+                            </div>
+                            <div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedUser(user)}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Профиль
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          Пользователей пока нет
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Products/Catalog Tab */}
+            <TabsContent value="products">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Каталог товаров</CardTitle>
+                      <CardDescription>
+                        Управление товарами и боксами
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleImportCatalog}
+                        disabled={isImporting}
+                        variant="outline"
+                      >
+                        {isImporting ? "Импорт..." : "Импорт с сайта"}
+                      </Button>
+                      <Button onClick={() => setEditingProduct(null)}>
+                        Добавить товар
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {boxesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className="text-gray-500">Загрузка товаров...</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {boxes && boxes.length > 0 ? (
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSelectAll(boxes)}
+                              >
+                                {selectedItems.length === boxes.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                                Выбрать все
+                              </Button>
+                              {selectedItems.length > 0 && (
+                                <Badge variant="secondary">
+                                  Выбрано: {selectedItems.length}
+                                </Badge>
+                              )}
+                            </div>
+                            {selectedItems.length > 0 && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  if (confirm(`Удалить ${selectedItems.length} товаров?`)) {
+                                    // Implement mass delete
+                                    console.log('Mass delete:', selectedItems);
+                                  }
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Удалить выбранные
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {boxes.map((box) => (
+                            <div
+                              key={box.id}
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSelectItem(box.id)}
+                                >
+                                  {selectedItems.includes(box.id) ? 
+                                    <CheckSquare className="h-4 w-4" /> : 
+                                    <Square className="h-4 w-4" />
+                                  }
+                                </Button>
+                                <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                                  <img
+                                    src={box.imageUrl || box.image}
+                                    alt={box.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium">{box.name}</p>
+                                  <p className="text-sm text-gray-600 line-clamp-2">
+                                    {box.description}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="outline">{box.category}</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="text-right flex items-center gap-2">
+                                <div>
+                                  <p className="font-medium">{box.price.toLocaleString('ru-RU')}₽</p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setEditingProduct(box)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteBox(box.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          Товаров пока нет
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Management Tab */}
+            <TabsContent value="management">
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Управление системой</CardTitle>
+                    <CardDescription>
+                      Дополнительные инструменты администратора
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => setShowPromoCodes(true)}
+                      >
+                        <Gift className="h-6 w-6" />
+                        Промокоды
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => setLocation("/admin/create-box")}
+                      >
+                        <Package className="h-6 w-6" />
+                        Создать бокс
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => window.location.reload()}
+                      >
+                        <BarChart3 className="h-6 w-6" />
+                        Обновить данные
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Additional management tools can be added here */}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
