@@ -90,8 +90,8 @@ export default function Order() {
 
   const createOrder = useMutation({
     mutationFn: async (orderData: any) => {
-      const response = await apiRequest("POST", "/api/orders", orderData);
-      return response.json();
+      const data = await apiRequest("POST", "/api/orders", orderData);
+      return data;
     },
     onSuccess: (newOrder: Order) => {
       // Save order and box data to session storage for checkout

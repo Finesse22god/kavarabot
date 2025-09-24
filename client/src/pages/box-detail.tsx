@@ -126,13 +126,13 @@ export default function BoxDetail() {
   const addToCartMutation = useMutation({
     mutationFn: async () => {
       if (!dbUser?.id || !box) throw new Error("User or box not found");
-      const response = await apiRequest("POST", "/api/cart", {
+      const data = await apiRequest("POST", "/api/cart", {
         userId: dbUser.id,
         boxId: box.id,
         selectedSize,
         itemType: "box"
       });
-      return response.json();
+      return data;
     },
     onSuccess: () => {
       toast({

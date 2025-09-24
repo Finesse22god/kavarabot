@@ -21,8 +21,7 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const response = await apiRequest("POST", "/api/admin/login", formData);
-      const data = await response.json();
+      const data = await apiRequest("POST", "/api/admin/login", formData);
       
       if (data.success) {
         // Store admin token

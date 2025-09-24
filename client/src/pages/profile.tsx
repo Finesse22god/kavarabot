@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Edit, Settings, Heart, Bell, Gift, Copy, Star, Trophy, Clock, Phone, MessageCircle, RotateCcw, FileText, HelpCircle, Users, Package } from "lucide-react";
+import { User, Edit, Settings, Heart, Bell, Gift, Copy, Star, Trophy, Clock, Phone, MessageCircle, RotateCcw, FileText, HelpCircle, Users, Package, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +44,7 @@ export default function Profile() {
     type: "",
     message: ""
   });
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   // Fetch user data from our database including referral code
   const { data: userData } = useQuery<{id: string; telegramId: string; firstName?: string; lastName?: string; referralCode?: string; loyaltyPoints: number}>({
@@ -276,9 +277,19 @@ export default function Profile() {
                       </span>
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600">
-                    <p>{order.customerName || 'Не указано'}</p>
-                    <p>Доставка: {order.deliveryMethod}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      <p>{order.customerName || 'Не указано'}</p>
+                      <p>Доставка: {order.deliveryMethod}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Детали
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -299,6 +310,99 @@ export default function Profile() {
       </div>
     );
   };
+
+  // Order Details Component
+  const OrderDetails = ({ order, onBack }: { order: any; onBack: () => void }) => {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="p-4 bg-black text-white">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="text-white hover:text-gray-300"
+            >
+              ← Назад
+            </Button>
+            <div>
+              <h2 className="font-semibold">Заказ #{order.orderNumber}</h2>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Детали заказа</span>
+                <Badge variant={order.status === 'paid' ? 'default' : 'secondary'}>
+                  {order.status === 'paid' ? 'Оплачен' : 
+                   order.status === 'pending' ? 'Ожидает оплаты' : order.status}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Номер заказа</Label>
+                  <p className="text-lg font-semibold">#{order.orderNumber}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Дата заказа</Label>
+                  <p>{new Date(order.createdAt).toLocaleDateString('ru-RU', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Сумма заказа</Label>
+                  <p className="text-lg font-semibold">{order.totalPrice.toLocaleString()}₽</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Способ доставки</Label>
+                  <p>{order.deliveryMethod}</p>
+                </div>
+              </div>
+
+              {order.customerName && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Контактные данные</Label>
+                  <div className="mt-1">
+                    <p><strong>Имя:</strong> {order.customerName}</p>
+                    {order.customerPhone && <p><strong>Телефон:</strong> {order.customerPhone}</p>}
+                    {order.customerEmail && <p><strong>Email:</strong> {order.customerEmail}</p>}
+                  </div>
+                </div>
+              )}
+
+              {order.deliveryAddress && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Адрес доставки</Label>
+                  <p className="mt-1">{order.deliveryAddress}</p>
+                </div>
+              )}
+
+              {order.comment && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Комментарий к заказу</Label>
+                  <p className="mt-1">{order.comment}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  // Show order details if order is selected
+  if (selectedOrder) {
+    return <OrderDetails order={selectedOrder} onBack={() => setSelectedOrder(null)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
