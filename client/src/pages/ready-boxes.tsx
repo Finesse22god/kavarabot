@@ -20,9 +20,6 @@ export default function ReadyBoxes() {
       const allBoxes = await response.json() as Box[];
       // Фильтруем только готовые боксы (category: "ready")
       return allBoxes.filter(box => 
-        box.contents && 
-        Array.isArray(box.contents) && 
-        box.contents.length > 0 &&
         box.category === "ready"
       );
     },
