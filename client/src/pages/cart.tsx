@@ -204,7 +204,7 @@ export default function Cart() {
                           <p className="text-sm text-blue-600 font-medium mb-2">Размер: {item.selectedSize}</p>
                         )}
                         <div className="flex items-center justify-between">
-                          <div className="text-xl font-bold">{currentItem.price.toLocaleString()}₽</div>
+                          <div className="text-xl font-bold">{(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽</div>
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
                               <Button

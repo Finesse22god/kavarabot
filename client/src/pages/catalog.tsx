@@ -155,13 +155,12 @@ export default function Catalog() {
       const response = await fetch("/api/boxes");
       if (!response.ok) throw new Error("Failed to fetch boxes");
       const allBoxes = await response.json() as Box[];
-      // Фильтруем только настоящие боксы (с contents массивом), исключаем импортированные товары
+      // Фильтруем только готовые боксы (category: "ready")
       return allBoxes.filter(box => 
         box.contents && 
         Array.isArray(box.contents) && 
         box.contents.length > 0 &&
-        // Дополнительная проверка - у настоящих боксов contents содержит "x1", "x2" и т.д.
-        box.contents.some(item => typeof item === 'string' && item.includes('x'))
+        box.category === "ready"
       );
     },
   });
@@ -244,7 +243,8 @@ export default function Catalog() {
       (item.sportTypes && item.sportTypes.includes(selectedSportType));
     
     // Фильтр по цене
-    const priceMatch = item.price >= selectedPriceRange.min && item.price <= selectedPriceRange.max;
+    const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+    const priceMatch = itemPrice >= selectedPriceRange.min && itemPrice <= selectedPriceRange.max;
     
     // Фильтр по поиску
     const searchMatch = searchQuery === "" || 
@@ -312,14 +312,14 @@ export default function Catalog() {
                 onClick={() => setLocation(`/box/${box.id}`)}
               >
                 <img
-                  src={box.imageUrl}
+                  src={box.imageUrl || ''}
                   alt={box.name}
                   className="w-full h-32 object-cover rounded-xl mb-3"
                 />
                 <h4 className="font-bold text-sm mb-2 truncate text-black">{box.name}</h4>
                 <p className="text-xs text-gray-600 mb-3 line-clamp-2">{box.description}</p>
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-black">{box.price.toLocaleString()}₽</span>
+                  <span className="font-bold text-black">{(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽</span>
                   <Button
                     size="sm"
                     onClick={(e) => {
@@ -455,14 +455,14 @@ export default function Catalog() {
               {/* Product Info */}
               <div className="flex gap-4">
                 <img
-                  src={selectedBoxForSize.imageUrl}
+                  src={selectedBoxForSize.imageUrl || ''}
                   alt={selectedBoxForSize.name}
                   className="w-20 h-20 object-cover rounded-lg"
                 />
                 <div>
                   <h4 className="font-semibold text-lg">{selectedBoxForSize.name}</h4>
                   <p className="text-gray-600">{selectedBoxForSize.description}</p>
-                  <p className="font-bold text-lg mt-1">{selectedBoxForSize.price.toLocaleString()}₽</p>
+                  <p className="font-bold text-lg mt-1">{(typeof selectedBoxForSize.price === 'string' ? parseFloat(selectedBoxForSize.price) : selectedBoxForSize.price).toLocaleString()}₽</p>
                 </div>
               </div>
 

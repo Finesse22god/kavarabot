@@ -188,7 +188,7 @@ export default function ProductDetail() {
           <div>
             <h2 className="text-2xl font-bold text-black tracking-wide">{product.name}</h2>
             <p className="text-gray-600 font-medium">
-              {product.price.toLocaleString()}₽
+              {(typeof product.price === 'string' ? parseFloat(product.price) : product.price).toLocaleString()}₽
             </p>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function ProductDetail() {
           <div>
             <h3 className="text-xl font-bold text-black mb-2">{product.name}</h3>
             <p className="text-gray-600 mb-4">{product.description}</p>
-            <p className="text-2xl font-bold text-black">{product.price.toLocaleString()}₽</p>
+            <p className="text-2xl font-bold text-black">{(typeof product.price === 'string' ? parseFloat(product.price) : product.price).toLocaleString()}₽</p>
           </div>
         </div>
 

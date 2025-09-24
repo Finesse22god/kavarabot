@@ -541,7 +541,7 @@ export default function AdminDashboard() {
                               </div>
                               <div className="text-right flex items-center gap-2">
                                 <div>
-                                  <p className="font-medium">{box.price.toLocaleString('ru-RU')}₽</p>
+                                  <p className="font-medium">{(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString('ru-RU')}₽</p>
                                 </div>
                                 <Button
                                   size="sm"

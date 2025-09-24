@@ -209,7 +209,7 @@ export default function BoxDetail() {
           <div>
             <h2 className="text-2xl font-bold text-black tracking-wide">{box.name}</h2>
             <p className="text-gray-600 font-medium">
-              {box.price.toLocaleString()}₽
+              {(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽
             </p>
           </div>
         </div>
@@ -226,7 +226,7 @@ export default function BoxDetail() {
           <div>
             <h3 className="text-xl font-bold text-black mb-2">{box.name}</h3>
             <p className="text-gray-600 mb-4">{box.description}</p>
-            <p className="text-2xl font-bold text-black">{box.price.toLocaleString()}₽</p>
+            <p className="text-2xl font-bold text-black">{(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽</p>
           </div>
         </div>
 

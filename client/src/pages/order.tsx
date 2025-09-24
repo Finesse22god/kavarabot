@@ -341,7 +341,7 @@ export default function Order() {
               <h4 className="font-semibold">{selectedBox.name}</h4>
               <p className="text-sm text-gray-600">{selectedBox.description}</p>
               <p className="text-lg font-bold text-primary mt-1">
-                {selectedBox.price.toLocaleString('ru-RU')}₽
+                {(typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString('ru-RU')}₽
               </p>
             </div>
           </div>
@@ -478,7 +478,7 @@ export default function Order() {
           <div className="space-y-2">
             <div className="flex justify-between">
               <span>Товар:</span>
-              <span>{selectedBox?.price.toLocaleString('ru-RU')}₽</span>
+              <span>{selectedBox ? (typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString('ru-RU') : 0}₽</span>
             </div>
             <div className="flex justify-between">
               <span>Доставка:</span>

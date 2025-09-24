@@ -18,13 +18,12 @@ export default function ReadyBoxes() {
       const response = await fetch("/api/boxes");
       if (!response.ok) throw new Error("Failed to fetch boxes");
       const allBoxes = await response.json() as Box[];
-      // Фильтруем только настоящие боксы (с contents массивом), исключаем импортированные товары
+      // Фильтруем только готовые боксы (category: "ready")
       return allBoxes.filter(box => 
         box.contents && 
         Array.isArray(box.contents) && 
         box.contents.length > 0 &&
-        // Дополнительная проверка - у настоящих боксов contents содержит "x1", "x2" и т.д.
-        box.contents.some(item => typeof item === 'string' && item.includes('x'))
+        box.category === "ready"
       );
     },
   });

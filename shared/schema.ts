@@ -57,6 +57,7 @@ export const boxes = pgTable("boxes", {
   category: varchar("category", { length: 50 }),
   isAvailable: boolean("is_available").default(true),
   contents: json("contents").$type<string[]>(),
+  sportTypes: json("sport_types").$type<string[]>(),
   availableSizes: json("available_sizes").$type<string[]>(),
   rating: decimal("rating", { precision: 3, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
