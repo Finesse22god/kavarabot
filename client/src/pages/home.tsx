@@ -53,9 +53,9 @@ export default function Home() {
       <div className="p-6 space-y-4 pb-20">
         <button 
           className="w-full bg-black text-white py-6 text-lg font-semibold tracking-wide hover:bg-gray-900 transition-colors rounded-xl"
-          onClick={() => handleMenuOption("/quiz")}
+          onClick={() => handleMenuOption("/boxes")}
         >
-          СОБРАТЬ БОКС
+          ГОТОВЫЕ БОКСЫ
         </button>
 
 

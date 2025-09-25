@@ -7,6 +7,7 @@ import Home from "./pages/home";
 import Quiz from "./pages/quiz";
 import PersonalBoxes from "./pages/personal-boxes";
 import ReadyBoxes from "./pages/ready-boxes";
+import Boxes from "./pages/boxes";
 import About from "./pages/about";
 import Order from "./pages/order";
 import OrderSuccess from "./pages/order-success";
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/quiz" component={Quiz} />
       <Route path="/catalog" component={Catalog} />
+      <Route path="/boxes" component={Boxes} />
       <Route path="/box/:id" component={BoxDetail} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/ready-boxes" component={ReadyBoxes} />
