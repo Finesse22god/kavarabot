@@ -1315,12 +1315,16 @@ router.post("/api/admin/import-catalog", verifyAdminToken, async (req, res) => {
 // Get catalog products (только отдельные товары, НЕ боксы)
 router.get("/api/catalog", async (req, res) => {
   try {
-    const { sportType, minPrice, maxPrice } = req.query;
+    const { sportType, minPrice, maxPrice, category } = req.query;
     
-    // Получаем все боксы как каталог товаров
-    let allProducts = await storage.getAllBoxes();
+    // Получаем все продукты
+    let allProducts = await storage.getAllProducts();
     
     // Применяем фильтры
+    if (category && typeof category === "string" && category !== "Все категории") {
+      allProducts = allProducts.filter(product => product.category === category);
+    }
+    
     if (sportType && typeof sportType === "string" && sportType !== "Все виды спорта") {
       allProducts = allProducts.filter(product => 
         product.sportTypes && product.sportTypes.includes(sportType)

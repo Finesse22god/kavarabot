@@ -24,6 +24,26 @@ const SPORT_TYPES = [
   "Повседневная носка"
 ];
 
+const CATEGORIES = [
+  "Все категории",
+  "Рашгарды",
+  "Лосины", 
+  "Рубашки",
+  "Поло",
+  "Шорты",
+  "Футболки",
+  "Майки",
+  "Худи",
+  "Брюки",
+  "Жилеты",
+  "Олимпийки",
+  "Джемперы",
+  "Куртки",
+  "Свитшоты",
+  "Сумки",
+  "Аксессуары"
+];
+
 const PRICE_RANGES = [
   { label: "Все цены", min: 0, max: Infinity },
   { label: "До 5.000₽", min: 0, max: 5000 },
@@ -45,6 +65,7 @@ export default function Catalog() {
     enabled: !!telegramUser?.id
   });
   const [selectedSportType, setSelectedSportType] = useState("Все виды спорта");
+  const [selectedCategory, setSelectedCategory] = useState("Все категории");
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -140,9 +161,23 @@ export default function Catalog() {
   };
 
   const { data: catalogItems, isLoading, error } = useQuery({
-    queryKey: ["/api/catalog"],
+    queryKey: ["/api/catalog", selectedCategory, selectedSportType, selectedPriceRange],
     queryFn: async () => {
-      const response = await fetch("/api/catalog");
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== "Все категории") {
+        params.append("category", selectedCategory);
+      }
+      if (selectedSportType && selectedSportType !== "Все виды спорта") {
+        params.append("sportType", selectedSportType);
+      }
+      if (selectedPriceRange.min > 0) {
+        params.append("minPrice", selectedPriceRange.min.toString());
+      }
+      if (selectedPriceRange.max < Infinity) {
+        params.append("maxPrice", selectedPriceRange.max.toString());
+      }
+      
+      const response = await fetch(`/api/catalog?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch catalog");
       return response.json() as Promise<Box[]>;
     },
@@ -242,6 +277,10 @@ export default function Catalog() {
     const sportMatch = selectedSportType === "Все виды спорта" || 
       (item.sportTypes && item.sportTypes.includes(selectedSportType));
     
+    // Фильтр по категории
+    const categoryMatch = selectedCategory === "Все категории" || 
+      ((item as any).category === selectedCategory);
+    
     // Фильтр по цене
     const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
     const priceMatch = itemPrice >= selectedPriceRange.min && itemPrice <= selectedPriceRange.max;
@@ -251,7 +290,7 @@ export default function Catalog() {
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    return sportMatch && priceMatch && searchMatch;
+    return sportMatch && categoryMatch && priceMatch && searchMatch;
   }) || [];
 
   // Show loading while data is being fetched
@@ -357,6 +396,25 @@ export default function Catalog() {
             />
           </div>
 
+          {/* Category Filter */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Категория товара
+            </label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Sport Type Filter */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -405,6 +463,7 @@ export default function Catalog() {
           <Button
             variant="outline"
             onClick={() => {
+              setSelectedCategory("Все категории");
               setSelectedSportType("Все виды спорта");
               setSelectedPriceRange(PRICE_RANGES[0]);
               setSearchQuery("");
