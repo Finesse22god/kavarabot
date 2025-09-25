@@ -46,8 +46,8 @@ export default function Profile() {
   });
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-  // Fetch user data from our database including referral code
-  const { data: userData } = useQuery<{id: string; telegramId: string; firstName?: string; lastName?: string; referralCode?: string; loyaltyPoints: number}>({
+  // Fetch user data from our database
+  const { data: userData } = useQuery<{id: string; telegramId: string; firstName?: string; lastName?: string}>({
     queryKey: [`/api/users/telegram/${user?.id?.toString()}`],
     enabled: !!user?.id,
   });
@@ -72,49 +72,10 @@ export default function Profile() {
     retry: 1,
   });
 
-  // Fetch loyalty stats
-  const { data: loyaltyStats, isLoading: statsLoading } = useQuery<{totalPoints: number; totalEarned: number; totalRedeemed: number}>({
-    queryKey: [`/api/loyalty/${userData?.id}/stats`],
-    enabled: !!userData?.id,
-    retry: 1,
-  });
-
-  // Fetch loyalty transactions
-  const { data: transactions, isLoading: transactionsLoading } = useQuery<any[]>({
-    queryKey: [`/api/loyalty/${userData?.id}/transactions`],
-    enabled: !!userData?.id,
-    retry: 1,
-  });
 
   // Fetch user favorites
   const { data: userFavorites, isLoading: favoritesLoading } = useUserFavorites(userData?.id);
 
-  // Generate referral code mutation
-  const generateReferralCodeMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/api/loyalty/${userData?.id}/generate-referral-code`, {
-        method: "POST",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to generate referral code");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/users/telegram/${user?.id?.toString()}`] });
-      toast({
-        title: "Успех",
-        description: "Промокод создан!",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось создать промокод",
-        variant: "destructive",
-      });
-    },
-  });
 
   // FAQ data
   const faqData = [
@@ -417,11 +378,10 @@ export default function Profile() {
 
       <div className="p-4">
         <Tabs defaultValue={tabFromUrl} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 text-xs">
+          <TabsList className="grid w-full grid-cols-4 text-xs">
             <TabsTrigger value="personal">Данные</TabsTrigger>
             <TabsTrigger value="orders">Заказы</TabsTrigger>
             <TabsTrigger value="favorites">Избранное</TabsTrigger>
-            <TabsTrigger value="loyalty">Лояльность</TabsTrigger>
             <TabsTrigger value="contacts">Контакты</TabsTrigger>
           </TabsList>
           
@@ -634,107 +594,6 @@ export default function Profile() {
             </div>
           </TabsContent>
 
-          <TabsContent value="loyalty" className="mt-4">
-            <div className="space-y-6">
-              {/* Points Overview */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Star className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-                    <div className="text-2xl font-bold">
-                      {statsLoading ? (
-                        <div className="animate-pulse bg-gray-200 h-8 w-16 rounded mx-auto"></div>
-                      ) : (
-                        loyaltyStats?.totalPoints || 0
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">Доступных баллов</p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Trophy className="h-8 w-8 mx-auto mb-2 text-primary" />
-                    <div className="text-2xl font-bold">
-                      {statsLoading ? (
-                        <div className="animate-pulse bg-gray-200 h-8 w-16 rounded mx-auto"></div>
-                      ) : (
-                        loyaltyStats?.totalEarned || 0
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">Всего заработано</p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-6 text-center">
-                    <Clock className="h-8 w-8 mx-auto mb-2 text-green-500" />
-                    <div className="text-2xl font-bold">
-                      {statsLoading ? (
-                        <div className="animate-pulse bg-gray-200 h-8 w-16 rounded mx-auto"></div>
-                      ) : (
-                        loyaltyStats?.totalRedeemed || 0
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">Потрачено баллов</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Your Personal Promo Code */}
-              <Card className="bg-gradient-to-br from-red-50 to-black/5 border border-red-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-red-600">
-                    <Gift className="h-5 w-5" />
-                    Ваш промокод
-                  </CardTitle>
-                  <CardDescription>
-                    Делитесь своим кодом с друзьями и получайте 10% баллами от их покупок
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {userData?.referralCode ? (
-                    <div className="space-y-4">
-                      <div className="p-4 bg-white border border-red-200 rounded-lg">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                          <div>
-                            <p className="text-sm text-gray-600 mb-1">Ваш промокод:</p>
-                            <p className="text-2xl font-bold font-mono text-red-600">{userData.referralCode}</p>
-                          </div>
-                          <Button
-                            onClick={() => {
-                              navigator.clipboard.writeText(userData.referralCode || "");
-                              toast({
-                                title: "Скопировано!",
-                                description: "Промокод скопирован в буфер обмена",
-                              });
-                            }}
-                            className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
-                          >
-                            <Gift className="h-4 w-4" />
-                            Копировать
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Gift className="w-16 h-16 text-red-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-gray-700 mb-2">Создайте свой промокод</h3>
-                      <p className="text-gray-600 mb-6">Получите персональный промокод для приглашения друзей</p>
-                      <Button 
-                        onClick={() => generateReferralCodeMutation.mutate()}
-                        disabled={generateReferralCodeMutation.isPending}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        {generateReferralCodeMutation.isPending ? "Создание..." : "Создать промокод"}
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="contacts" className="mt-4">
             <div className="space-y-4">
