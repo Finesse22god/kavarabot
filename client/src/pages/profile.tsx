@@ -45,6 +45,7 @@ export default function Profile() {
     message: ""
   });
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
 
   // Fetch user data from our database
   const { data: userData } = useQuery<{id: string; telegramId: string; firstName?: string; lastName?: string}>({
@@ -272,6 +273,80 @@ export default function Profile() {
     );
   };
 
+  // Payment creation function
+  const createPayment = async (order: any) => {
+    setIsCreatingPayment(true);
+    try {
+      const intent = await apiRequest("POST", "/api/create-payment-intent", {
+        amount: order.totalPrice,
+        description: `Оплата заказа ${order.orderNumber}`,
+        orderId: order.orderNumber,
+        returnUrl: `${window.location.origin}/payment/success`
+      });
+      
+      // Validate API response structure
+      if (!intent || typeof intent !== 'object') {
+        throw new Error('Неожиданный ответ от сервера');
+      }
+      
+      if (intent.error) {
+        throw new Error(intent.error || 'Ошибка создания платежа');
+      }
+      
+      if (!intent.paymentId || !intent.confirmationUrl) {
+        throw new Error('Отсутствуют данные для оплаты в ответе сервера');
+      }
+      
+      // Update order with payment ID
+      const updateResult = await apiRequest("PUT", `/api/orders/${order.id}/payment-id`, {
+        paymentId: intent.paymentId
+      });
+      
+      // Validate order update was successful
+      if (!updateResult || updateResult.error) {
+        throw new Error(updateResult?.error || 'Не удалось обновить заказ с ID платежа');
+      }
+
+      // Redirect to payment page
+      window.open(intent.confirmationUrl, '_blank');
+      
+      // Invalidate orders cache to refresh UI after payment status changes
+      queryClient.invalidateQueries({ queryKey: [`/api/orders/user/${userData?.id}`] });
+      
+      toast({
+        title: "Ссылка на оплату создана",
+        description: "Вы будете перенаправлены на страницу оплаты"
+      });
+    } catch (error) {
+      console.error("Payment creation error:", error);
+      
+      // Extract detailed error message from server response
+      let errorMessage = "Не удалось создать ссылку на оплату. Попробуйте еще раз.";
+      if (error instanceof Error) {
+        // Extract backend error details from the thrown error message
+        const match = error.message.match(/Request failed: \d+ - (.+)/);
+        if (match) {
+          try {
+            const backendError = JSON.parse(match[1]);
+            errorMessage = backendError.error || backendError.message || match[1];
+          } catch {
+            errorMessage = match[1];
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: "Ошибка",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingPayment(false);
+    }
+  };
+
   // Order Details Component
   const OrderDetails = ({ order, onBack }: { order: any; onBack: () => void }) => {
     return (
@@ -351,6 +426,26 @@ export default function Profile() {
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Комментарий к заказу</Label>
                   <p className="mt-1">{order.comment}</p>
+                </div>
+              )}
+
+              {order.status === 'pending' && (
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={() => createPayment(order)}
+                    disabled={isCreatingPayment}
+                    className="w-full"
+                    data-testid="button-pay-order"
+                  >
+                    {isCreatingPayment ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                        Создание ссылки...
+                      </>
+                    ) : (
+                      "💳 Оплатить заказ"
+                    )}
+                  </Button>
                 </div>
               )}
             </CardContent>
