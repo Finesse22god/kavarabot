@@ -730,18 +730,46 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
   try {
     const createData = req.body;
     
+    // Validate required fields
+    if (!createData.name || !createData.price) {
+      return res.status(400).json({ error: "Name and price are required" });
+    }
+
+    // Validate products if provided (max 4 products)
+    if (createData.productIds && createData.productIds.length > 4) {
+      return res.status(400).json({ error: "Box can contain maximum 4 products" });
+    }
+    
     // Преобразуем данные для совместимости с сущностью Box
     const boxCreateData: CreateBoxDto = {
       name: createData.name,
       description: createData.description,
       price: createData.price,
       category: createData.category,
-      imageUrl: createData.image, // преобразуем image в imageUrl
-      sportTypes: createData.sportTypes || [], // добавляем поддержку видов спорта
-      isAvailable: true
+      imageUrl: createData.image || createData.imageUrl, // поддерживаем оба поля
+      sportTypes: createData.sportTypes || [],
+      isAvailable: createData.isAvailable !== false, // по умолчанию true
+      productIds: createData.productIds || [],
+      productQuantities: createData.productQuantities || []
     };
     
     const newBox = await storage.createBox(boxCreateData);
+    
+    // Если были переданы товары, создаем связи BoxProduct
+    if (createData.productIds && createData.productIds.length > 0) {
+      for (let i = 0; i < createData.productIds.length; i++) {
+        const productId = createData.productIds[i];
+        const quantity = createData.productQuantities?.[i] || 1;
+        
+        try {
+          await storage.addProductToBox(newBox.id, productId, quantity);
+        } catch (productError) {
+          console.error(`Error adding product ${productId} to box ${newBox.id}:`, productError);
+          // Продолжаем создание других связей даже если одна не удалась
+        }
+      }
+    }
+    
     res.status(201).json(newBox);
   } catch (error) {
     console.error("Error creating box:", error);
@@ -793,6 +821,45 @@ router.get("/api/admin/products", verifyAdminToken, async (req, res) => {
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+router.get("/api/admin/box-products/stats", verifyAdminToken, async (req, res) => {
+  try {
+    // Get all boxes with their products
+    const boxes = await storage.getAllBoxes();
+    let totalProductsInBoxes = 0;
+    
+    for (const box of boxes) {
+      const boxProducts = await storage.getBoxProducts(box.id);
+      totalProductsInBoxes += boxProducts.reduce((sum, bp) => sum + bp.quantity, 0);
+    }
+    
+    res.json({
+      totalBoxes: boxes.length,
+      totalProductsInBoxes,
+      averageProductsPerBox: boxes.length > 0 ? Math.round(totalProductsInBoxes / boxes.length * 100) / 100 : 0
+    });
+  } catch (error) {
+    console.error("Error fetching box products stats:", error);
+    res.status(500).json({ error: "Failed to fetch box products stats" });
+  }
+});
+
+router.post("/api/admin/products", verifyAdminToken, async (req, res) => {
+  try {
+    const productData: CreateProductDto = req.body;
+    
+    // Validate required fields
+    if (!productData.name || !productData.price) {
+      return res.status(400).json({ error: "Name and price are required" });
+    }
+
+    const product = await storage.createProduct(productData);
+    res.status(201).json(product);
+  } catch (error) {
+    console.error("Error creating product:", error);
+    res.status(500).json({ error: "Failed to create product" });
   }
 });
 

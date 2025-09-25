@@ -13,6 +13,7 @@ import OrderDetails from "./order-details";
 import EditProduct from "./edit-product";
 import UserProfile from "./user-profile";
 import PromoCodes from "./promo-codes";
+import CreateBoxForm from "./create-box-form";
 
 interface Order {
   id: string;
@@ -68,7 +69,7 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Box | null | undefined>(undefined);
+  const [editingProduct, setEditingProduct] = useState<Box | null | undefined | 'create_box'>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showPromoCodes, setShowPromoCodes] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -147,6 +148,11 @@ export default function AdminDashboard() {
     retry: false,
   });
 
+  const { data: boxProductsStats, isLoading: statsLoading } = useQuery({
+    queryKey: ["/api/admin/box-products/stats"],
+    retry: false,
+  });
+
   const handleLogout = () => {
     localStorage.removeItem("adminToken");
     toast({
@@ -213,6 +219,11 @@ export default function AdminDashboard() {
     return <OrderDetails order={selectedOrder} onBack={() => setSelectedOrder(null)} />;
   }
 
+  // Show box creation form
+  if (editingProduct === 'create_box') {
+    return <CreateBoxForm onBack={() => setEditingProduct(undefined)} />;
+  }
+
   // Show product edit modal
   if (editingProduct !== undefined) {
     return <EditProduct product={editingProduct} onBack={() => setEditingProduct(undefined)} />;
@@ -232,7 +243,9 @@ export default function AdminDashboard() {
     totalOrders: orders?.length || 0,
     totalUsers: users?.length || 0,
     totalRevenue: orders?.reduce((sum, order) => sum + order.totalPrice, 0) || 0,
-    activeBoxes: boxes?.length || 0
+    activeBoxes: boxes?.length || 0,
+    totalProducts: products?.length || 0,
+    totalProductsInBoxes: boxProductsStats?.totalProductsInBoxes || 0
   };
 
   return (
@@ -296,6 +309,29 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.activeBoxes}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Всего товаров</CardTitle>
+                <Gift className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalProducts}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Товары в боксах</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalProductsInBoxes}</div>
+                <p className="text-xs text-muted-foreground">
+                  Общее количество товаров во всех боксах
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -459,7 +495,12 @@ export default function AdminDashboard() {
                         {isImporting ? "Импорт..." : "Импорт с сайта"}
                       </Button>
                       <Button onClick={() => setEditingProduct(null)}>
-                        Добавить товар
+                        <Package className="h-4 w-4 mr-1" />
+                        Создать товар
+                      </Button>
+                      <Button onClick={() => setEditingProduct('create_box')} variant="default">
+                        <Gift className="h-4 w-4 mr-1" />
+                        Создать бокс
                       </Button>
                     </div>
                   </div>
