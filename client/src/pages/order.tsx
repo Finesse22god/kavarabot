@@ -130,11 +130,13 @@ export default function Order() {
   const calculateTotalPrice = () => {
     if (!selectedBox) return 0;
     
-    let total = selectedBox.price + calculateDeliveryPrice() + calculatePaymentFee();
+    const price = typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price;
+    let total = price + calculateDeliveryPrice() + calculatePaymentFee();
     
     // Apply promo code discount
     if (appliedPromoCode) {
-      total = total - appliedPromoCode.discountAmount;
+      const discount = typeof appliedPromoCode.discountAmount === 'string' ? parseFloat(appliedPromoCode.discountAmount) : appliedPromoCode.discountAmount;
+      total = total - discount;
     }
     
     // Apply loyalty points discount
@@ -145,7 +147,8 @@ export default function Order() {
 
   const getOriginalPrice = () => {
     if (!selectedBox) return 0;
-    return selectedBox.price + calculateDeliveryPrice() + calculatePaymentFee();
+    const price = typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price;
+    return price + calculateDeliveryPrice() + calculatePaymentFee();
   };
 
   const handlePromoCodeApplied = (discount: PromoCodeDiscount) => {
@@ -224,7 +227,6 @@ export default function Order() {
         
         // Создаем один заказ вместо множества
         apiRequest("POST", "/api/orders", combinedOrderData)
-          .then(res => res.json())
           .then((order) => {
             // Очищаем корзину после успешного оформления
             cartOrderData.cartItems.forEach((cartItem: any) => {

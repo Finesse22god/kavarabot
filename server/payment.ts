@@ -31,10 +31,10 @@ export async function createPaymentIntent(paymentData: PaymentData): Promise<Pay
   const paymentId = uuidv4();
   
   // For YooMoney P2P, we create a payment form URL
-  const baseUrl = 'https://b5c2b040-9060-4c94-bc16-e4271d93d2af-00-1ke7ldax14w72.picard.replit.dev';
+  const baseUrl = 'https://ffda1710-e4e3-438f-aee0-891e4f004ca7-00-2fhb8prkicvnj.kirk.replit.dev';
   
   const paymentUrl = createPaymentFormUrl({
-    receiver: process.env.YOOMONEY_WALLET || '410011234567890',
+    receiver: process.env.YOOMONEY_WALLET || '4100119160773859',
     'quickpay-form': 'shop',
     targets: paymentData.description,
     'paymentType': 'AC',
