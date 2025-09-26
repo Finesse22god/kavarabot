@@ -14,6 +14,7 @@ import EditProduct from "./edit-product";
 import UserProfile from "./user-profile";
 import PromoCodes from "./promo-codes";
 import CreateBoxForm from "./create-box-form";
+import EditBoxForm from "./edit-box-form";
 import type { Box, Product } from "@shared/schema";
 
 interface Order {
@@ -374,7 +375,7 @@ export default function AdminDashboard() {
 
   // Show box edit modal
   if (editingBox !== undefined && editingBox !== 'create_box') {
-    return <EditProduct product={editingBox as any} onBack={() => setEditingBox(undefined)} />;
+    return <EditBoxForm box={editingBox as Box} onBack={() => setEditingBox(undefined)} />;
   }
 
   // Show product edit modal

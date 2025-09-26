@@ -40,13 +40,21 @@ export default function BoxDetail() {
   });
 
   // Fetch box products (товары внутри бокса)
-  const { data: boxProducts } = useQuery({
+  const { data: boxProducts } = useQuery<any[]>({
     queryKey: [`/api/boxes/${params?.id}/products`],
     enabled: !!params?.id,
   });
 
   // Fetch existing user measurements
-  const { data: existingMeasurements } = useQuery({
+  const { data: existingMeasurements } = useQuery<{
+    height?: string;
+    weight?: string;
+    sleeveLength?: string;
+    chestSize?: string;
+    waistSize?: string;
+    hipSize?: string;
+    preferredSize?: string;
+  }>({
     queryKey: [`/api/users/measurements/${dbUser?.id}`],
     enabled: !!dbUser?.id,
     retry: 1,
@@ -219,7 +227,7 @@ export default function BoxDetail() {
         {/* Box Image and Info */}
         <div className="space-y-4">
           <img
-            src={box.imageUrl}
+            src={box.imageUrl || "/placeholder-box.jpg"}
             alt={box.name}
             className="w-full h-64 object-cover rounded-lg"
           />

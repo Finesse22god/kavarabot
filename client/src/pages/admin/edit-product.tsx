@@ -17,7 +17,6 @@ interface Product {
   price: number;
   category: string;
   image: string;
-  sportTypes?: string[];
 }
 
 interface EditProductProps {
@@ -34,21 +33,9 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     price: product?.price || 0,
     category: product?.category || "personal",
     image: product?.image || "",
-    sportTypes: product?.sportTypes || [],
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState(product?.image || "");
-  const [newSportType, setNewSportType] = useState("");
-
-  // Updated sport categories matching quiz
-  const availableSportTypes = [
-    "Единоборства 🥊",
-    "Бег/кардио",
-    "Силовые тренировки", 
-    "Йога",
-    "Командные виды спорта",
-    "Повседневная носка"
-  ];
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -56,7 +43,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
   const saveProductMutation = useMutation({
     mutationFn: async (data: any) => {
       const token = localStorage.getItem("adminToken");
-      const url = isCreateMode ? "/api/admin/boxes" : `/api/admin/boxes/${product?.id}`;
+      const url = isCreateMode ? "/api/admin/products" : `/api/admin/products/${product?.id}`;
       const method = isCreateMode ? "POST" : "PUT";
       
       return await fetch(url, {
@@ -74,7 +61,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/boxes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
       toast({
         title: "Успешно",
         description: isCreateMode ? "Товар создан" : "Товар обновлен",
@@ -228,61 +215,6 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
             </select>
           </div>
 
-          <div>
-            <Label>Виды спорта</Label>
-            <div className="space-y-3">
-              {formData.sportTypes.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.sportTypes.map((sport, index) => (
-                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                      {sport}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-4 w-4 p-0 hover:bg-transparent"
-                        onClick={() => {
-                          const updatedSportTypes = formData.sportTypes.filter((_, i) => i !== index);
-                          setFormData({ ...formData, sportTypes: updatedSportTypes });
-                        }}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </Badge>
-                  ))}
-                </div>
-              )}
-              
-              <div className="flex gap-2">
-                <select
-                  value={newSportType}
-                  onChange={(e) => setNewSportType(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="">Выберите вид спорта</option>
-                  {availableSportTypes.map((sport) => (
-                    <option key={sport} value={sport}>{sport}</option>
-                  ))}
-                </select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    if (newSportType && !formData.sportTypes.includes(newSportType)) {
-                      setFormData({ 
-                        ...formData, 
-                        sportTypes: [...formData.sportTypes, newSportType] 
-                      });
-                      setNewSportType("");
-                    }
-                  }}
-                  disabled={!newSportType || formData.sportTypes.includes(newSportType)}
-                >
-                  Добавить
-                </Button>
-              </div>
-            </div>
-          </div>
 
           <div>
             <Label htmlFor="image">Изображение</Label>
