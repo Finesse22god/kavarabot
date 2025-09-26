@@ -60,7 +60,8 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showPromoCodes, setShowPromoCodes] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedBoxes, setSelectedBoxes] = useState<string[]>([]);
   const [showMassActions, setShowMassActions] = useState(false);
 
   const handleImportCatalog = async () => {
@@ -223,8 +224,62 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBulkDeleteProducts = async () => {
+    if (selectedProducts.length === 0) {
+      toast({
+        title: "Не выбраны товары",
+        description: "Выберите товары для удаления",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!confirm(`Вы уверены, что хотите удалить ${selectedProducts.length} товаров?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      // Удаляем все выбранные товары
+      const deletePromises = selectedProducts.map(productId =>
+        fetch(`/api/admin/products/${productId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        })
+      );
+
+      const results = await Promise.all(deletePromises);
+      const failedDeletes = results.filter(result => !result.ok);
+
+      if (failedDeletes.length === 0) {
+        toast({
+          title: "Товары удалены",
+          description: `${selectedProducts.length} товаров успешно удалено`
+        });
+        setSelectedProducts([]); // Очищаем выбор
+        window.location.reload();
+      } else {
+        toast({
+          title: "Частичная ошибка",
+          description: `Удалено ${results.length - failedDeletes.length} из ${results.length} товаров`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка массового удаления:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при удалении товаров",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleBulkDeleteBoxes = async () => {
-    if (selectedItems.length === 0) {
+    if (selectedBoxes.length === 0) {
       toast({
         title: "Не выбраны боксы",
         description: "Выберите боксы для удаления",
@@ -233,7 +288,7 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (!confirm(`Вы уверены, что хотите удалить ${selectedItems.length} боксов?`)) {
+    if (!confirm(`Вы уверены, что хотите удалить ${selectedBoxes.length} боксов?`)) {
       return;
     }
 
@@ -241,7 +296,7 @@ export default function AdminDashboard() {
       const token = localStorage.getItem('adminToken');
       
       // Удаляем все выбранные боксы
-      const deletePromises = selectedItems.map(boxId =>
+      const deletePromises = selectedBoxes.map(boxId =>
         fetch(`/api/admin/boxes/${boxId}`, {
           method: 'DELETE',
           headers: {
@@ -256,9 +311,9 @@ export default function AdminDashboard() {
       if (failedDeletes.length === 0) {
         toast({
           title: "Боксы удалены",
-          description: `${selectedItems.length} боксов успешно удалено`
+          description: `${selectedBoxes.length} боксов успешно удалено`
         });
-        setSelectedItems([]); // Очищаем выбор
+        setSelectedBoxes([]); // Очищаем выбор
         window.location.reload();
       } else {
         toast({
@@ -277,17 +332,32 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleSelectItem = (itemId: string) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
-        ? prev.filter(id => id !== itemId)
-        : [...prev, itemId]
+  const handleSelectProduct = (productId: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(productId) 
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
     );
   };
 
-  const handleSelectAll = (items: any[]) => {
-    const allIds = items.map(item => item.id);
-    setSelectedItems(prev => 
+  const handleSelectBox = (boxId: string) => {
+    setSelectedBoxes(prev => 
+      prev.includes(boxId) 
+        ? prev.filter(id => id !== boxId)
+        : [...prev, boxId]
+    );
+  };
+
+  const handleSelectAllProducts = (products: any[]) => {
+    const allIds = products.map(item => item.id);
+    setSelectedProducts(prev => 
+      prev.length === allIds.length ? [] : allIds
+    );
+  };
+
+  const handleSelectAllBoxes = (boxes: any[]) => {
+    const allIds = boxes.map(item => item.id);
+    setSelectedBoxes(prev => 
       prev.length === allIds.length ? [] : allIds
     );
   };
@@ -304,7 +374,7 @@ export default function AdminDashboard() {
 
   // Show box edit modal
   if (editingBox !== undefined && editingBox !== 'create_box') {
-    return <EditProduct product={editingBox} onBack={() => setEditingBox(undefined)} />;
+    return <EditProduct product={editingBox as any} onBack={() => setEditingBox(undefined)} />;
   }
 
   // Show product edit modal
@@ -599,27 +669,22 @@ export default function AdminDashboard() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleSelectAll(products)}
+                                onClick={() => handleSelectAllProducts(products)}
                               >
-                                {selectedItems.length === products.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                                {selectedProducts.length === products.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                                 Выбрать все
                               </Button>
-                              {selectedItems.length > 0 && (
+                              {selectedProducts.length > 0 && (
                                 <Badge variant="secondary">
-                                  Выбрано: {selectedItems.length}
+                                  Выбрано: {selectedProducts.length}
                                 </Badge>
                               )}
                             </div>
-                            {selectedItems.length > 0 && (
+                            {selectedProducts.length > 0 && (
                               <Button
                                 variant="destructive"
                                 size="sm"
-                                onClick={() => {
-                                  if (confirm(`Удалить ${selectedItems.length} товаров?`)) {
-                                    // Implement mass delete
-                                    console.log('Mass delete:', selectedItems);
-                                  }
-                                }}
+                                onClick={() => handleBulkDeleteProducts()}
                               >
                                 <Trash2 className="h-4 w-4 mr-1" />
                                 Удалить выбранные
@@ -636,9 +701,9 @@ export default function AdminDashboard() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleSelectItem(product.id)}
+                                  onClick={() => handleSelectProduct(product.id)}
                                 >
-                                  {selectedItems.includes(product.id) ? 
+                                  {selectedProducts.includes(product.id) ? 
                                     <CheckSquare className="h-4 w-4" /> : 
                                     <Square className="h-4 w-4" />
                                   }
@@ -705,13 +770,13 @@ export default function AdminDashboard() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      {selectedItems.length > 0 && (
+                      {selectedBoxes.length > 0 && (
                         <Button
                           variant="destructive"
                           onClick={() => handleBulkDeleteBoxes()}
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
-                          Удалить выбранные ({selectedItems.length})
+                          Удалить выбранные ({selectedBoxes.length})
                         </Button>
                       )}
                       <Button onClick={() => setEditingBox('create_box')}>
@@ -727,37 +792,68 @@ export default function AdminDashboard() {
                   ) : (
                     <div className="space-y-4">
                       {boxes && boxes.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {boxes.map((box: Box) => (
-                            <div key={box.id} className="border rounded-lg p-4">
-                              {box.imageUrl && (
-                                <img 
-                                  src={box.imageUrl} 
-                                  alt={box.name}
-                                  className="w-full h-48 object-cover rounded mb-3"
-                                />
+                        <div>
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSelectAllBoxes(boxes)}
+                              >
+                                {selectedBoxes.length === boxes.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                                Выбрать все
+                              </Button>
+                              {selectedBoxes.length > 0 && (
+                                <Badge variant="secondary">
+                                  Выбрано: {selectedBoxes.length}
+                                </Badge>
                               )}
-                              <h3 className="font-semibold text-lg mb-2">{box.name}</h3>
-                              <p className="text-gray-600 text-sm mb-2">{box.description}</p>
-                              <p className="text-lg font-bold mb-3">{box.price}₽</p>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setEditingBox(box)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDeleteBox(box.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
                             </div>
-                          ))}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {boxes.map((box: Box) => (
+                              <div key={box.id} className="border rounded-lg p-4 relative">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleSelectBox(box.id)}
+                                  className="absolute top-2 left-2 z-10"
+                                >
+                                  {selectedBoxes.includes(box.id) ? 
+                                    <CheckSquare className="h-4 w-4" /> : 
+                                    <Square className="h-4 w-4" />
+                                  }
+                                </Button>
+                                {box.imageUrl && (
+                                  <img 
+                                    src={box.imageUrl} 
+                                    alt={box.name}
+                                    className="w-full h-48 object-cover rounded mb-3"
+                                  />
+                                )}
+                                <h3 className="font-semibold text-lg mb-2">{box.name}</h3>
+                                <p className="text-gray-600 text-sm mb-2">{box.description || ''}</p>
+                                <p className="text-lg font-bold mb-3">{box.price}₽</p>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingBox(box)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteBox(box.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ) : (
                         <div className="text-center py-8 text-gray-500">
@@ -791,14 +887,6 @@ export default function AdminDashboard() {
                         Промокоды
                       </Button>
                       
-                      <Button
-                        variant="outline"
-                        className="h-20 flex flex-col gap-2"
-                        onClick={() => setLocation("/admin/create-box")}
-                      >
-                        <Package className="h-6 w-6" />
-                        Создать бокс
-                      </Button>
                       
                       <Button
                         variant="outline"
