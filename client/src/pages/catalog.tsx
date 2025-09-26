@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { Box } from "@shared/schema";
+import type { Box, Product } from "@shared/schema";
 
 const SPORT_TYPES = [
   "Все виды спорта",
@@ -179,26 +179,10 @@ export default function Catalog() {
       
       const response = await fetch(`/api/catalog?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch catalog");
-      return response.json() as Promise<Box[]>;
+      return response.json() as Promise<Product[]>;
     },
   });
 
-  // Fetch ready boxes для отображения наверху
-  const { data: readyBoxes } = useQuery({
-    queryKey: ["/api/boxes"],
-    queryFn: async () => {
-      const response = await fetch("/api/boxes");
-      if (!response.ok) throw new Error("Failed to fetch boxes");
-      const allBoxes = await response.json() as Box[];
-      // Фильтруем только готовые боксы (category: "ready")
-      return allBoxes.filter(box => 
-        box.contents && 
-        Array.isArray(box.contents) && 
-        box.contents.length > 0 &&
-        box.category === "ready"
-      );
-    },
-  });
 
   const addToCartMutation = useMutation({
     mutationFn: async ({ itemId, selectedSize, itemType }: { itemId: string; selectedSize: string; itemType: string }) => {
@@ -294,7 +278,7 @@ export default function Catalog() {
   }) || [];
 
   // Show loading while data is being fetched
-  if (!catalogItems || !readyBoxes || (telegramUser?.id && !dbUser)) {
+  if (!catalogItems || (telegramUser?.id && !dbUser)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -337,44 +321,6 @@ export default function Catalog() {
         </div>
       </div>
 
-      {/* Ready Boxes Carousel */}
-      <div className="p-6 bg-white border-b border-gray-200">
-        <h3 className="text-xl font-bold text-black mb-4 tracking-wide">ГОТОВЫЕ БОКСЫ</h3>
-        <div className="flex gap-4 overflow-x-auto pb-2">
-          {readyBoxes?.length === 0 ? (
-            <p className="text-gray-500 text-sm">Готовые боксы не найдены</p>
-          ) : (
-            readyBoxes?.map((box) => (
-              <div 
-                key={box.id} 
-                className="flex-shrink-0 w-48 bg-gray-50 rounded-2xl p-4 border border-gray-200 cursor-pointer"
-                onClick={() => setLocation(`/box/${box.id}`)}
-              >
-                <img
-                  src={box.imageUrl || ''}
-                  alt={box.name}
-                  className="w-full h-32 object-cover rounded-xl mb-3"
-                />
-                <h4 className="font-bold text-sm mb-2 truncate text-black">{box.name}</h4>
-                <p className="text-xs text-gray-600 mb-3 line-clamp-2">{box.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-black">{(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽</span>
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLocation(`/box/${box.id}`);
-                    }}
-                    className="bg-black text-white hover:bg-gray-800 text-xs px-3 py-1 rounded-xl"
-                  >
-                    Выбрать
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
       {/* Catalog Products Header */}
       <div className="p-6 pb-4">

@@ -110,8 +110,25 @@ export const orders = pgTable("orders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Products table
+export const products = pgTable("products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  price: integer("price").notNull(),
+  imageUrl: text("image_url"),
+  category: varchar("category", { length: 50 }),
+  brand: varchar("brand", { length: 100 }),
+  color: varchar("color", { length: 50 }),
+  sizes: json("sizes").$type<string[]>(),
+  isAvailable: boolean("is_available").default(true),
+  sportTypes: json("sport_types").$type<string[]>(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Additional types
 export type Box = typeof boxes.$inferSelect;
+export type Product = typeof products.$inferSelect;
 export type InsertBox = typeof boxes.$inferInsert;
 export type QuizResponse = typeof quizResponses.$inferSelect;
 export type InsertQuizResponse = typeof quizResponses.$inferInsert;
