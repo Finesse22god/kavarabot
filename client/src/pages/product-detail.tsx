@@ -82,17 +82,18 @@ export default function ProductDetail() {
 
   // Load existing measurements when they're fetched
   useEffect(() => {
-    if (existingMeasurements) {
+    if (existingMeasurements && typeof existingMeasurements === 'object') {
+      const measurements_data = existingMeasurements as any;
       setMeasurements({
-        height: existingMeasurements.height || "",
-        weight: existingMeasurements.weight || "",
-        sleeveLength: existingMeasurements.sleeveLength || "",
-        chestSize: existingMeasurements.chestSize || "",
-        waistSize: existingMeasurements.waistSize || "",
-        hipSize: existingMeasurements.hipSize || ""
+        height: measurements_data.height || "",
+        weight: measurements_data.weight || "",
+        sleeveLength: measurements_data.sleeveLength || "",
+        chestSize: measurements_data.chestSize || "",
+        waistSize: measurements_data.waistSize || "",
+        hipSize: measurements_data.hipSize || ""
       });
-      if (existingMeasurements.preferredSize) {
-        setSelectedSize(existingMeasurements.preferredSize);
+      if (measurements_data.preferredSize) {
+        setSelectedSize(measurements_data.preferredSize);
       }
     }
   }, [existingMeasurements]);
