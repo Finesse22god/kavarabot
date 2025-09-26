@@ -14,6 +14,7 @@ import EditProduct from "./edit-product";
 import UserProfile from "./user-profile";
 import PromoCodes from "./promo-codes";
 import CreateBoxForm from "./create-box-form";
+import type { Box, Product } from "@shared/schema";
 
 interface Order {
   id: string;
@@ -45,31 +46,17 @@ interface User {
   createdAt: string;
 }
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  category: string;
-  createdAt: string;
-}
 
-interface Box {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image: string;
-  imageUrl?: string;
+interface BoxProductsStats {
+  totalProductsInBoxes: number;
 }
 
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [editingProduct, setEditingProduct] = useState<Box | null | undefined | 'create_box'>(undefined);
+  const [editingProduct, setEditingProduct] = useState<Product | null | undefined>(undefined);
+  const [editingBox, setEditingBox] = useState<Box | null | undefined | 'create_box'>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showPromoCodes, setShowPromoCodes] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -148,7 +135,7 @@ export default function AdminDashboard() {
     retry: false,
   });
 
-  const { data: boxProductsStats, isLoading: statsLoading } = useQuery({
+  const { data: boxProductsStats, isLoading: statsLoading } = useQuery<BoxProductsStats>({
     queryKey: ["/api/admin/box-products/stats"],
     retry: false,
   });
@@ -160,6 +147,43 @@ export default function AdminDashboard() {
       description: "Вы вышли из админ панели"
     });
     setLocation("/admin/login");
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('Вы уверены, что хотите удалить этот товар?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Товар удален",
+          description: "Товар успешно удален из системы"
+        });
+        window.location.reload();
+      } else {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось удалить товар",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка удаления:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при удалении товара",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteBox = async (boxId: string) => {
@@ -220,8 +244,13 @@ export default function AdminDashboard() {
   }
 
   // Show box creation form
-  if (editingProduct === 'create_box') {
-    return <CreateBoxForm onBack={() => setEditingProduct(undefined)} />;
+  if (editingBox === 'create_box') {
+    return <CreateBoxForm onBack={() => setEditingBox(undefined)} />;
+  }
+
+  // Show box edit modal
+  if (editingBox !== undefined && editingBox !== 'create_box') {
+    return <EditProduct product={editingBox} onBack={() => setEditingBox(undefined)} />;
   }
 
   // Show product edit modal
@@ -338,10 +367,11 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="orders">Заказы</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
-              <TabsTrigger value="products">Каталог</TabsTrigger>
+              <TabsTrigger value="products">Товары</TabsTrigger>
+              <TabsTrigger value="boxes">Боксы</TabsTrigger>
               <TabsTrigger value="management">Управление</TabsTrigger>
             </TabsList>
 
@@ -475,15 +505,15 @@ export default function AdminDashboard() {
               </Card>
             </TabsContent>
 
-            {/* Products/Catalog Tab */}
+            {/* Products Tab */}
             <TabsContent value="products">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>Каталог товаров</CardTitle>
+                      <CardTitle>Товары каталога</CardTitle>
                       <CardDescription>
-                        Управление товарами и боксами
+                        Управление товарами в каталоге
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -498,30 +528,26 @@ export default function AdminDashboard() {
                         <Package className="h-4 w-4 mr-1" />
                         Создать товар
                       </Button>
-                      <Button onClick={() => setEditingProduct('create_box')} variant="default">
-                        <Gift className="h-4 w-4 mr-1" />
-                        Создать бокс
-                      </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {boxesLoading ? (
+                  {productsLoading ? (
                     <div className="flex justify-center py-8">
                       <div className="text-gray-500">Загрузка товаров...</div>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {boxes && boxes.length > 0 ? (
+                      {products && products.length > 0 ? (
                         <div>
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleSelectAll(boxes)}
+                                onClick={() => handleSelectAll(products)}
                               >
-                                {selectedItems.length === boxes.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                                {selectedItems.length === products.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                                 Выбрать все
                               </Button>
                               {selectedItems.length > 0 && (
@@ -547,54 +573,54 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           
-                          {boxes.map((box) => (
+                          {products.map((product) => (
                             <div
-                              key={box.id}
+                              key={product.id}
                               className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                             >
                               <div className="flex items-center gap-3">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleSelectItem(box.id)}
+                                  onClick={() => handleSelectItem(product.id)}
                                 >
-                                  {selectedItems.includes(box.id) ? 
+                                  {selectedItems.includes(product.id) ? 
                                     <CheckSquare className="h-4 w-4" /> : 
                                     <Square className="h-4 w-4" />
                                   }
                                 </Button>
                                 <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
                                   <img
-                                    src={box.imageUrl || box.image}
-                                    alt={box.name}
+                                    src={product.imageUrl}
+                                    alt={product.name}
                                     className="w-full h-full object-cover"
                                   />
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-medium">{box.name}</p>
+                                  <p className="font-medium">{product.name}</p>
                                   <p className="text-sm text-gray-600 line-clamp-2">
-                                    {box.description}
+                                    {product.description}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline">{box.category}</Badge>
+                                    <Badge variant="outline">{product.category}</Badge>
                                   </div>
                                 </div>
                               </div>
                               <div className="text-right flex items-center gap-2">
                                 <div>
-                                  <p className="font-medium">{(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString('ru-RU')}₽</p>
+                                  <p className="font-medium">{(typeof product.price === 'string' ? parseFloat(product.price) : product.price).toLocaleString('ru-RU')}₽</p>
                                 </div>
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => setEditingProduct(box)}
+                                  onClick={() => setEditingProduct(product)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={() => handleDeleteBox(box.id)}
+                                  onClick={() => handleDeleteProduct(product.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -605,6 +631,74 @@ export default function AdminDashboard() {
                       ) : (
                         <div className="text-center py-8 text-gray-500">
                           Товаров пока нет
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Boxes Tab */}
+            <TabsContent value="boxes">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Готовые боксы</CardTitle>
+                      <CardDescription>
+                        Управление готовыми боксами для клиентов
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={() => setEditingBox('create_box')}>
+                        <Package className="h-4 w-4 mr-1" />
+                        Создать бокс
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {boxesLoading ? (
+                    <div className="text-center py-8">Загрузка боксов...</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {boxes && boxes.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {boxes.map((box: Box) => (
+                            <div key={box.id} className="border rounded-lg p-4">
+                              {box.imageUrl && (
+                                <img 
+                                  src={box.imageUrl} 
+                                  alt={box.name}
+                                  className="w-full h-48 object-cover rounded mb-3"
+                                />
+                              )}
+                              <h3 className="font-semibold text-lg mb-2">{box.name}</h3>
+                              <p className="text-gray-600 text-sm mb-2">{box.description}</p>
+                              <p className="text-lg font-bold mb-3">{box.price}₽</p>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setEditingBox(box)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteBox(box.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          Боксов пока нет
                         </div>
                       )}
                     </div>
