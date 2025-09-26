@@ -223,6 +223,60 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBulkDeleteBoxes = async () => {
+    if (selectedItems.length === 0) {
+      toast({
+        title: "Не выбраны боксы",
+        description: "Выберите боксы для удаления",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!confirm(`Вы уверены, что хотите удалить ${selectedItems.length} боксов?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      // Удаляем все выбранные боксы
+      const deletePromises = selectedItems.map(boxId =>
+        fetch(`/api/admin/boxes/${boxId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        })
+      );
+
+      const results = await Promise.all(deletePromises);
+      const failedDeletes = results.filter(result => !result.ok);
+
+      if (failedDeletes.length === 0) {
+        toast({
+          title: "Боксы удалены",
+          description: `${selectedItems.length} боксов успешно удалено`
+        });
+        setSelectedItems([]); // Очищаем выбор
+        window.location.reload();
+      } else {
+        toast({
+          title: "Частичная ошибка",
+          description: `Удалено ${results.length - failedDeletes.length} из ${results.length} боксов`,
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Ошибка массового удаления:', error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при удалении боксов",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSelectItem = (itemId: string) => {
     setSelectedItems(prev => 
       prev.includes(itemId) 
@@ -651,6 +705,15 @@ export default function AdminDashboard() {
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
+                      {selectedItems.length > 0 && (
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleBulkDeleteBoxes()}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Удалить выбранные ({selectedItems.length})
+                        </Button>
+                      )}
                       <Button onClick={() => setEditingBox('create_box')}>
                         <Package className="h-4 w-4 mr-1" />
                         Создать бокс

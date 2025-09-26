@@ -1284,17 +1284,16 @@ router.post("/api/admin/import-catalog", verifyAdminToken, async (req, res) => {
     
     for (const product of products) {
       try {
-        const box = await storage.createBox({
+        const newProduct = await storage.createProduct({
           name: product.name,
           description: product.description,
           price: product.price,
           imageUrl: product.imageUrl,
           category: product.category,
           sportTypes: product.sportTypes,
-          isAvailable: true,
-          emoji: "📦"
+          isAvailable: true
         });
-        importedProducts.push(box);
+        importedProducts.push(newProduct);
       } catch (error) {
         console.error(`Ошибка при создании товара ${product.name}:`, error);
       }

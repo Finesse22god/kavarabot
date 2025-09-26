@@ -340,7 +340,7 @@ export default function Catalog() {
             {boxes.map((box) => (
               <div
                 key={box.id}
-                className="flex-shrink-0 w-64 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer"
+                className="flex-shrink-0 w-64 h-96 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer flex flex-col"
                 onClick={() => handleAddToCart(box)}
                 data-testid={`box-card-${box.id}`}
               >
@@ -354,11 +354,11 @@ export default function Catalog() {
                     {(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽
                   </div>
                 </div>
-                <div className="p-4">
-                  <h4 className="font-bold text-lg mb-2">{box.name}</h4>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{box.description}</p>
+                <div className="p-4 flex flex-col flex-1">
+                  <h4 className="font-bold text-lg mb-2 line-clamp-1">{box.name}</h4>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">{box.description}</p>
                   <Button 
-                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-semibold"
+                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-semibold mt-auto"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleAddToCart(box);
