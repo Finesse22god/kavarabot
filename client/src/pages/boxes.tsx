@@ -70,7 +70,7 @@ export default function Boxes() {
       </div>
 
       {/* Bottom Action Buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 space-y-3">
+      <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-200 p-4 space-y-3">
         <Button
           onClick={() => setLocation("/quiz")}
           className="w-full bg-black text-white py-4 text-lg font-semibold hover:bg-gray-900"
