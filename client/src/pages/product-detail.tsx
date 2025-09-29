@@ -242,14 +242,14 @@ export default function ProductDetail() {
         {/* Size Selection */}
         {product.sizes && product.sizes.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center space-x-2">
-                <Ruler className="w-5 h-5" />
-                <span>Выбор размера</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center space-x-2">
+                  <Ruler className="w-5 h-5" />
+                  <span>Выбор размера</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
                 <Label htmlFor="size-select" className="text-sm font-medium">
                   Доступные размеры
                 </Label>
