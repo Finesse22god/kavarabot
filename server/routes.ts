@@ -730,8 +730,16 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
   try {
     const createData = req.body;
     
+    // Детальное логирование для отладки
+    console.log("🔍 DEBUG: Создание бокса - начало обработки");
+    console.log("Полученные данные:", JSON.stringify(createData, null, 2));
+    console.log("Authorization присутствует:", req.headers.authorization ? "ДА" : "НЕТ");
+    
     // Validate required fields
     if (!createData.name || !createData.price) {
+      console.log("❌ Ошибка валидации: отсутствуют name или price");
+      console.log("name:", createData.name);
+      console.log("price:", createData.price);
       return res.status(400).json({ error: "Name and price are required" });
     }
 
@@ -753,23 +761,28 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
       productQuantities: createData.productQuantities || []
     };
     
+    console.log("📦 Создаем бокс с данными:", JSON.stringify(boxCreateData, null, 2));
     const newBox = await storage.createBox(boxCreateData);
+    console.log("✅ Бокс создан успешно:", newBox.id);
     
     // Если были переданы товары, создаем связи BoxProduct
     if (createData.productIds && createData.productIds.length > 0) {
+      console.log("🔗 Добавляем товары в бокс:", createData.productIds);
       for (let i = 0; i < createData.productIds.length; i++) {
         const productId = createData.productIds[i];
         const quantity = createData.productQuantities?.[i] || 1;
         
         try {
           await storage.addProductToBox(newBox.id, productId, quantity);
+          console.log(`✅ Товар ${productId} добавлен в бокс`);
         } catch (productError) {
-          console.error(`Error adding product ${productId} to box ${newBox.id}:`, productError);
+          console.error(`❌ Ошибка добавления товара ${productId} в бокс ${newBox.id}:`, productError);
           // Продолжаем создание других связей даже если одна не удалась
         }
       }
     }
     
+    console.log("🎉 Бокс полностью создан и настроен");
     res.status(201).json(newBox);
   } catch (error) {
     console.error("Error creating box:", error);

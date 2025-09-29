@@ -47,24 +47,45 @@ export default function AdminCreateBox() {
 
   const createBoxMutation = useMutation({
     mutationFn: async (boxCreateData: any) => {
+      console.log("🚀 Начинаем создание бокса...");
+      console.log("📦 Данные для создания:", boxCreateData);
+      
       const token = localStorage.getItem("adminToken");
-      if (!token) throw new Error("Admin token not found");
-
-      const response = await fetch("/api/admin/boxes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify(boxCreateData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create box");
+      console.log("🔑 Токен для авторизации:", token ? "НАЙДЕН" : "НЕ НАЙДЕН");
+      
+      if (!token) {
+        console.error("❌ Токен не найден в localStorage!");
+        throw new Error("Admin token not found");
       }
 
-      return response.json();
+      console.log("📡 Отправляем запрос на /api/admin/boxes...");
+      
+      try {
+        const response = await fetch("/api/admin/boxes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: JSON.stringify(boxCreateData),
+        });
+
+        console.log("📡 Получен ответ:", response.status, response.statusText);
+        
+        if (!response.ok) {
+          console.error("❌ Запрос неуспешен:", response.status);
+          const error = await response.json();
+          console.error("❌ Детали ошибки:", error);
+          throw new Error(error.error || "Failed to create box");
+        }
+
+        const result = await response.json();
+        console.log("✅ Бокс успешно создан:", result);
+        return result;
+      } catch (fetchError) {
+        console.error("❌ Ошибка при выполнении fetch:", fetchError);
+        throw fetchError;
+      }
     },
     onSuccess: () => {
       toast({

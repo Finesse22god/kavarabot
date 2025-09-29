@@ -296,18 +296,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBox(boxData: CreateBoxDto): Promise<Box> {
-    const box = this.boxRepository.create({
-      name: boxData.name,
-      description: boxData.description,
-      price: boxData.price,
-      imageUrl: boxData.imageUrl,
-      contents: boxData.contents,
-      category: boxData.category,
-      emoji: boxData.emoji,
-      isAvailable: boxData.isAvailable ?? true,
-      sportTypes: boxData.sportTypes || [],
-    });
-    return await this.boxRepository.save(box);
+    console.log("💾 Storage.createBox - получены данные:", JSON.stringify(boxData, null, 2));
+    
+    try {
+      const box = this.boxRepository.create({
+        name: boxData.name,
+        description: boxData.description,
+        price: boxData.price,
+        imageUrl: boxData.imageUrl,
+        contents: boxData.contents,
+        category: boxData.category,
+        emoji: boxData.emoji,
+        isAvailable: boxData.isAvailable ?? true,
+        sportTypes: boxData.sportTypes || [],
+      });
+      
+      console.log("💾 Объект бокса создан:", JSON.stringify(box, null, 2));
+      
+      const savedBox = await this.boxRepository.save(box);
+      console.log("💾 Бокс сохранен в БД:", savedBox.id);
+      
+      return savedBox;
+    } catch (error) {
+      console.error("💾 Ошибка в Storage.createBox:", error);
+      throw error;
+    }
   }
 
   async updateBox(id: string, data: Partial<CreateBoxDto>): Promise<Box | null> {
