@@ -31,16 +31,10 @@ const faqData = [
 ];
 
 export default function Support() {
-  const [contactForm, setContactForm] = useState({
-    message: ""
-  });
-
   const [feedbackForm, setFeedbackForm] = useState({
     type: "",
     message: ""
   });
-
-  // Remove handleContactSubmit as it's now inline
 
   const handleFeedbackSubmit = () => {
     if (!feedbackForm.message.trim()) {
@@ -66,9 +60,12 @@ export default function Support() {
       alert('Отзыв отправлен! Спасибо за обратную связь.');
       setFeedbackForm({ type: "", message: "" });
     }).catch(() => {
-      // Fallback to Telegram
-      const message = `Тип: ${feedbackForm.type}\n\nСообщение: ${feedbackForm.message}`;
-      window.open(`https://t.me/finessgod?text=${encodeURIComponent(message)}`, '_blank');
+      // Fallback to Telegram manager
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+      } else {
+        window.open("https://t.me/kavarateam", "_blank");
+      }
     });
   };
 
@@ -125,70 +122,51 @@ export default function Support() {
                 </div>
                 
                 <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="message">Ваше сообщение</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="Опишите ваш вопрос..."
-                      value={contactForm.message}
-                      onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
-                      rows={6}
-                    />
-                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Наш менеджер поможет вам с любыми вопросами по заказам, размерам, доставке и возврату.
+                  </p>
                   
                   <Button 
                     className="w-full bg-primary text-white"
                     onClick={() => {
-                      if (!contactForm.message.trim()) {
-                        alert('Пожалуйста, введите ваше сообщение');
-                        return;
+                      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                      } else {
+                        window.open("https://t.me/kavarateam", "_blank");
                       }
-                      
-                      const telegramUrl = `https://t.me/finessgod?text=${encodeURIComponent(contactForm.message)}`;
-                      window.open(telegramUrl, '_blank');
-                      
-                      // Clear the form
-                      setContactForm(prev => ({ ...prev, message: "" }));
                     }}
                   >
-                    Отправить сообщение
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Связаться с менеджером
                   </Button>
                 </div>
               </div>
               
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h4 className="font-semibold mb-3">Другие способы связи</h4>
+                <h4 className="font-semibold mb-3">Telegram канал KAVARA</h4>
                 <div className="space-y-3">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <MessageCircle className="w-6 h-6 text-blue-600" />
                         <div>
-                          <p className="font-semibold text-blue-900">Написать менеджеру</p>
-                          <p className="text-sm text-blue-700">Быстрая связь через Telegram</p>
+                          <p className="font-semibold text-blue-900">Подписаться на канал</p>
+                          <p className="text-sm text-blue-700">Новинки, акции и эксклюзивный контент</p>
                         </div>
                       </div>
                       <Button 
                         onClick={() => {
                           if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-                            window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                            window.Telegram.WebApp.openTelegramLink("https://t.me/kavarasportswear");
                           } else {
-                            window.open("https://t.me/kavarateam", "_blank");
+                            window.open("https://t.me/kavarasportswear", "_blank");
                           }
                         }}
                         size="sm"
                         className="bg-blue-600 hover:bg-blue-700 text-white"
                       >
-                        Написать
+                        Подписаться
                       </Button>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <Phone className="w-5 h-5 text-gray-500" />
-                    <div>
-                      <p className="font-medium">Экстренная связь</p>
-                      <p className="text-sm text-gray-600">+7 925 131-51-01</p>
-                      <p className="text-xs text-gray-500">Только при технических проблемах</p>
                     </div>
                   </div>
                 </div>
@@ -235,9 +213,16 @@ export default function Support() {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => window.open('https://t.me/finessgod', '_blank')}
+                    onClick={() => {
+                      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                      } else {
+                        window.open("https://t.me/kavarateam", "_blank");
+                      }
+                    }}
                   >
-                    Оформить возврат
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Связаться с менеджером
                   </Button>
                 </div>
               </div>
@@ -301,9 +286,16 @@ export default function Support() {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => window.open('https://t.me/finessgod', '_blank')}
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+                      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                    } else {
+                      window.open("https://t.me/kavarateam", "_blank");
+                    }
+                  }}
                 >
-                  Оставить отзыв
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Связаться с менеджером
                 </Button>
               </div>
             </div>

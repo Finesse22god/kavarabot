@@ -44,14 +44,12 @@ export default function Checkout() {
 
     setIsCreatingPayment(true);
     try {
-      const response = await apiRequest("POST", "/api/create-payment-intent", {
+      const intent = await apiRequest("POST", "/api/create-payment-intent", {
         amount: order.totalPrice,
         description: `Оплата заказа ${order.orderNumber} - ${box.name}`,
         orderId: order.orderNumber,
         returnUrl: `${window.location.origin}/payment/success`
       });
-
-      const intent = await response.json();
       setPaymentIntent(intent);
 
       // Store payment ID in the order
@@ -86,8 +84,7 @@ export default function Checkout() {
 
     try {
       // Check order status directly by order number
-      const response = await apiRequest("GET", `/api/orders/number/${order.orderNumber}`);
-      const orderData = await response.json();
+      const orderData = await apiRequest("GET", `/api/orders/number/${order.orderNumber}`);
 
       if (orderData.status === 'paid') {
         toast({
@@ -160,7 +157,7 @@ export default function Checkout() {
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
               <img 
-                src={box.imageUrl} 
+                src={box.imageUrl || "/placeholder-box.jpg"} 
                 alt={box.name}
                 className="w-16 h-16 rounded-lg object-cover"
               />

@@ -99,7 +99,7 @@ export default function PaymentSuccess() {
               <div className="bg-white rounded-lg p-4 text-left">
                 <div className="flex items-center space-x-4">
                   <img 
-                    src={box.imageUrl} 
+                    src={box.imageUrl || "/placeholder-box.jpg"} 
                     alt={box.name}
                     className="w-16 h-16 rounded-lg object-cover"
                   />

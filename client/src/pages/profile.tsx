@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { User, Edit, Settings, Heart, Bell, Gift, Copy, Star, Trophy, Clock, Phone, MessageCircle, RotateCcw, FileText, HelpCircle, Users, Package, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,8 @@ export default function Profile() {
   const tabFromUrl = urlParams.get('tab') || 'personal';
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: user?.first_name || "",
-    lastName: user?.last_name || ""
+    firstName: "",
+    lastName: ""
   });
   const [notifications, setNotifications] = useState({
     orders: true,
@@ -53,15 +53,30 @@ export default function Profile() {
     enabled: !!user?.id,
   });
 
+  // Update formData when userData changes
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        firstName: userData.firstName || user?.first_name || "",
+        lastName: userData.lastName || user?.last_name || ""
+      });
+    } else if (user) {
+      setFormData({
+        firstName: user.first_name || "",
+        lastName: user.last_name || ""
+      });
+    }
+  }, [userData, user]);
+
   const { data: quizResponse } = useQuery<QuizResponse>({
     queryKey: ["/api/quiz-responses/user", userData?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/quiz-responses/user/${userData?.id}`);
-      if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error("Failed to fetch quiz response");
+      try {
+        return await apiRequest("GET", `/api/quiz-responses/user/${userData?.id}`);
+      } catch (error: any) {
+        if (error.message?.includes('404')) return null;
+        throw error;
       }
-      return response.json();
     },
     enabled: !!userData?.id,
   });
@@ -127,9 +142,12 @@ export default function Profile() {
       alert('Отзыв отправлен! Спасибо за обратную связь.');
       setFeedbackForm({ type: "", message: "" });
     }).catch(() => {
-      // Fallback to Telegram
-      const message = `Тип: ${feedbackForm.type}\n\nСообщение: ${feedbackForm.message}`;
-      window.open(`https://t.me/finessgod?text=${encodeURIComponent(message)}`, '_blank');
+      // Fallback to Telegram manager
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+      } else {
+        window.open("https://t.me/kavarateam", "_blank");
+      }
     });
   };
 
@@ -150,25 +168,16 @@ export default function Profile() {
 
   const handleSaveProfile = async () => {
     try {
-      const response = await fetch(`/api/users/${userData?.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      const updatedUser = await response.json();
+      const updatedUser = await apiRequest("PUT", `/api/users/${userData?.id}`, formData);
       
-      // Update local state
+      // Update local state  
       setFormData({
         firstName: updatedUser.firstName || "",
         lastName: updatedUser.lastName || ""
       });
+      
+      // Invalidate userData query to refresh
+      queryClient.invalidateQueries({ queryKey: [`/api/users/telegram/${user?.id?.toString()}`] });
       
       toast({
         title: "Успех",
@@ -719,61 +728,51 @@ export default function Profile() {
                 </div>
                 
                 <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="message">Ваше сообщение</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="Опишите ваш вопрос..."
-                      value={contactForm.message}
-                      onChange={(e) => setContactForm(prev => ({ ...prev, message: e.target.value }))}
-                      rows={6}
-                    />
-                  </div>
+                  <p className="text-gray-600 text-sm">
+                    Наш менеджер поможет вам с любыми вопросами по заказам, размерам, доставке и возврату.
+                  </p>
                   
                   <Button 
                     className="w-full bg-primary text-white"
                     onClick={() => {
-                      if (!contactForm.message.trim()) {
-                        alert('Пожалуйста, введите ваше сообщение');
-                        return;
+                      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                      } else {
+                        window.open("https://t.me/kavarateam", "_blank");
                       }
-                      
-                      const telegramUrl = `https://t.me/finessgod?text=${encodeURIComponent(contactForm.message)}`;
-                      window.open(telegramUrl, '_blank');
-                      
-                      // Clear the form
-                      setContactForm(prev => ({ ...prev, message: "" }));
                     }}
                   >
-                    Отправить сообщение
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Связаться с менеджером
                   </Button>
                 </div>
               </div>
               
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h4 className="font-semibold mb-3">Другие способы связи</h4>
+                <h4 className="font-semibold mb-3">Telegram канал KAVARA</h4>
                 <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <Phone className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="font-medium">По вопросам заказа и возврата</p>
-                      <p className="text-sm text-gray-600">+7 925 131-51-01</p>
-                      <p className="text-sm text-gray-600">sales@kavarabrand.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <MessageCircle className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="font-medium">По вопросам сотрудничества</p>
-                      <p className="text-sm text-gray-600">+7 916 091-56-54</p>
-                      <p className="text-sm text-gray-600">info@kavarabrand.com</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <MessageCircle className="w-5 h-5 text-primary" />
-                    <div>
-                      <p className="font-medium">Telegram канал</p>
-                      <p className="text-sm text-gray-600">@kavarabrand</p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <MessageCircle className="w-6 h-6 text-blue-600" />
+                        <div>
+                          <p className="font-semibold text-blue-900">Подписаться на канал</p>
+                          <p className="text-sm text-blue-700">Новинки, акции и эксклюзивный контент</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => {
+                          if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+                            window.Telegram.WebApp.openTelegramLink("https://t.me/kavarasportswear");
+                          } else {
+                            window.open("https://t.me/kavarasportswear", "_blank");
+                          }
+                        }}
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Подписаться
+                      </Button>
                     </div>
                   </div>
                 </div>

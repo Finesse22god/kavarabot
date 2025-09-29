@@ -9,9 +9,7 @@ export function useIsFavorite(userId: string | undefined, boxId: string) {
     queryFn: async () => {
       if (!userId) return { isFavorite: false };
       
-      const response = await fetch(`/api/favorites/check?userId=${userId}&boxId=${boxId}`);
-      if (!response.ok) throw new Error("Failed to check favorite status");
-      return response.json();
+      return await apiRequest("GET", `/api/favorites/check?userId=${userId}&boxId=${boxId}`);
     },
     enabled: !!userId && !!boxId,
   });
@@ -24,9 +22,7 @@ export function useUserFavorites(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return [];
       
-      const response = await fetch(`/api/users/${userId}/favorites`);
-      if (!response.ok) throw new Error("Failed to fetch favorites");
-      return await response.json();
+      return await apiRequest("GET", `/api/users/${userId}/favorites`);
     },
     enabled: !!userId,
   });
@@ -40,13 +36,7 @@ export function useFavoriteMutations(userId: string | undefined) {
     mutationFn: async (boxId: string) => {
       if (!userId) throw new Error("User ID is required");
       
-      const response = await fetch("/api/favorites", {
-        method: "POST",
-        body: JSON.stringify({ userId, boxId }),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Failed to add favorite");
-      return await response.json();
+      return await apiRequest("POST", "/api/favorites", { userId, boxId });
     },
     onSuccess: (_, boxId) => {
       // Invalidate relevant queries
@@ -59,13 +49,7 @@ export function useFavoriteMutations(userId: string | undefined) {
     mutationFn: async (boxId: string) => {
       if (!userId) throw new Error("User ID is required");
       
-      const response = await fetch("/api/favorites", {
-        method: "DELETE",
-        body: JSON.stringify({ userId, boxId }),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!response.ok) throw new Error("Failed to remove favorite");
-      return await response.json();
+      return await apiRequest("DELETE", "/api/favorites", { userId, boxId });
     },
     onSuccess: (_, boxId) => {
       // Invalidate relevant queries
