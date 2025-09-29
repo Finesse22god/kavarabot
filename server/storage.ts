@@ -460,10 +460,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderByNumber(orderNumber: string): Promise<Order | null> {
-    return await this.orderRepository.findOne({
+    const order = await this.orderRepository.findOne({
       where: { orderNumber },
       relations: ["box", "user"]
     });
+
+    if (!order) return null;
+
+    // Calculate totalPrice if missing or zero
+    if (!order.totalPrice || order.totalPrice <= 0) {
+      let calculatedPrice = 0;
+
+      // If order has a box, use box price
+      if (order.boxId && order.box) {
+        calculatedPrice = order.box.price;
+      }
+      // If order has a product, fetch and use product price
+      else if (order.productId) {
+        const product = await this.productRepository.findOne({ where: { id: order.productId } });
+        if (product) {
+          calculatedPrice = product.price;
+        }
+      }
+      // If order has cart items, calculate from cart
+      else if (order.cartItems) {
+        try {
+          const items = JSON.parse(order.cartItems);
+          calculatedPrice = items.reduce((total: number, item: any) => {
+            return total + ((item.price || 0) * (item.quantity || 1));
+          }, 0);
+        } catch (error) {
+          console.error('Error parsing cart items:', error);
+        }
+      }
+
+      // Update the order with calculated price if we found one
+      if (calculatedPrice > 0) {
+        order.totalPrice = calculatedPrice;
+        await this.orderRepository.save(order);
+      }
+    }
+
+    return order;
   }
 
   // Loyalty System Methods

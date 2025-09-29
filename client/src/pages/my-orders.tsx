@@ -58,16 +58,48 @@ export default function MyOrders() {
     },
   });
 
+  // Calculate order total as fallback if server doesn't have it
+  const calculateOrderTotal = (order: Order) => {
+    if (order.totalPrice && order.totalPrice > 0) {
+      return order.totalPrice;
+    }
+
+    let total = 0;
+    
+    // Try to calculate from cart items first
+    if (order.cartItems) {
+      try {
+        const items = JSON.parse(order.cartItems);
+        total = items.reduce((sum: number, item: any) => {
+          return sum + ((item.price || 0) * (item.quantity || 1));
+        }, 0);
+        if (total > 0) return total;
+      } catch (error) {
+        console.error('Error parsing cart items:', error);
+      }
+    }
+    
+    // Fallback to box or product price from the order relation
+    // Note: We don't have access to box/product here, but the server should handle this
+    // If server-side calculation fails, we return the current totalPrice (which might be 0)
+    return order.totalPrice || 0;
+  };
+
   const handlePayment = (order: Order) => {
-    if (!order.totalPrice || order.totalPrice <= 0) {
+    const orderTotal = calculateOrderTotal(order);
+    
+    if (!orderTotal || orderTotal <= 0) {
       toast({
         title: "Ошибка",
-        description: "Отсутствуют данные для оплаты",
+        description: "Не удается определить стоимость заказа",
         variant: "destructive",
       });
       return;
     }
-    paymentMutation.mutate(order);
+    
+    // Use calculated total for payment
+    const orderWithTotal = { ...order, totalPrice: orderTotal };
+    paymentMutation.mutate(orderWithTotal);
   };
 
   const currentOrders = orders?.filter(order => 
@@ -163,7 +195,7 @@ export default function MyOrders() {
 
       <div className="flex justify-between items-center">
         <span className="text-lg font-bold text-primary">
-          {order.totalPrice.toLocaleString('ru-RU')}₽
+          {calculateOrderTotal(order).toLocaleString('ru-RU')}₽
         </span>
         <Button 
           variant="outline" 

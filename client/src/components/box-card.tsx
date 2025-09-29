@@ -87,26 +87,27 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
                 {typeof box.price === 'string' ? parseFloat(box.price).toLocaleString('ru-RU') : box.price.toLocaleString('ru-RU')} ₽
               </div>
               <div className="flex gap-2">
-                {onAddToCart && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddToCart(box);
-                    }}
-                    className="flex-1 border border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2 rounded-xl"
-                  >
-                    <ShoppingCart className="w-4 h-4" />
-                    В КОРЗИНУ
-                  </button>
-                )}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onSelect?.(box);
+                    onAddToCart?.(box);
                   }}
-                  className="flex-1 bg-black text-white py-3 font-semibold tracking-wide hover:bg-gray-900 transition-colors rounded-xl"
+                  className="flex-1 border border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2 rounded-xl"
+                  data-testid={`button-add-to-cart-${box.id}`}
                 >
-                  ВЫБРАТЬ
+                  <ShoppingCart className="w-4 h-4" />
+                  В КОРЗИНУ
+                </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCardClick();
+                  }}
+                  className="px-4 border border-gray-300 text-gray-600 py-3 font-semibold tracking-wide hover:bg-gray-100 transition-colors rounded-xl"
+                  data-testid={`button-details-${box.id}`}
+                  title="Подробнее"
+                >
+                  📝
                 </button>
               </div>
             </div>

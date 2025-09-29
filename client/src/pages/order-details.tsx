@@ -66,6 +66,66 @@ function OrderItems({ order }: { order: Order }) {
                 Размер: {order.selectedSize}
               </p>
             )}
+            
+            {/* Box Contents Details */}
+            {box.contents && (() => {
+              // Check if contents is already an array
+              if (Array.isArray(box.contents) && box.contents.length > 0) {
+                return (
+                  <div className="mt-3 p-2 bg-white rounded border">
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Содержимое бокса:
+                    </p>
+                    <div className="space-y-1">
+                      {box.contents.map((item: any, idx: number) => (
+                        <div key={idx} className="text-xs text-gray-600">
+                          • {item.name || item.title || `Товар ${idx + 1}`}
+                          {item.brand && ` (${item.brand})`}
+                          {item.size && ` - размер ${item.size}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              
+              // Try to parse as JSON string
+              if (typeof box.contents === 'string') {
+                try {
+                  const contents = JSON.parse(box.contents);
+                  if (Array.isArray(contents) && contents.length > 0) {
+                    return (
+                      <div className="mt-3 p-2 bg-white rounded border">
+                        <p className="text-xs font-medium text-gray-600 mb-2">
+                          Содержимое бокса:
+                        </p>
+                        <div className="space-y-1">
+                          {contents.map((item: any, idx: number) => (
+                            <div key={idx} className="text-xs text-gray-600">
+                              • {item.name || item.title || `Товар ${idx + 1}`}
+                              {item.brand && ` (${item.brand})`}
+                              {item.size && ` - размер ${item.size}`}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                } catch (error) {
+                  // If JSON parsing fails, show as text
+                  return (
+                    <div className="mt-3 p-2 bg-white rounded border">
+                      <p className="text-xs font-medium text-gray-600 mb-1">
+                        Содержимое:
+                      </p>
+                      <p className="text-xs text-gray-600">{box.contents}</p>
+                    </div>
+                  );
+                }
+              }
+              
+              return null;
+            })()}
           </div>
         </div>
       )}
@@ -105,6 +165,11 @@ function OrderItems({ order }: { order: Order }) {
                 Цвет: {product.color}
               </p>
             )}
+            {order.selectedSize && (
+              <p className="text-sm text-gray-500 mt-1">
+                Размер: {order.selectedSize}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -117,20 +182,45 @@ function OrderItems({ order }: { order: Order }) {
           </p>
           {cartItems.map((item: any, index: number) => (
             <div key={index} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-gray-400" />
+              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                {item.imageUrl ? (
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name || `Товар ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Package className="w-6 h-6 text-gray-400" />
+                )}
               </div>
               <div className="flex-1">
                 <h4 className="font-medium">{item.name || `Товар ${index + 1}`}</h4>
                 {item.description && (
                   <p className="text-gray-600 text-sm">{item.description}</p>
                 )}
-                <div className="flex items-center justify-between mt-1">
+                
+                {/* Additional product details */}
+                <div className="text-sm text-gray-500 space-y-1 mt-2">
+                  {item.brand && (
+                    <div>Бренд: {item.brand}</div>
+                  )}
+                  {item.color && (
+                    <div>Цвет: {item.color}</div>
+                  )}
+                  {item.category && (
+                    <div>Категория: {item.category}</div>
+                  )}
+                  {item.selectedSize && (
+                    <div>Размер: {item.selectedSize}</div>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between mt-3">
                   <span className="text-sm text-gray-500">
                     Количество: {item.quantity || 1}
                   </span>
                   <span className="font-medium text-sm">
-                    {item.price ? `${item.price}₽` : ''}
+                    {item.price ? `${Number(item.price).toLocaleString('ru-RU')}₽` : ''}
                   </span>
                 </div>
               </div>
@@ -208,16 +298,54 @@ export default function OrderDetails() {
     },
   });
 
+  // Calculate order total as fallback if server doesn't have it
+  const calculateOrderTotal = (order: Order) => {
+    if (order.totalPrice && order.totalPrice > 0) {
+      return order.totalPrice;
+    }
+
+    let total = 0;
+    
+    // Try to calculate from cart items first
+    if (order.cartItems) {
+      try {
+        const items = JSON.parse(order.cartItems);
+        total = items.reduce((sum: number, item: any) => {
+          return sum + ((item.price || 0) * (item.quantity || 1));
+        }, 0);
+        if (total > 0) return total;
+      } catch (error) {
+        console.error('Error parsing cart items:', error);
+      }
+    }
+    
+    // Fallback to single box price
+    if (order.boxId && box) {
+      total = box.price;
+    }
+    // Fallback to single product price
+    else if (order.productId && product) {
+      total = product.price;
+    }
+
+    return total;
+  };
+
   const handlePayment = (order: Order) => {
-    if (!order.totalPrice || order.totalPrice <= 0) {
+    const orderTotal = calculateOrderTotal(order);
+    
+    if (!orderTotal || orderTotal <= 0) {
       toast({
         title: "Ошибка",
-        description: "Отсутствуют данные для оплаты",
+        description: "Не удается определить стоимость заказа",
         variant: "destructive",
       });
       return;
     }
-    paymentMutation.mutate(order);
+    
+    // Use calculated total for payment
+    const orderWithTotal = { ...order, totalPrice: orderTotal };
+    paymentMutation.mutate(orderWithTotal);
   };
 
   const getStatusIcon = (status: string | null) => {
@@ -364,7 +492,7 @@ export default function OrderDetails() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Общая сумма:</span>
-                <span className="font-bold text-lg">{order.totalPrice.toLocaleString('ru-RU')}₽</span>
+                <span className="font-bold text-lg">{calculateOrderTotal(order).toLocaleString('ru-RU')}₽</span>
               </div>
             </div>
             
