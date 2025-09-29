@@ -210,46 +210,17 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        {/* Product Details */}
-        {(product.brand || product.color || product.category) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Детали товара</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {product.brand && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Бренд:</span>
-                  <span className="font-medium">{product.brand}</span>
-                </div>
-              )}
-              {product.color && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Цвет:</span>
-                  <span className="font-medium">{product.color}</span>
-                </div>
-              )}
-              {product.category && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Категория:</span>
-                  <span className="font-medium">{product.category}</span>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         {/* Size Selection */}
         {product.sizes && product.sizes.length > 0 && (
           <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center space-x-2">
-                  <Ruler className="w-5 h-5" />
-                  <span>Выбор размера</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center space-x-2">
+                <Ruler className="w-5 h-5" />
+                <span>Выбор размера</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
                 <Label htmlFor="size-select" className="text-sm font-medium">
                   Доступные размеры
                 </Label>
@@ -266,24 +237,12 @@ export default function ProductDetail() {
                   </SelectContent>
                 </Select>
               </div>
-              
-              {/* Size recommendation */}
-              {measurements.chestSize && measurements.waistSize && measurements.hipSize && (
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Рекомендация:</strong> На основе ваших измерений рекомендуемый размер: {" "}
-                    <span className="font-bold">
-                      {getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize)}
-                    </span>
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}
 
         {/* Add to Cart Button */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 -mx-6">
+        <div className="space-y-4">
           <Button
             onClick={handleAddToCart}
             disabled={addToCartMutation.isPending || !selectedSize}
@@ -301,6 +260,12 @@ export default function ProductDetail() {
               </div>
             )}
           </Button>
+          
+          {product.sizes && product.sizes.length > 0 && !selectedSize && (
+            <p className="text-sm text-gray-500 text-center">
+              Выберите размер для добавления в корзину
+            </p>
+          )}
         </div>
       </div>
     </div>
