@@ -863,6 +863,29 @@ router.post("/api/admin/products", verifyAdminToken, async (req, res) => {
   }
 });
 
+router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const productData: Partial<CreateProductDto> = req.body;
+    
+    // Validate required fields if provided
+    if ((productData.name !== undefined && !productData.name) || 
+        (productData.price !== undefined && !productData.price)) {
+      return res.status(400).json({ error: "Name and price cannot be empty" });
+    }
+
+    const product = await storage.updateProduct(id, productData);
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    
+    res.json(product);
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
 router.delete("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
