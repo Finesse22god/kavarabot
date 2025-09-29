@@ -30,23 +30,45 @@ export default function Checkout() {
     const orderData = sessionStorage.getItem("currentOrder");
     const boxData = sessionStorage.getItem("selectedBox");
     
-    if (orderData && boxData) {
-      setOrder(JSON.parse(orderData));
-      setBox(JSON.parse(boxData));
+    if (orderData) {
+      const parsedOrder = JSON.parse(orderData);
+      setOrder(parsedOrder);
+      
+      // Box data is optional - some orders might not have boxes
+      if (boxData) {
+        setBox(JSON.parse(boxData));
+      }
     } else {
+      // No order data - redirect to home
       setLocation("/");
     }
     setIsLoading(false);
   }, [setLocation]);
 
   const createPayment = async () => {
-    if (!order || !box) return;
+    if (!order) return;
 
     setIsCreatingPayment(true);
     try {
+      // Prepare description based on order content
+      let description = `Оплата заказа ${order.orderNumber}`;
+      if (box) {
+        description += ` - ${box.name}`;
+      } else if (order.cartItems) {
+        try {
+          const cartItems = JSON.parse(order.cartItems);
+          if (cartItems.length > 0) {
+            description += ` (${cartItems.length} товаров)`;
+          }
+        } catch (e) {
+          // Fallback if parsing fails
+          description += ` - товары из корзины`;
+        }
+      }
+      
       const intent = await apiRequest("POST", "/api/create-payment-intent", {
         amount: order.totalPrice,
-        description: `Оплата заказа ${order.orderNumber} - ${box.name}`,
+        description,
         orderId: order.orderNumber,
         returnUrl: `${window.location.origin}/payment/success`
       });
@@ -93,7 +115,9 @@ export default function Checkout() {
         });
         // Store order data in session for payment success page
         sessionStorage.setItem("currentOrder", JSON.stringify(orderData));
-        sessionStorage.setItem("selectedBox", JSON.stringify(box));
+        if (box) {
+          sessionStorage.setItem("selectedBox", JSON.stringify(box));
+        }
         setLocation("/payment/success");
       } else {
         toast({
@@ -120,7 +144,7 @@ export default function Checkout() {
     );
   }
 
-  if (!order || !box) {
+  if (!order) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-600">Заказ не найден</p>
@@ -155,20 +179,42 @@ export default function Checkout() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <img 
-                src={box.imageUrl || "/placeholder-box.jpg"} 
-                alt={box.name}
-                className="w-16 h-16 rounded-lg object-cover"
-              />
-              <div className="flex-1">
-                <h3 className="font-semibold">{box.name}</h3>
-                <p className="text-sm text-gray-600">{box.description}</p>
+            {/* Order Items Display */}
+            {box ? (
+              <div className="flex items-center space-x-4">
+                <img 
+                  src={box.imageUrl || "/placeholder-box.jpg"} 
+                  alt={box.name}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div className="flex-1">
+                  <h3 className="font-semibold">{box.name}</h3>
+                  <p className="text-sm text-gray-600">{box.description}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">{order.totalPrice}₽</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold">{order.totalPrice}₽</p>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-8 h-8 text-gray-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">Заказ #{order.orderNumber}</h3>
+                  <p className="text-sm text-gray-600">
+                    {order.cartItems ? (
+                      `${JSON.parse(order.cartItems).length} товаров в заказе`
+                    ) : (
+                      'Товары для оплаты'
+                    )}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold">{order.totalPrice}₽</p>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between">

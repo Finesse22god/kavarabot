@@ -264,79 +264,25 @@ export default function OrderDetails() {
     enabled: !!orderNumber,
   });
 
-  // Payment mutation
-  const paymentMutation = useMutation({
-    mutationFn: async (order: Order) => {
-      const orderTotal = calculateOrderTotal(order);
-      
-      if (orderTotal <= 0) {
-        throw new Error("Неверная сумма заказа");
-      }
-
-      console.log("Creating payment for order:", {
-        orderNumber: order.orderNumber,
-        amount: orderTotal,
-        orderId: order.id
-      });
-
-      const response = await fetch("/api/create-payment-intent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: orderTotal,
-          description: `Оплата заказа ${order.orderNumber}`,
-          orderId: order.orderNumber, // Используем orderNumber как label для YooMoney
-          returnUrl: `${window.location.origin}/order-details?order=${order.orderNumber}&payment=success`
-        }),
-      });
-
-      const responseData = await response.json();
-      
-      if (!response.ok) {
-        console.error("Payment creation failed:", responseData);
-        throw new Error(responseData.details || responseData.error || "Failed to create payment");
-      }
-
-      console.log("Payment intent created:", responseData);
-      return responseData;
+  // Helper queries to get box and product data for calculation
+  const { data: box } = useQuery({
+    queryKey: [`/api/boxes/${order?.boxId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/boxes/${order?.boxId}`);
+      if (!response.ok) throw new Error("Failed to fetch box");
+      return response.json();
     },
-    onSuccess: (paymentIntent, order) => {
-      console.log("Payment intent success:", paymentIntent);
-      
-      if (paymentIntent.confirmation?.confirmation_url) {
-        // YooKassa payment URL
-        window.open(paymentIntent.confirmation.confirmation_url, '_blank');
-      } else if (paymentIntent.paymentUrl) {
-        // Legacy payment URL
-        window.open(paymentIntent.paymentUrl, '_blank');
-      } else {
-        console.error("No payment URL found in response:", paymentIntent);
-        toast({
-          title: "Ошибка",
-          description: "Не удалось получить ссылку для оплаты",
-          variant: "destructive",
-        });
-        return;
-      }
+    enabled: !!order?.boxId,
+  });
 
-      toast({
-        title: "Переход к оплате",
-        description: `Откройте новое окно для оплаты заказа ${order.orderNumber}`,
-      });
-
-      // Обновляем статус заказа через 3 секунды
-      setTimeout(() => {
-        refetch();
-      }, 3000);
+  const { data: product } = useQuery({
+    queryKey: [`/api/products/${order?.productId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${order?.productId}`);
+      if (!response.ok) throw new Error("Failed to fetch product");
+      return response.json();
     },
-    onError: (error) => {
-      console.error("Payment mutation error:", error);
-      toast({
-        title: "Ошибка оплаты",
-        description: error instanceof Error ? error.message : "Не удалось создать платеж. Попробуйте позже.",
-        variant: "destructive",
-      });
-    },
+    enabled: !!order?.productId,
   });
 
   // Calculate order total as fallback if server doesn't have it
@@ -383,7 +329,7 @@ export default function OrderDetails() {
     return 0;
   };
 
-  const handlePayment = (order: Order) => {
+  const handlePayment = async (order: Order) => {
     const orderTotal = calculateOrderTotal(order);
     
     if (!orderTotal || orderTotal <= 0) {
@@ -395,17 +341,46 @@ export default function OrderDetails() {
       return;
     }
 
-    console.log("Initiating payment for order:", {
+    console.log("Preparing payment redirect for order:", {
       orderNumber: order.orderNumber,
       totalPrice: orderTotal,
       status: order.status
     });
     
-    // Show confirmation before payment
-    if (window.confirm(`Оплатить заказ ${order.orderNumber} на сумму ${orderTotal.toLocaleString('ru-RU')}₽?`)) {
-      // Use calculated total for payment
+    try {
+      // Prepare order data with calculated total for checkout page
       const orderWithTotal = { ...order, totalPrice: orderTotal };
-      paymentMutation.mutate(orderWithTotal);
+      
+      // Save order data to sessionStorage for checkout page
+      sessionStorage.setItem("currentOrder", JSON.stringify(orderWithTotal));
+      
+      // If order has a box, fetch and save box data
+      if (order.boxId) {
+        try {
+          const response = await fetch(`/api/boxes/${order.boxId}`);
+          if (response.ok) {
+            const boxData = await response.json();
+            sessionStorage.setItem("selectedBox", JSON.stringify(boxData));
+          }
+        } catch (error) {
+          console.error("Failed to fetch box data:", error);
+          // Continue with payment even if box data fetch fails
+        }
+      }
+      
+      // If order has products or cart items, we still proceed to checkout
+      // The checkout page will handle different order types
+      
+      // Redirect to checkout page
+      setLocation("/checkout");
+      
+    } catch (error) {
+      console.error("Error preparing payment:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось подготовить данные для оплаты. Попробуйте еще раз.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -572,20 +547,12 @@ export default function OrderDetails() {
                   <div className="space-y-2">
                     <Button
                       onClick={() => handlePayment(order)}
-                      disabled={paymentMutation.isPending}
                       className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
                       size="lg"
                       data-testid={`button-pay-order-details-${order.orderNumber}`}
                     >
                       <CreditCard className="w-5 h-5 mr-2" />
-                      {paymentMutation.isPending ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                          Создание платежа...
-                        </>
-                      ) : (
-                        `Оплатить ${calculateOrderTotal(order).toLocaleString('ru-RU')}₽`
-                      )}
+                      Оплатить {calculateOrderTotal(order).toLocaleString('ru-RU')}₽
                     </Button>
                     <Button
                       onClick={() => refetch()}
@@ -652,10 +619,10 @@ export default function OrderDetails() {
                    order.paymentMethod || 'Не указан'}
                 </span>
               </div>
-              {order.deliveryAddress && (
+              {order.deliveryMethod === 'courier' && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Адрес доставки:</span>
-                  <span>{order.deliveryAddress}</span>
+                  <span>По указанному адресу</span>
                 </div>
               )}
             </div>
@@ -707,7 +674,7 @@ export default function OrderDetails() {
                        'Статус изменен'}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {order.updatedAt ? new Date(order.updatedAt).toLocaleDateString('ru-RU', {
+                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString('ru-RU', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric',
