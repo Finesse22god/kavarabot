@@ -61,7 +61,26 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
 
   const createBoxMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/admin/boxes", data);
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        throw new Error("Admin token not found");
+      }
+      
+      const response = await fetch("/api/admin/boxes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Network error" }));
+        throw new Error(error.error || "Failed to create box");
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -76,7 +95,7 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
       console.error("Ошибка создания бокса:", error);
       toast({
         title: "Ошибка",
-        description: "Не удалось создать бокс",
+        description: error.message || "Не удалось создать бокс",
         variant: "destructive",
       });
     },

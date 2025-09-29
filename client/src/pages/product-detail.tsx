@@ -139,7 +139,10 @@ export default function ProductDetail() {
   });
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
+    // Проверяем нужен ли размер для этого товара
+    const hasProductSizes = product?.sizes && product.sizes.length > 0;
+    
+    if (hasProductSizes && !selectedSize) {
       toast({
         title: "Выберите размер",
         description: "Пожалуйста, выберите размер перед добавлением в корзину",
@@ -245,7 +248,7 @@ export default function ProductDetail() {
         <div className="space-y-4">
           <Button
             onClick={handleAddToCart}
-            disabled={addToCartMutation.isPending || !selectedSize}
+            disabled={addToCartMutation.isPending || (product?.sizes && product.sizes.length > 0 && !selectedSize)}
             className="w-full bg-black text-white hover:bg-gray-800 py-4 text-lg font-semibold tracking-wide"
           >
             {addToCartMutation.isPending ? (
@@ -261,7 +264,7 @@ export default function ProductDetail() {
             )}
           </Button>
           
-          {product.sizes && product.sizes.length > 0 && !selectedSize && (
+          {product?.sizes && product.sizes.length > 0 && !selectedSize && (
             <p className="text-sm text-gray-500 text-center">
               Выберите размер для добавления в корзину
             </p>

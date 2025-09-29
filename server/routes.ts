@@ -980,21 +980,35 @@ router.post("/api/create-payment-intent", async (req, res) => {
   try {
     const { amount, description, orderId, returnUrl } = req.body;
     
+    console.log("Creating payment intent:", { amount, description, orderId, returnUrl });
+    
     if (!amount || !description || !orderId) {
+      console.log("Missing required fields:", { amount, description, orderId });
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const paymentAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      console.log("Invalid amount:", paymentAmount);
+      return res.status(400).json({ error: "Invalid amount" });
+    }
+
     const paymentIntent = await createPaymentIntent({
-      amount: parseFloat(amount),
-      description,
-      orderId,
-      returnUrl
+      amount: paymentAmount,
+      description: String(description),
+      orderId: String(orderId),
+      returnUrl: returnUrl || `${req.protocol}://${req.get('host')}/payment-success`
     });
 
+    console.log("Payment intent created successfully:", paymentIntent);
     res.json(paymentIntent);
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ 
+      error: "Internal server error",
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

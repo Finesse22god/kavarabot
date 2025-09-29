@@ -27,47 +27,89 @@ export interface PaymentIntent {
 }
 
 // Create payment intent for YooMoney
-export async function createPaymentIntent(paymentData: PaymentData): Promise<PaymentIntent> {
-  const paymentId = uuidv4();
-  
-  // For YooMoney P2P, we create a payment form URL
-  const baseUrl = 'https://ffda1710-e4e3-438f-aee0-891e4f004ca7-00-2fhb8prkicvnj.kirk.replit.dev';
-  
-  const paymentUrl = createPaymentFormUrl({
-    receiver: process.env.YOOMONEY_WALLET || '4100119160773859',
-    'quickpay-form': 'shop',
-    targets: paymentData.description,
-    'paymentType': 'AC',
-    sum: paymentData.amount,
-    'formcomment': paymentData.orderId,
-    'short-dest': paymentData.description,
-    label: paymentId,
-    successURL: `https://t.me/kavaraappbot/app?startapp=payment_success`,
-    'need-fio': false,
-    'need-email': false,
-    'need-phone': false,
-    'need-address': false
-  });
+export async function createPaymentIntent({
+  amount,
+  description,
+  orderId,
+  returnUrl
+}: {
+  amount: number;
+  description: string;
+  orderId: string;
+  returnUrl?: string;
+}) {
+  try {
+    console.log("Creating YooKassa payment:", { amount, description, orderId });
 
-  return {
-    id: paymentId,
-    amount: paymentData.amount,
-    status: 'pending',
-    paymentUrl,
-    description: paymentData.description,
-    orderId: paymentData.orderId
-  };
+    // Валидация параметров
+    if (!process.env.YOOMONEY_SHOP_ID || !process.env.YOOMONEY_SECRET_KEY) {
+      throw new Error("YooMoney credentials not configured");
+    }
+
+    if (amount <= 0) {
+      throw new Error("Amount must be greater than 0");
+    }
+
+    if (amount > 100000) {
+      throw new Error("Amount exceeds maximum limit");
+    }
+
+    const paymentData = {
+      amount: {
+        value: amount.toFixed(2),
+        currency: "RUB"
+      },
+      confirmation: {
+        type: "redirect",
+        return_url: returnUrl || "https://your-app.com/success"
+      },
+      capture: true,
+      description: description.substring(0, 128), // Ограничиваем длину описания
+      metadata: {
+        order_id: orderId
+      }
+    };
+
+    console.log("Payment data:", JSON.stringify(paymentData, null, 2));
+
+    const authHeader = `Basic ${Buffer.from(`${process.env.YOOMONEY_SHOP_ID}:${process.env.YOOMONEY_SECRET_KEY}`).toString("base64")}`;
+
+    const response = await fetch("https://api.yookassa.ru/v3/payments", {
+      method: "POST",
+      headers: {
+        "Authorization": authHeader,
+        "Content-Type": "application/json",
+        "Idempotence-Key": `${orderId}_${Date.now()}` // Уникальный ключ
+      },
+      body: JSON.stringify(paymentData)
+    });
+
+    console.log("YooKassa response status:", response.status);
+
+    const result = await response.json();
+    console.log("YooKassa response:", result);
+
+    if (!response.ok) {
+      console.error("Payment creation failed:", result);
+      throw new Error(result.description || `Payment creation failed: ${response.status}`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Payment creation error:", error);
+    throw error;
+  }
 }
 
 // Generate YooMoney payment form URL
 function createPaymentFormUrl(params: Record<string, any>): string {
   const baseUrl = 'https://yoomoney.ru/quickpay/confirm.xml';
   const urlParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     urlParams.append(key, String(value));
   });
-  
+
   return `${baseUrl}?${urlParams.toString()}`;
 }
 
@@ -75,14 +117,14 @@ function createPaymentFormUrl(params: Record<string, any>): string {
 export async function checkPaymentStatus(paymentId: string): Promise<PaymentIntent> {
   try {
     const api = getYooMoneyAPI();
-    
+
     // Get operation history to find payment by label
     const history = await api.operationHistory({
       records: 100
     });
-    
+
     const payment = history.operations?.find((op: any) => op.label === paymentId);
-    
+
     if (payment) {
       return {
         id: paymentId,
@@ -92,7 +134,7 @@ export async function checkPaymentStatus(paymentId: string): Promise<PaymentInte
         orderId: payment.label || paymentId
       };
     }
-    
+
     return {
       id: paymentId,
       amount: 0,
@@ -141,7 +183,7 @@ export function parseYooMoneyNotification(body: any) {
 // Verify notification authenticity
 export function verifyNotification(notification: any, secret: string): boolean {
   const crypto = require('crypto');
-  
+
   const string = [
     notification.notification_type,
     notification.operation_id,
@@ -153,7 +195,7 @@ export function verifyNotification(notification: any, secret: string): boolean {
     secret,
     notification.label
   ].join('&');
-  
+
   const hash = crypto.createHash('sha1').update(string, 'utf8').digest('hex');
   return hash === notification.sha1_hash;
 }

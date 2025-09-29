@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Info } from "lucide-react";
 import type { Product } from "@shared/schema";
@@ -35,13 +36,27 @@ export default function ProductCard({
     }
   };
 
+  const handleAddToCart = () => {
+    // Проверяем нужен ли размер для этого товара
+    const hasProductSizes = product.sizes && product.sizes.length > 0;
+    
+    if (hasProductSizes && !selectedSize) {
+      // Если у товара есть размеры, но размер не выбран - показываем предупреждение
+      return;
+    }
+    
+    onAddToCart?.(product, selectedSize);
+    // Сбрасываем выбранный размер после добавления
+    setSelectedSize("");
+  };
+
   return (
-    <div className={`border-2 border-black bg-white rounded-2xl overflow-hidden ${isComingSoon ? "opacity-60" : "cursor-pointer"}`} onClick={handleCardClick}>
-      <div className="aspect-[4/3] relative overflow-hidden">
+    <div className={`border-2 border-black bg-white rounded-2xl overflow-hidden ${isComingSoon ? "opacity-60" : ""}`}>
+      <div className="aspect-[4/3] relative overflow-hidden" onClick={handleCardClick}>
         <img 
           src={product.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={product.name}
-          className={`w-full h-full object-cover ${isComingSoon ? "grayscale" : ""}`}
+          className={`w-full h-full object-cover cursor-pointer ${isComingSoon ? "grayscale" : ""}`}
         />
         {/* Favorite Button */}
         <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
@@ -60,13 +75,13 @@ export default function ProductCard({
         )}
       </div>
       
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-black mb-2 tracking-wide">{product.name.toUpperCase()}</h3>
-        <p className="text-gray-600 mb-4 text-sm">{product.description}</p>
+      <div className="p-4">
+        <h3 className="text-lg font-bold text-black mb-2 tracking-wide">{product.name.toUpperCase()}</h3>
+        <p className="text-gray-600 mb-3 text-sm line-clamp-2">{product.description}</p>
         
         {/* Product-specific info: sizes, brand, color */}
         {!isComingSoon && (
-          <div className="mb-6">
+          <div className="mb-4">
             {product.sizes && product.sizes.length > 0 && (
               <div className="mb-3">
                 <div className="flex items-center justify-between mb-2">
@@ -110,7 +125,7 @@ export default function ProductCard({
                     </DialogContent>
                   </Dialog>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5 mb-2">
                   {product.sizes.map((size: string, index: number) => (
                     <button
                       key={index}
@@ -118,7 +133,7 @@ export default function ProductCard({
                         e.stopPropagation();
                         setSelectedSize(size === selectedSize ? "" : size);
                       }}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium border-2 transition-all ${
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border-2 transition-all ${
                         selectedSize === size
                           ? "border-black bg-black text-white"
                           : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
@@ -130,15 +145,15 @@ export default function ProductCard({
                   ))}
                 </div>
                 {product.sizes.length > 0 && !selectedSize && (
-                  <div className="text-xs text-red-500 mt-1">
+                  <div className="text-xs text-red-500 mb-2">
                     ⚠️ Выберите размер для добавления в корзину
                   </div>
                 )}
               </div>
             )}
             
-            {(product.brand || product.color) && (
-              <div className="text-xs text-gray-600 space-y-1">
+            {(product.brand || product.color || product.category) && (
+              <div className="text-xs text-gray-600 space-y-1 mb-3">
                 {product.brand && <div><strong>Бренд:</strong> {product.brand}</div>}
                 {product.color && <div><strong>Цвет:</strong> {product.color}</div>}
                 {product.category && <div><strong>Категория:</strong> {product.category}</div>}
@@ -147,7 +162,7 @@ export default function ProductCard({
           </div>
         )}
         
-        <div className="border-t border-gray-200 pt-4">
+        <div className="border-t border-gray-200 pt-3">
           {isComingSoon ? (
             <button 
               className="w-full border border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors rounded-xl"
@@ -160,26 +175,17 @@ export default function ProductCard({
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="text-2xl font-bold text-black text-center">
+              <div className="text-xl font-bold text-black text-center">
                 {typeof product.price === 'string' ? parseFloat(product.price).toLocaleString('ru-RU') : product.price.toLocaleString('ru-RU')} ₽
               </div>
               <div className="flex gap-2">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    
-                    // Проверяем нужен ли размер для этого товара
-                    const hasProductSizes = product.sizes && product.sizes.length > 0;
-                    
-                    if (hasProductSizes && !selectedSize) {
-                      // Если у товара есть размеры, но размер не выбран - показываем предупреждение
-                      return;
-                    }
-                    
-                    onAddToCart?.(product, selectedSize);
+                    handleAddToCart();
                   }}
                   disabled={(product.sizes && product.sizes.length > 0 && !selectedSize) || false}
-                  className={`flex-1 py-3 font-semibold tracking-wide transition-colors flex items-center justify-center gap-2 rounded-xl ${
+                  className={`flex-1 py-2.5 font-semibold tracking-wide transition-colors flex items-center justify-center gap-2 rounded-xl text-sm ${
                     product.sizes && product.sizes.length > 0 && !selectedSize
                       ? "border border-gray-300 text-gray-400 cursor-not-allowed"
                       : "border border-black text-black hover:bg-black hover:text-white"
@@ -194,7 +200,7 @@ export default function ProductCard({
                     e.stopPropagation();
                     handleCardClick();
                   }}
-                  className="px-4 border border-gray-300 text-gray-600 py-3 font-semibold tracking-wide hover:bg-gray-100 transition-colors rounded-xl"
+                  className="px-3 border border-gray-300 text-gray-600 py-2.5 font-semibold tracking-wide hover:bg-gray-100 transition-colors rounded-xl text-sm"
                   data-testid={`button-details-${product.id}`}
                   title="Подробнее"
                 >
