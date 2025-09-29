@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, RefreshCw } from "lucide-react";
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, RefreshCw, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTelegram } from "@/hooks/use-telegram";
+import { useToast } from "@/hooks/use-toast";
 import type { Order } from "@shared/schema";
 
 export default function OrderDetails() {
   const [, setLocation] = useLocation();
   const { user, isInTelegram } = useTelegram();
+  const { toast } = useToast();
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,6 +30,52 @@ export default function OrderDetails() {
     },
     enabled: !!orderNumber,
   });
+
+  // Payment mutation
+  const paymentMutation = useMutation({
+    mutationFn: async (order: Order) => {
+      const response = await fetch("/api/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: order.totalPrice,
+          description: `Заказ ${order.orderNumber}`,
+          orderId: order.id,
+          returnUrl: `https://t.me/kavaraappbot/app?startapp=payment_success`
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create payment");
+      return response.json();
+    },
+    onSuccess: (paymentIntent, order) => {
+      // Redirect to payment URL
+      window.open(paymentIntent.paymentUrl, '_blank');
+      toast({
+        title: "Переход к оплате",
+        description: `Заказ ${order.orderNumber} ожидает оплаты`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка оплаты",
+        description: "Не удалось создать платеж. Попробуйте позже.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePayment = (order: Order) => {
+    if (!order.totalPrice || order.totalPrice <= 0) {
+      toast({
+        title: "Ошибка",
+        description: "Отсутствуют данные для оплаты",
+        variant: "destructive",
+      });
+      return;
+    }
+    paymentMutation.mutate(order);
+  };
 
   const getStatusIcon = (status: string | null) => {
     switch (status) {
@@ -176,6 +224,21 @@ export default function OrderDetails() {
                 <span className="font-bold text-lg">{order.totalPrice.toLocaleString('ru-RU')}₽</span>
               </div>
             </div>
+            
+            {/* Payment Button for Pending Orders */}
+            {order.status === "pending" && (
+              <div className="mt-4 pt-4 border-t">
+                <Button
+                  onClick={() => handlePayment(order)}
+                  disabled={paymentMutation.isPending}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  data-testid={`button-pay-order-details-${order.orderNumber}`}
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  {paymentMutation.isPending ? "Создание платежа..." : "Оплатить заказ"}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 

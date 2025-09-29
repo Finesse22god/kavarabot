@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle } from "lucide-react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Order } from "@shared/schema";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MyOrders() {
   const { user, isInTelegram } = useTelegram();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ["/api/orders/user", user?.id],
     queryFn: async () => {
@@ -20,6 +23,52 @@ export default function MyOrders() {
     },
     enabled: !!user?.id,
   });
+
+  // Payment mutation
+  const paymentMutation = useMutation({
+    mutationFn: async (order: Order) => {
+      const response = await fetch("/api/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: order.totalPrice,
+          description: `Заказ ${order.orderNumber}`,
+          orderId: order.id,
+          returnUrl: `https://t.me/kavaraappbot/app?startapp=payment_success`
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create payment");
+      return response.json();
+    },
+    onSuccess: (paymentIntent, order) => {
+      // Redirect to payment URL
+      window.open(paymentIntent.paymentUrl, '_blank');
+      toast({
+        title: "Переход к оплате",
+        description: `Заказ ${order.orderNumber} ожидает оплаты`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Ошибка оплаты",
+        description: "Не удалось создать платеж. Попробуйте позже.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePayment = (order: Order) => {
+    if (!order.totalPrice || order.totalPrice <= 0) {
+      toast({
+        title: "Ошибка",
+        description: "Отсутствуют данные для оплаты",
+        variant: "destructive",
+      });
+      return;
+    }
+    paymentMutation.mutate(order);
+  };
 
   const currentOrders = orders?.filter(order => 
     order.status === "pending" || order.status === "paid" || order.status === "processing" || order.status === "shipped"
@@ -86,6 +135,19 @@ export default function MyOrders() {
         <p className="text-sm text-gray-600">Клиент: {order.customerName}</p>
         <p className="text-sm text-gray-600">Доставка: {order.deliveryMethod}</p>
         <div className="flex items-center gap-2 mt-2">
+          {order.status === "pending" && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handlePayment(order)}
+              className="text-xs bg-green-600 hover:bg-green-700"
+              disabled={paymentMutation.isPending}
+              data-testid={`button-pay-order-${order.orderNumber}`}
+            >
+              <CreditCard className="w-3 h-3 mr-1" />
+              {paymentMutation.isPending ? "Загружается..." : "Оплатить заказ"}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

@@ -16,8 +16,9 @@ async function createServer() {
   // Initialize TypeORM database
   await initializeDatabase();
 
-  // Middleware
-  app.use(express.json());
+  // Middleware - увеличиваем лимиты для загрузки файлов
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // API Routes
   app.get('/api/health', (req, res) => {
