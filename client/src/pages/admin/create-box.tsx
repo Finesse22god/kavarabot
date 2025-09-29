@@ -1,12 +1,18 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function AdminCreateBox() {
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [boxData, setBoxData] = useState({
     name: "",
     description: "",
@@ -15,13 +21,83 @@ export default function AdminCreateBox() {
     category: "",
     imageUrl: "",
     contents: "",
-    availableSizes: ""
+    availableSizes: "",
+    sportTypes: [] as string[],
+    selectedProducts: [] as string[]
+  });
+
+  // Fetch all products for selection
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+    queryFn: async () => {
+      const response = await fetch("/api/products");
+      if (!response.ok) throw new Error("Failed to fetch products");
+      return response.json();
+    },
+  });
+
+  const createBoxMutation = useMutation({
+    mutationFn: async (boxCreateData: any) => {
+      const token = localStorage.getItem("adminToken");
+      if (!token) throw new Error("Admin token not found");
+
+      const response = await fetch("/api/admin/boxes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(boxCreateData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create box");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Успех!",
+        description: "Бокс успешно создан",
+      });
+      setLocation("/admin/dashboard");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось создать бокс",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Creating box:", boxData);
-    // TODO: Implement box creation logic
+    
+    if (!boxData.name || !boxData.price) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните обязательные поля: название и цену",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const createData = {
+      name: boxData.name,
+      description: boxData.description,
+      price: parseFloat(boxData.price),
+      category: boxData.category,
+      imageUrl: boxData.imageUrl,
+      sportTypes: boxData.sportTypes,
+      productIds: boxData.selectedProducts,
+      productQuantities: boxData.selectedProducts.map(() => 1), // 1 for each product
+      isAvailable: true,
+    };
+
+    createBoxMutation.mutate(createData);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -125,8 +201,55 @@ export default function AdminCreateBox() {
                 />
               </div>
 
-              <Button type="submit" className="w-full">
-                Создать бокс
+              {/* Product Selection */}
+              <div>
+                <Label>Выберите товары для бокса (максимум 4)</Label>
+                <div className="grid grid-cols-1 gap-2 mt-2 max-h-60 overflow-y-auto border rounded-lg p-4">
+                  {products.map((product: any) => (
+                    <div key={product.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={product.id}
+                        checked={boxData.selectedProducts.includes(product.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            if (boxData.selectedProducts.length < 4) {
+                              setBoxData(prev => ({
+                                ...prev,
+                                selectedProducts: [...prev.selectedProducts, product.id]
+                              }));
+                            } else {
+                              toast({
+                                title: "Предупреждение",
+                                description: "Максимум 4 товара в боксе",
+                                variant: "destructive"
+                              });
+                            }
+                          } else {
+                            setBoxData(prev => ({
+                              ...prev,
+                              selectedProducts: prev.selectedProducts.filter(id => id !== product.id)
+                            }));
+                          }
+                        }}
+                        disabled={!boxData.selectedProducts.includes(product.id) && boxData.selectedProducts.length >= 4}
+                      />
+                      <Label htmlFor={product.id} className="text-sm">
+                        {product.name} - {product.price}₽ ({product.category})
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Выбрано: {boxData.selectedProducts.length} из 4
+                </p>
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={createBoxMutation.isPending}
+              >
+                {createBoxMutation.isPending ? "Создание..." : "Создать бокс"}
               </Button>
             </form>
           </CardContent>

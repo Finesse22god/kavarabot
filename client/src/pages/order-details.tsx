@@ -319,16 +319,11 @@ export default function OrderDetails() {
       }
     }
     
-    // Fallback to single box price
-    if (order.boxId && box) {
-      total = box.price;
-    }
-    // Fallback to single product price
-    else if (order.productId && product) {
-      total = product.price;
-    }
-
-    return total;
+    // Fallback calculation - this should be handled by the server now
+    console.warn('Order total not available, server should calculate this');
+    
+    // Return 0 if no total found - server should calculate this
+    return 0;
   };
 
   const handlePayment = (order: Order) => {

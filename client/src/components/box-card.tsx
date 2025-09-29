@@ -20,11 +20,24 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   const handleCardClick = () => {
     if (!isComingSoon) {
       // Check if this is a Product (has sizes array) or Box (has contents array)
-      if (box.sizes && Array.isArray(box.sizes)) {
+      // Debug logging - remove in production
+      console.log('🔍 Clicking on item:', { 
+        id: box.id, 
+        name: box.name,
+        sizes: box.sizes, 
+        sizesIsArray: Array.isArray(box.sizes),
+        sizesLength: box.sizes?.length,
+        contents: box.contents, 
+        hasContents: !!box.contents,
+        type: (box.sizes && Array.isArray(box.sizes) && box.sizes.length > 0) ? 'PRODUCT' : 'BOX' 
+      });
+      if (box.sizes && Array.isArray(box.sizes) && box.sizes.length > 0) {
         // This is a Product - redirect to product page
+        console.log('Redirecting to product page:', `/product/${box.id}`);
         setLocation(`/product/${box.id}`);
-      } else {
+      } else if (box.contents || !box.sizes) {
         // This is a Box - redirect to box page
+        console.log('Redirecting to box page:', `/box/${box.id}`);
         setLocation(`/box/${box.id}`);
       }
     }

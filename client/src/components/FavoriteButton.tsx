@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
-  boxId: string;
+  boxId: string; // Can be either box ID or product ID
   userId?: string;
   size?: "sm" | "md" | "lg";
   variant?: "ghost" | "outline" | "default";

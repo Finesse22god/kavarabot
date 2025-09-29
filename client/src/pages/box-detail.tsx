@@ -195,13 +195,55 @@ export default function BoxDetail() {
     );
   }
 
-  // Parse box contents from description or create mock data
-  const boxContents = [
-    { name: "Спортивная футболка", image: "/placeholder-item1.jpg" },
-    { name: "Леггинсы", image: "/placeholder-item2.jpg" },
-    { name: "Спортивный бюстгальтер", image: "/placeholder-item3.jpg" },
-    { name: "Кроссовки", image: "/placeholder-item4.jpg" }
-  ];
+  // Parse box contents - priority: real products > JSON contents > fallback
+  const parseBoxContents = () => {
+    // First, try to use real box products from API
+    if (boxProducts && boxProducts.length > 0) {
+      return boxProducts.map((boxProduct: any) => ({
+        name: boxProduct.product.name,
+        image: boxProduct.product.imageUrl,
+        price: boxProduct.product.price,
+        description: boxProduct.product.description,
+        quantity: boxProduct.quantity,
+        isRealProduct: true
+      }));
+    }
+    
+    // Second, try to parse JSON contents from box.contents
+    if (box?.contents && Array.isArray(box.contents)) {
+      return box.contents.map((item: string, index: number) => ({
+        name: item,
+        image: `https://images.unsplash.com/photo-${1571019613454 + index}-1cb2f99b2d8b`,
+        isRealProduct: false
+      }));
+    }
+    
+    // Third, try to parse string contents
+    if (box?.contents && typeof box.contents === 'string') {
+      try {
+        const parsed = JSON.parse(box.contents);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item: string, index: number) => ({
+            name: item,
+            image: `https://images.unsplash.com/photo-${1571019613454 + index}-1cb2f99b2d8b`,
+            isRealProduct: false
+          }));
+        }
+      } catch (e) {
+        // If JSON parsing fails, fallback to mock data
+      }
+    }
+    
+    // Fallback to mock data
+    return [
+      { name: "Спортивная футболка", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab", isRealProduct: false },
+      { name: "Леггинсы", image: "https://images.unsplash.com/photo-1506629905607-ce2a6c06f2a0", isRealProduct: false },
+      { name: "Спортивный бюстгальтер", image: "https://images.unsplash.com/photo-1544966503-7cc5ac882d5e", isRealProduct: false },
+      { name: "Кроссовки", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff", isRealProduct: false }
+    ];
+  };
+
+  const boxContents = parseBoxContents();
 
   return (
     <div className="min-h-screen bg-white">
@@ -241,38 +283,41 @@ export default function BoxDetail() {
         {/* Box Contents */}
         <div>
           <h4 className="text-lg font-bold text-black mb-4">Что внутри бокса:</h4>
-          {boxProducts && boxProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3">
-              {boxProducts.map((boxProduct: any, index: number) => (
-                <div key={index} className="bg-gray-50 rounded-xl p-4 flex items-center space-x-4">
-                  <img 
-                    src={boxProduct.product.imageUrl} 
-                    alt={boxProduct.product.name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <h5 className="font-medium text-gray-900">{boxProduct.product.name}</h5>
-                    <p className="text-sm text-gray-600">{boxProduct.product.description}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-sm font-medium text-primary">{boxProduct.product.price}₽</span>
+          <div className="grid grid-cols-1 gap-3">
+            {boxContents.map((item: any, index: number) => (
+              <div key={index} className="bg-gray-50 rounded-xl p-4 flex items-center space-x-4">
+                <img 
+                  src={item.image} 
+                  alt={item.name}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div className="flex-1">
+                  <h5 className="font-medium text-gray-900">{item.name}</h5>
+                  {item.description && (
+                    <p className="text-sm text-gray-600">{item.description}</p>
+                  )}
+                  <div className="flex items-center justify-between mt-2">
+                    {item.price && (
+                      <span className="text-sm font-medium text-primary">{item.price}₽</span>
+                    )}
+                    {item.quantity && (
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                        x{boxProduct.quantity}
+                        x{item.quantity}
                       </span>
-                    </div>
+                    )}
+                    {item.isRealProduct && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                        Настоящий товар
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {boxContents.map((item, index) => (
-                <div key={index} className="bg-gray-50 rounded-lg p-4 text-center">
-                  <div className="w-full h-20 bg-gray-200 rounded-lg mb-2 flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">{item.name}</span>
-                  </div>
-                  <p className="text-sm font-medium text-gray-700">{item.name}</p>
-                </div>
-              ))}
+              </div>
+            ))}
+          </div>
+          {boxContents.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p>Содержимое бокса не определено</p>
             </div>
           )}
         </div>
