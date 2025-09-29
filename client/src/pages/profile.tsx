@@ -282,74 +282,57 @@ export default function Profile() {
     );
   };
 
-  // Payment creation function
-  const createPayment = async (order: any) => {
+  // Payment redirect function (unified approach)
+  const handlePayment = async (order: any) => {
     setIsCreatingPayment(true);
     try {
-      const intent = await apiRequest("POST", "/api/create-payment-intent", {
-        amount: order.totalPrice,
-        description: `Оплата заказа ${order.orderNumber}`,
-        orderId: order.orderNumber,
-        returnUrl: `${window.location.origin}/payment/success`
-      });
+      // Calculate order total
+      const orderTotal = order.totalPrice || 0;
       
-      // Validate API response structure
-      if (!intent || typeof intent !== 'object') {
-        throw new Error('Неожиданный ответ от сервера');
-      }
-      
-      if (intent.error) {
-        throw new Error(intent.error || 'Ошибка создания платежа');
-      }
-      
-      if (!intent.paymentId || !intent.confirmationUrl) {
-        throw new Error('Отсутствуют данные для оплаты в ответе сервера');
-      }
-      
-      // Update order with payment ID
-      const updateResult = await apiRequest("PUT", `/api/orders/${order.id}/payment-id`, {
-        paymentId: intent.paymentId
-      });
-      
-      // Validate order update was successful
-      if (!updateResult || updateResult.error) {
-        throw new Error(updateResult?.error || 'Не удалось обновить заказ с ID платежа');
+      if (!orderTotal || orderTotal <= 0) {
+        toast({
+          title: "Ошибка",
+          description: "Не удается определить стоимость заказа. Обратитесь в поддержку.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Redirect to payment page
-      window.open(intent.confirmationUrl, '_blank');
-      
-      // Invalidate orders cache to refresh UI after payment status changes
-      queryClient.invalidateQueries({ queryKey: [`/api/orders/user/${userData?.id}`] });
-      
-      toast({
-        title: "Ссылка на оплату создана",
-        description: "Вы будете перенаправлены на страницу оплаты"
+      console.log("Preparing payment redirect for order:", {
+        orderNumber: order.orderNumber,
+        totalPrice: orderTotal,
+        status: order.status
       });
-    } catch (error) {
-      console.error("Payment creation error:", error);
       
-      // Extract detailed error message from server response
-      let errorMessage = "Не удалось создать ссылку на оплату. Попробуйте еще раз.";
-      if (error instanceof Error) {
-        // Extract backend error details from the thrown error message
-        const match = error.message.match(/Request failed: \d+ - (.+)/);
-        if (match) {
-          try {
-            const backendError = JSON.parse(match[1]);
-            errorMessage = backendError.error || backendError.message || match[1];
-          } catch {
-            errorMessage = match[1];
+      // Prepare order data with calculated total for checkout page
+      const orderWithTotal = { ...order, totalPrice: orderTotal };
+      
+      // Save order data to sessionStorage for checkout page
+      sessionStorage.setItem("currentOrder", JSON.stringify(orderWithTotal));
+      
+      // If order has a box, fetch and save box data
+      if (order.boxId) {
+        try {
+          const response = await fetch(`/api/boxes/${order.boxId}`);
+          if (response.ok) {
+            const boxData = await response.json();
+            sessionStorage.setItem("selectedBox", JSON.stringify(boxData));
           }
-        } else {
-          errorMessage = error.message;
+        } catch (error) {
+          console.error("Failed to fetch box data:", error);
+          // Continue with payment even if box data fetch fails
         }
       }
       
+      // Redirect to unified checkout page
+      setLocation("/checkout");
+      
+    } catch (error) {
+      console.error("Error preparing payment:", error);
       toast({
         title: "Ошибка",
-        description: errorMessage,
-        variant: "destructive"
+        description: "Не удалось подготовить данные для оплаты. Попробуйте еще раз.",
+        variant: "destructive",
       });
     } finally {
       setIsCreatingPayment(false);
@@ -441,7 +424,7 @@ export default function Profile() {
               {order.status === 'pending' && (
                 <div className="pt-4 border-t">
                   <Button
-                    onClick={() => createPayment(order)}
+                    onClick={() => handlePayment(order)}
                     disabled={isCreatingPayment}
                     className="w-full"
                     data-testid="button-pay-order"
