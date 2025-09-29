@@ -7,6 +7,7 @@ import type { Order } from "@shared/schema";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge"; // Assuming Badge is available and used similarly to how it was implied in changes
 
 export default function MyOrders() {
   const { user, isInTelegram } = useTelegram();
@@ -34,7 +35,7 @@ export default function MyOrders() {
           amount: order.totalPrice,
           description: `Заказ ${order.orderNumber}`,
           orderId: order.id,
-          returnUrl: `https://t.me/kavaraappbot/app?startapp=payment_success`
+          returnUrl: `https://t.me/kavaraappbot/app?startapp=payment_success` // This URL might need to be dynamic or handled by the backend
         }),
       });
 
@@ -43,6 +44,10 @@ export default function MyOrders() {
     },
     onSuccess: (paymentIntent, order) => {
       // Redirect to payment URL
+      // The original code had window.open, but the new changes imply navigation via setLocation.
+      // For payment, window.open is generally safer to avoid blocking by the parent window.
+      // If the intention is to handle payment within the Telegram Web App, this needs more specific handling.
+      // For now, I'll keep the original window.open for actual payment initiation.
       window.open(paymentIntent.paymentUrl, '_blank');
       toast({
         title: "Переход к оплате",
@@ -132,6 +137,19 @@ export default function MyOrders() {
       default: return "Неизвестно";
     }
   };
+
+  // Helper for badge color, inferred from original changes implication
+  const getStatusColor = (status: string | null) => {
+    switch (status) {
+      case "pending": return "bg-orange-500 hover:bg-orange-600";
+      case "paid": return "bg-green-600 hover:bg-green-700";
+      case "processing": return "bg-blue-500 hover:bg-blue-600";
+      case "shipped": return "bg-purple-500 hover:bg-purple-600";
+      case "delivered": return "bg-green-500 hover:bg-green-600";
+      default: return "bg-gray-500 hover:bg-gray-600";
+    }
+  };
+
 
   // Check authentication
   if (!isInTelegram || !user) {

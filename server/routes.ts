@@ -421,50 +421,79 @@ router.put("/api/orders/:orderId/payment-id", async (req, res) => {
   }
 });
 
-// YooMoney webhook endpoint for payment notifications
+// YooKassa webhook endpoint for payment notifications
 router.post("/api/yoomoney-webhook", async (req, res) => {
   try {
-    console.log("YooMoney webhook received:", req.body);
+    console.log("YooKassa webhook received:", req.body);
 
-    const { notification_type, operation_id, label } = req.body;
+    const { event, object } = req.body;
 
-    // Check for both card-incoming and p2p-incoming notifications
-    if ((notification_type === "p2p-incoming" || notification_type === "card-incoming") && label) {
-      console.log(`Received payment notification for payment ID: ${label}`);
+    // Handle YooKassa payment notifications
+    if (event === "payment.succeeded" && object) {
+      const { id: paymentId, status, amount, metadata } = object;
+      
+      console.log(`Received YooKassa payment notification:`, {
+        paymentId,
+        status,
+        amount: amount?.value,
+        metadata
+      });
 
-      // Update order status to paid using the payment label as order identifier
-      const order = await storage.updateOrderStatusByPaymentId(label, "paid");
+      if (status === "succeeded" && metadata?.order_id) {
+        const orderNumber = metadata.order_number || metadata.order_id;
+        
+        // Update order status to paid using the order number
+        const order = await storage.updateOrderStatusByPaymentId(orderNumber, "paid");
 
-      if (order) {
-        console.log(`Order ${label} marked as paid via YooMoney webhook`);
+        if (order) {
+          console.log(`Order ${orderNumber} marked as paid via YooKassa webhook`);
 
-        // Send admin notification about successful payment
-        const adminNotification = `💰 Новая оплата!
+          // Send admin notification about successful payment
+          const adminNotification = `💰 Новая оплата YooKassa!
 
 Заказ: ${order.orderNumber}
 Сумма: ${order.totalPrice}₽
+ID платежа: ${paymentId}
 Покупатель: ${order.customerName}
 Телефон: ${order.customerPhone}
 Email: ${order.customerEmail}
 Способ доставки: ${order.deliveryMethod}`;
 
-        // Send notification to admin Telegram
-        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: process.env.ADMIN_CHAT_ID || '-1002812810825',
-            text: adminNotification
-          })
-        });
+          // Send notification to admin Telegram
+          try {
+            await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: process.env.ADMIN_CHAT_ID || '-1002812810825',
+                text: adminNotification
+              })
+            });
+          } catch (telegramError) {
+            console.error("Error sending Telegram notification:", telegramError);
+          }
+        } else {
+          console.error(`Order not found for payment: ${orderNumber}`);
+        }
       }
     }
 
-    // Always respond with OK to YooMoney
+    // Handle legacy YooMoney notifications (if still needed)
+    const { notification_type, operation_id, label } = req.body;
+    if ((notification_type === "p2p-incoming" || notification_type === "card-incoming") && label) {
+      console.log(`Received legacy YooMoney payment notification for: ${label}`);
+      
+      const order = await storage.updateOrderStatusByPaymentId(label, "paid");
+      if (order) {
+        console.log(`Order ${label} marked as paid via legacy YooMoney webhook`);
+      }
+    }
+
+    // Always respond with OK
     res.status(200).send("OK");
   } catch (error) {
-    console.error("Error processing YooMoney webhook:", error);
-    res.status(200).send("OK"); // Still return OK to YooMoney to avoid retries
+    console.error("Error processing payment webhook:", error);
+    res.status(200).send("OK"); // Still return OK to avoid retries
   }
 });
 

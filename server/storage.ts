@@ -66,6 +66,10 @@ export interface IStorage {
   getOrdersByUser(userId: string): Promise<Order[]>;
   getAllOrders(): Promise<Order[]>;
   createOrder(order: CreateOrderDto): Promise<Order>;
+  updateOrderPaymentId(orderId: string, paymentId: string): Promise<Order | null>;
+  updateOrderStatus(orderNumber: string, status: string): Promise<Order | null>;
+  updateOrderStatusByPaymentId(paymentId: string, status: string): Promise<Order | null>;
+  getOrderByNumber(orderNumber: string): Promise<Order | null>;
 
   // Notifications
   createNotification(notification: CreateNotificationDto): Promise<Notification>;
@@ -101,6 +105,7 @@ export interface IStorage {
   getPromoCodeByCode(code: string): Promise<PromoCode | null>;
   updatePromoCodeStatus(id: string, isActive: boolean): Promise<PromoCode | null>;
   getOrdersByPromoCodeId(promoCodeId: string): Promise<Order[]>;
+  updateTrainerDiscount(trainerId: string, discountPercent: number): Promise<Trainer | null>;
 
   // Favorites System
   createFavorite(favorite: CreateFavoriteDto): Promise<any>;
@@ -128,6 +133,10 @@ export interface IStorage {
   removeProductFromBox(boxId: string, productId: string): Promise<boolean>;
   getBoxProducts(boxId: string): Promise<BoxProduct[]>;
   updateBoxProductQuantity(boxId: string, productId: string, quantity: number): Promise<BoxProduct | null>;
+
+  // Admin methods
+  getOrdersByUserId(userId: string): Promise<Order[]>;
+  getLoyaltyStatsByUserId(userId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -297,7 +306,7 @@ export class DatabaseStorage implements IStorage {
 
   async createBox(boxData: CreateBoxDto): Promise<Box> {
     console.log("💾 Storage.createBox - получены данные:", JSON.stringify(boxData, null, 2));
-    
+
     try {
       const box = this.boxRepository.create({
         name: boxData.name,
@@ -310,12 +319,12 @@ export class DatabaseStorage implements IStorage {
         isAvailable: boxData.isAvailable ?? true,
         sportTypes: boxData.sportTypes || [],
       });
-      
+
       console.log("💾 Объект бокса создан:", JSON.stringify(box, null, 2));
-      
+
       const savedBox = await this.boxRepository.save(box);
       console.log("💾 Бокс сохранен в БД:", savedBox.id);
-      
+
       return savedBox;
     } catch (error) {
       console.error("💾 Ошибка в Storage.createBox:", error);
@@ -326,7 +335,7 @@ export class DatabaseStorage implements IStorage {
   async updateBox(id: string, data: Partial<CreateBoxDto>): Promise<Box | null> {
     const box = await this.boxRepository.findOneBy({ id });
     if (!box) return null;
-    
+
     // Обновляем только предоставленные поля
     if (data.name !== undefined) box.name = data.name;
     if (data.description !== undefined) box.description = data.description;
@@ -337,7 +346,7 @@ export class DatabaseStorage implements IStorage {
     if (data.emoji !== undefined) box.emoji = data.emoji;
     if (data.isAvailable !== undefined) box.isAvailable = data.isAvailable;
     if (data.sportTypes !== undefined) box.sportTypes = data.sportTypes;
-    
+
     return await this.boxRepository.save(box);
   }
 
@@ -413,51 +422,8 @@ export class DatabaseStorage implements IStorage {
       cartItems: orderData.cartItems || null,
       status: "pending",
     });
-    
+
     return await this.orderRepository.save(order);
-  }
-
-  async createNotification(notificationData: CreateNotificationDto): Promise<Notification> {
-    const notification = this.notificationRepository.create({
-      userId: notificationData.userId,
-      boxId: notificationData.boxId,
-    });
-    return await this.notificationRepository.save(notification);
-  }
-
-  async getNotificationsByBox(boxId: string): Promise<Notification[]> {
-    return await this.notificationRepository.find({
-      where: { boxId },
-      order: { createdAt: "DESC" }
-    });
-  }
-
-  async updateOrderStatus(orderNumber: string, status: string): Promise<Order | null> {
-    const order = await this.orderRepository.findOne({
-      where: { orderNumber }
-    });
-
-    if (order) {
-      order.status = status;
-      return await this.orderRepository.save(order);
-    }
-    return null;
-  }
-
-  async updateOrderStatusByPaymentId(paymentId: string, status: string): Promise<Order | null> {
-    // Find order by matching payment ID stored in the order
-    const order = await this.orderRepository.findOne({
-      where: { paymentId }
-    });
-
-    if (order) {
-      console.log(`Found order ${order.orderNumber} for payment ID: ${paymentId}`);
-      order.status = status;
-      return await this.orderRepository.save(order);
-    } else {
-      console.log(`No order found for payment ID: ${paymentId}`);
-      return null;
-    }
   }
 
   async updateOrderPaymentId(orderId: string, paymentId: string): Promise<Order | null> {
@@ -470,6 +436,33 @@ export class DatabaseStorage implements IStorage {
       return await this.orderRepository.save(order);
     }
     return null;
+  }
+
+  async updateOrderStatus(orderNumber: string, status: string): Promise<Order | null> {
+    const order = await this.orderRepository.findOneBy({ orderNumber });
+    if (!order) return null;
+
+    order.status = status;
+    return await this.orderRepository.save(order);
+  }
+
+  async updateOrderStatusByPaymentId(paymentId: string, status: string): Promise<Order | null> {
+    // First try to find by payment ID
+    let order = await this.orderRepository.findOneBy({ paymentId });
+
+    // If not found, try to find by order number (for cases where paymentId is actually orderNumber)
+    if (!order) {
+      order = await this.orderRepository.findOneBy({ orderNumber: paymentId });
+    }
+
+    if (!order) {
+      console.error(`Order not found for payment ID: ${paymentId}`);
+      return null;
+    }
+
+    console.log(`Updating order ${order.orderNumber} status to ${status}`);
+    order.status = status;
+    return await this.orderRepository.save(order);
   }
 
   async getOrderByNumber(orderNumber: string): Promise<Order | null> {
@@ -517,6 +510,22 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
+  // Notifications
+  async createNotification(notificationData: CreateNotificationDto): Promise<Notification> {
+    const notification = this.notificationRepository.create({
+      userId: notificationData.userId,
+      boxId: notificationData.boxId,
+    });
+    return await this.notificationRepository.save(notification);
+  }
+
+  async getNotificationsByBox(boxId: string): Promise<Notification[]> {
+    return await this.notificationRepository.find({
+      where: { boxId },
+      order: { createdAt: "DESC" }
+    });
+  }
+
   // Loyalty System Methods
   async createLoyaltyTransaction(transactionData: CreateLoyaltyTransactionDto): Promise<LoyaltyTransaction> {
     const transaction = this.loyaltyTransactionRepository.create({
@@ -553,7 +562,7 @@ export class DatabaseStorage implements IStorage {
     const totalEarned = transactions
       .filter(t => t.type === 'earn' || t.type === 'referral_bonus' || t.type === 'referral_reward')
       .reduce((sum, t) => sum + t.points, 0);
-    
+
     const totalSpent = transactions
       .filter(t => t.type === 'spend')
       .reduce((sum, t) => sum + t.points, 0);
@@ -613,13 +622,13 @@ export class DatabaseStorage implements IStorage {
     let referralCode: string;
     let isUnique = false;
     let attempts = 0;
-    
+
     while (!isUnique && attempts < 10) {
       // Create a code from username or random string
       const baseCode = user.username || 'USER';
       const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
       referralCode = `${baseCode}${randomSuffix}`.toUpperCase();
-      
+
       const existingUser = await this.getUserByReferralCode(referralCode);
       if (!existingUser) {
         isUnique = true;
@@ -634,7 +643,7 @@ export class DatabaseStorage implements IStorage {
 
     user.referralCode = referralCode!;
     await this.userRepository.save(user);
-    
+
     return referralCode!;
   }
 
@@ -644,7 +653,7 @@ export class DatabaseStorage implements IStorage {
 
     referral.status = 'completed';
     referral.bonusAwarded = true;
-    
+
     return await this.referralRepository.save(referral);
   }
 
@@ -734,7 +743,7 @@ export class DatabaseStorage implements IStorage {
     const promoCode = await this.promoCodeRepository.findOneBy({ 
       code: code.toUpperCase() 
     });
-    
+
     if (!promoCode) return null;
 
     promoCode.usedCount += 1;
@@ -763,7 +772,7 @@ export class DatabaseStorage implements IStorage {
   async updatePromoCodeStatus(id: string, isActive: boolean): Promise<PromoCode | null> {
     const promoCode = await this.promoCodeRepository.findOneBy({ id });
     if (!promoCode) return null;
-    
+
     promoCode.isActive = isActive;
     return await this.promoCodeRepository.save(promoCode);
   }
@@ -779,17 +788,17 @@ export class DatabaseStorage implements IStorage {
   async updateTrainerDiscount(trainerId: string, discountPercent: number): Promise<Trainer | null> {
     const trainer = await this.trainerRepository.findOne({ where: { id: trainerId } });
     if (!trainer) return null;
-    
+
     trainer.discountPercent = discountPercent;
     await this.trainerRepository.save(trainer);
-    
+
     // Update associated promo code discount
     const promoCode = await this.promoCodeRepository.findOne({ where: { trainerId } });
     if (promoCode) {
       promoCode.discountPercent = discountPercent;
       await this.promoCodeRepository.save(promoCode);
     }
-    
+
     return trainer;
   }
 
@@ -805,7 +814,7 @@ export class DatabaseStorage implements IStorage {
     const transactions = await this.loyaltyTransactionRepository.find({
       where: { userId }
     });
-    
+
     const referrals = await this.referralRepository.find({
       where: { referrerId: userId }
     });
@@ -834,7 +843,7 @@ export class DatabaseStorage implements IStorage {
     const existing = await this.favoriteRepository.findOne({
       where: { userId: favoriteData.userId, boxId: favoriteData.boxId }
     });
-    
+
     if (existing) {
       return existing;
     }
@@ -874,12 +883,12 @@ export class DatabaseStorage implements IStorage {
     // Determine item type based on what we're adding
     const isProduct = itemType === "product" || await this.getProduct(itemId);
     const type = isProduct ? "product" : "box";
-    
+
     // Check if item already exists in cart with same size and type
     const whereCondition = type === "product" 
       ? { userId, productId: itemId, selectedSize, itemType: type }
       : { userId, boxId: itemId, selectedSize, itemType: type };
-      
+
     const existingItem = await this.cartRepository.findOne({
       where: whereCondition
     });
@@ -996,7 +1005,7 @@ export class DatabaseStorage implements IStorage {
     const boxProduct = await this.boxProductRepository.findOne({
       where: { boxId, productId }
     });
-    
+
     if (!boxProduct) return null;
 
     boxProduct.quantity = quantity;

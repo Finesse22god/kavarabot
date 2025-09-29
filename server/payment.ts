@@ -61,12 +61,13 @@ export async function createPaymentIntent({
       },
       confirmation: {
         type: "redirect",
-        return_url: returnUrl || "https://your-app.com/success"
+        return_url: returnUrl || `https://ffda1710-e4e3-438f-aee0-891e4f004ca7-00-2fhb8prkicvnj.kirk.replit.dev/payment-success`
       },
       capture: true,
       description: description.substring(0, 128), // Ограничиваем длину описания
       metadata: {
-        order_id: orderId
+        order_id: orderId,
+        order_number: orderId // Добавляем номер заказа для удобства
       }
     };
 
