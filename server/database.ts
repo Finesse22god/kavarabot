@@ -32,8 +32,10 @@ export async function initializeDatabase() {
     await AppDataSource.initialize();
     console.log("Database connected successfully with TypeORM");
 
-    // Seed initial data using TypeORM
-    await seedDatabase();
+    // Seed initial data in background (non-blocking)
+    seedDatabase().catch(error => {
+      console.error("Database seeding failed (non-critical):", error);
+    });
   } catch (error) {
     console.error("Database connection failed:", error);
     throw error;
@@ -41,19 +43,31 @@ export async function initializeDatabase() {
 }
 
 async function seedDatabase() {
-  const boxRepository = AppDataSource.getRepository(Box);
-  const productRepository = AppDataSource.getRepository(Product);
-
-  const existingBoxes = await boxRepository.count();
-  const existingProducts = await productRepository.count();
+  let boxRepository, productRepository, existingBoxes, existingProducts;
   
-  if (existingBoxes > 0 && existingProducts > 0) {
-    console.log("Database already seeded");
-    return;
+  try {
+    boxRepository = AppDataSource.getRepository(Box);
+    productRepository = AppDataSource.getRepository(Product);
+
+    // Quick check with limits to avoid counting all records
+    [existingBoxes, existingProducts] = await Promise.all([
+      boxRepository.find({ take: 1 }),
+      productRepository.find({ take: 1 })
+    ]);
+    
+    if (existingBoxes.length > 0 && existingProducts.length > 0) {
+      console.log("Database already seeded (skipping)");
+      return;
+    }
+
+    console.log("Starting database seeding...");
+  } catch (error) {
+    console.error("Database seeding check failed:", error);
+    return; // Skip seeding if check fails
   }
 
   // Seed products first
-  if (existingProducts === 0) {
+  if (existingProducts.length === 0) {
     const products = [
       {
         name: "KAVARA Спортивная футболка",

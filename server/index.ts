@@ -8,21 +8,79 @@ import { initializeDatabase } from './database.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Global database initialization state
+let dbInitialized = false;
+let dbInitPromise: Promise<void> | null = null;
+
+async function initializeDatabaseLazy() {
+  if (dbInitialized) return;
+  if (dbInitPromise) return dbInitPromise;
+  
+  dbInitPromise = initializeDatabase().then(() => {
+    dbInitialized = true;
+    console.log('✅ Database initialization completed');
+  }).catch((error) => {
+    console.error('❌ Database initialization failed:', error);
+    dbInitPromise = null; // Allow retry
+    throw error;
+  });
+  
+  return dbInitPromise;
+}
+
 async function createServer() {
   const app = express();
   const port = Number(process.env.PORT) || 5000;
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // Initialize TypeORM database
-  await initializeDatabase();
+  // Start database initialization in background (non-blocking)
+  initializeDatabaseLazy().catch(console.error);
 
   // Middleware - увеличиваем лимиты для загрузки файлов
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-  // API Routes
+  // Health check endpoints - must be before database initialization
+  app.get('/health', (req, res) => {
+    res.status(200).json({ 
+      status: 'ok', 
+      message: 'KAVARA server is running',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
   app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'KAVARA API is running' });
+    res.status(200).json({ 
+      status: 'ok', 
+      message: 'KAVARA API is running',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
+  // Readiness check - simple endpoint for deployment health checks
+  app.get('/ready', (req, res) => {
+    res.status(200).send('OK');
+  });
+
+  // Database readiness check
+  app.get('/db-ready', async (req, res) => {
+    try {
+      if (dbInitialized) {
+        res.status(200).json({ status: 'ready', message: 'Database is initialized' });
+      } else {
+        // Try to initialize if not already done
+        await initializeDatabaseLazy();
+        res.status(200).json({ status: 'ready', message: 'Database initialized successfully' });
+      }
+    } catch (error) {
+      res.status(503).json({ 
+        status: 'not_ready', 
+        message: 'Database initialization failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   });
   
   // Connect all routes
