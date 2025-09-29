@@ -158,7 +158,13 @@ export default function Checkout() {
         <div className="flex items-center space-x-3">
           <button 
             className="p-2" 
-            onClick={() => setLocation("/order")}
+            onClick={() => {
+              if (order?.orderNumber) {
+                setLocation(`/order-details?order=${order.orderNumber}`);
+              } else {
+                setLocation("/order");
+              }
+            }}
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
@@ -201,12 +207,12 @@ export default function Checkout() {
                   <CreditCard className="w-8 h-8 text-gray-400" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Заказ #{order.orderNumber}</h3>
+                  <h3 className="font-semibold">Товары из корзины</h3>
                   <p className="text-sm text-gray-600">
                     {order.cartItems ? (
-                      `${JSON.parse(order.cartItems).length} товаров в заказе`
+                      `${JSON.parse(order.cartItems).length} товаров`
                     ) : (
-                      'Товары для оплаты'
+                      '1 товаров'
                     )}
                   </p>
                 </div>
