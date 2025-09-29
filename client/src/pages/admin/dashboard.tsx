@@ -29,6 +29,9 @@ interface Order {
   deliveryAddress?: string;
   createdAt: string;
   boxId?: string;
+  productId?: string;
+  cartItems?: string;
+  selectedSize?: string;
   boxName?: string;
   userInfo?: {
     username?: string;
@@ -50,6 +53,30 @@ interface User {
 
 interface BoxProductsStats {
   totalProductsInBoxes: number;
+}
+
+// Helper function to get brief order content description
+function getOrderContentBrief(order: Order): string {
+  if (order.boxName) {
+    return `Готовый бокс: ${order.boxName}`;
+  }
+  if (order.boxId) {
+    return `Бокс (ID: ${order.boxId})`;
+  }
+  if (order.productId) {
+    return `Товар (ID: ${order.productId})`;
+  }
+  if (order.cartItems) {
+    try {
+      const items = JSON.parse(order.cartItems);
+      if (items && items.length > 0) {
+        return `Корзина (${items.length} товаров)`;
+      }
+    } catch (e) {
+      // Ignore JSON parse errors
+    }
+  }
+  return 'Состав не указан';
 }
 
 export default function AdminDashboard() {
@@ -585,6 +612,9 @@ export default function AdminDashboard() {
                                   <p className="font-medium">#{order.orderNumber}</p>
                                   <p className="text-sm text-gray-600">
                                     {order.customerName || order.userInfo?.firstName + ' ' + order.userInfo?.lastName || 'Неизвестно'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {getOrderContentBrief(order)}
                                   </p>
                                 </div>
                                 <Badge variant={order.status === 'paid' ? 'default' : 'secondary'}>

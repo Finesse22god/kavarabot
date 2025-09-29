@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Phone, Mail, MapPin, Package, CreditCard } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, MapPin, Package, CreditCard, ShoppingBag } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { Box, Product } from "@shared/schema";
 
 interface Order {
   id: string;
@@ -16,6 +18,9 @@ interface Order {
   deliveryAddress?: string;
   createdAt: string;
   boxId?: string;
+  productId?: string;
+  cartItems?: string;
+  selectedSize?: string;
   boxName?: string;
   promoCode?: string;
   promoCodeDiscount?: number;
@@ -31,6 +36,194 @@ interface Order {
     quantity: number;
     price: number;
   }>;
+}
+
+// Component to display order items in admin panel
+function AdminOrderItems({ order }: { order: Order }) {
+  const { data: box } = useQuery<Box>({
+    queryKey: [`/api/boxes/${order.boxId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/boxes/${order.boxId}`);
+      if (!response.ok) throw new Error("Failed to fetch box");
+      return response.json();
+    },
+    enabled: !!order.boxId,
+  });
+
+  const { data: product } = useQuery<Product>({
+    queryKey: [`/api/products/${order.productId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${order.productId}`);
+      if (!response.ok) throw new Error("Failed to fetch product");
+      return response.json();
+    },
+    enabled: !!order.productId,
+  });
+
+  // Parse cart items if available
+  const cartItems = order.cartItems ? JSON.parse(order.cartItems) : null;
+
+  return (
+    <div className="space-y-4">
+      {/* Single Box Order */}
+      {box && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+            {box.imageUrl ? (
+              <img 
+                src={box.imageUrl} 
+                alt={box.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ShoppingBag className="w-8 h-8 text-gray-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{box.name}</h3>
+            <p className="text-gray-600 text-sm mt-1">{box.description}</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Готовый бокс
+              </Badge>
+              <span className="font-medium">
+                {Number(box.price).toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+            {order.selectedSize && (
+              <p className="text-sm text-gray-500 mt-1">
+                Размер: {order.selectedSize}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Single Product Order */}
+      {product && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+            {product.imageUrl ? (
+              <img 
+                src={product.imageUrl} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package className="w-8 h-8 text-gray-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{product.name}</h3>
+            <p className="text-gray-600 text-sm mt-1">{product.description}</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Товар
+              </Badge>
+              <span className="font-medium">
+                {product.price.toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+            {product.brand && (
+              <p className="text-sm text-gray-500">
+                Бренд: {product.brand}
+              </p>
+            )}
+            {product.color && (
+              <p className="text-sm text-gray-500">
+                Цвет: {product.color}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cart Items */}
+      {cartItems && cartItems.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-700">
+            Товары из корзины ({cartItems.length}):
+          </p>
+          {cartItems.map((item: any, index: number) => (
+            <div key={index} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium">{item.name || `Товар ${index + 1}`}</h4>
+                {item.description && (
+                  <p className="text-gray-600 text-sm">{item.description}</p>
+                )}
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-sm text-gray-500">
+                    Количество: {item.quantity || 1}
+                  </span>
+                  <span className="font-medium text-sm">
+                    {item.price ? `${item.price}₽` : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Legacy items support */}
+      {!box && !product && (!cartItems || cartItems.length === 0) && order.items && order.items.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-700">
+            Товары в заказе ({order.items.length}):
+          </p>
+          {order.items.map((item, index) => (
+            <div key={index} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium">{item.name}</h4>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-sm text-gray-500">
+                    Количество: {item.quantity}
+                  </span>
+                  <span className="font-medium text-sm">{item.price}₽</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Legacy box name support */}
+      {!box && !product && (!cartItems || cartItems.length === 0) && (!order.items || order.items.length === 0) && order.boxName && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+            <ShoppingBag className="w-8 h-8 text-gray-400" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{order.boxName}</h3>
+            <p className="text-gray-600 text-sm mt-1">Готовый набор KAVARA</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Готовый бокс (legacy)
+              </Badge>
+              <span className="font-medium">
+                {order.totalPrice.toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No items found */}
+      {!box && !product && (!cartItems || cartItems.length === 0) && (!order.items || order.items.length === 0) && !order.boxName && (
+        <div className="text-center py-8">
+          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 mb-2">Информация о составе заказа недоступна</p>
+          <p className="text-sm text-gray-400">ID заказа: {order.id}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface OrderDetailsProps {
@@ -210,46 +403,7 @@ export default function OrderDetails({ order, onBack }: OrderDetailsProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {order.boxName ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <div>
-                    <p className="font-semibold">{order.boxName}</p>
-                    <p className="text-sm text-gray-600">Готовый набор KAVARA</p>
-                  </div>
-                  <p className="font-semibold">{order.totalPrice}₽</p>
-                </div>
-                <div className="pt-3 border-t">
-                  <div className="flex justify-between items-center">
-                    <p className="text-lg font-bold">Итого:</p>
-                    <p className="text-lg font-bold">{order.totalPrice}₽</p>
-                  </div>
-                </div>
-              </div>
-            ) : order.items && order.items.length > 0 ? (
-              <div className="space-y-3">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                    <div>
-                      <p className="font-semibold">{item.name}</p>
-                      <p className="text-sm text-gray-600">Количество: {item.quantity}</p>
-                    </div>
-                    <p className="font-semibold">{item.price}₽</p>
-                  </div>
-                ))}
-                <div className="pt-3 border-t">
-                  <div className="flex justify-between items-center">
-                    <p className="text-lg font-bold">Итого:</p>
-                    <p className="text-lg font-bold">{order.totalPrice}₽</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-500 mb-2">Состав заказа не указан</p>
-                <p className="text-sm text-gray-400">ID заказа: {order.id}</p>
-              </div>
-            )}
+            <AdminOrderItems order={order} />
           </CardContent>
         </Card>
       </div>
