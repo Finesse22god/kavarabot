@@ -109,9 +109,8 @@ export default function Catalog() {
 
   // Фильтрация товаров
   const filteredItems = catalogItems?.filter(item => {
-    // Фильтр по категории
-    const categoryMatch = selectedCategory === "Все категории" || 
-      ((item as any).category === selectedCategory);
+    // Фильтр по категории - пока отключен, так как товары имеют другие категории (clothing, accessories)
+    const categoryMatch = selectedCategory === "Все категории" || true; // Показать все товары пока фильтр не настроен
     
     // Фильтр по поиску
     const searchMatch = searchQuery === "" || 
@@ -122,7 +121,7 @@ export default function Catalog() {
   }) || [];
 
   // Show loading while data is being fetched
-  if (!catalogItems || (telegramUser?.id && !dbUser)) {
+  if (!catalogItems) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -133,9 +132,11 @@ export default function Catalog() {
     );
   }
 
+  // Debug info - removed in production
+
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-20">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center space-x-4">
@@ -266,13 +267,18 @@ export default function Catalog() {
       {/* Products Grid */}
       <div className="p-6">
         {filteredItems.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 mb-8">
             {filteredItems.map((item) => (
               <BoxCard
                 key={item.id}
                 box={item}
                 variant="default"
                 userId={dbUser?.id}
+                onAddToCart={(item) => {
+                  // Add to cart logic
+                  console.log('Add to cart:', item.name);
+                  // TODO: Implement actual cart functionality
+                }}
               />
             ))}
           </div>
