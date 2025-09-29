@@ -27,7 +27,6 @@ export default function AdminCreateBox() {
     description: "",
     price: "",
     originalPrice: "",
-    category: "",
     imageUrl: "",
     contents: "",
     availableSizes: "",
@@ -125,7 +124,6 @@ export default function AdminCreateBox() {
       name: boxData.name,
       description: boxData.description,
       price: parseFloat(boxData.price),
-      category: boxData.category,
       imageUrl: boxData.imageUrl,
       sportTypes: boxData.sportTypes,
       productIds: boxData.selectedProducts,
@@ -150,29 +148,14 @@ export default function AdminCreateBox() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Название бокса</Label>
-                  <Input
-                    id="name"
-                    value={boxData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="category">Категория</Label>
-                  <Select value={boxData.category} onValueChange={(value) => handleInputChange("category", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Выберите категорию" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ready">Готовый бокс</SelectItem>
-                      <SelectItem value="personal">Персональный бокс</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="name">Название бокса</Label>
+                <Input
+                  id="name"
+                  value={boxData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  required
+                />
               </div>
 
               <div>
