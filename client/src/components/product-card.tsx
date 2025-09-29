@@ -76,6 +76,7 @@ export default function ProductCard({
                       <button 
                         className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
                         onClick={(e) => e.stopPropagation()}
+                        data-testid="button-size-guide"
                       >
                         <Info className="w-3 h-3" />
                         Размерная сетка
@@ -122,6 +123,7 @@ export default function ProductCard({
                           ? "border-black bg-black text-white"
                           : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                       }`}
+                      data-testid={`button-size-${size.toLowerCase()}`}
                     >
                       {size}
                     </button>

@@ -105,6 +105,58 @@ export default function Catalog() {
     },
   });
 
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ userId, productId, quantity, selectedSize, itemType }: {
+      userId: string;
+      productId: string;
+      quantity: number;
+      selectedSize?: string;
+      itemType: string;
+    }) => {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          productId,
+          quantity,
+          selectedSize,
+          itemType,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add to cart");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      // Показываем уведомление об успехе
+      toast({
+        title: "Добавлено в корзину",
+        description: `Товар ${variables.selectedSize ? `(размер ${variables.selectedSize})` : ""} добавлен в корзину`,
+      });
+      
+      // Инвалидируем кэш корзины для обновления счетчика
+      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
+      
+      // Автоматически открываем корзину
+      setTimeout(() => {
+        setLocation("/cart");
+      }, 500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось добавить товар в корзину",
+        variant: "destructive",
+      });
+    },
+  });
+
 
 
 
@@ -290,9 +342,27 @@ export default function Catalog() {
                 product={item as Product}
                 variant="default"
                 userId={dbUser?.id}
-                onAddToCart={(product) => {
-                  console.log('Add product to cart:', product.name);
-                  // TODO: Implement actual cart functionality
+                onAddToCart={(product, selectedSize) => {
+                  if (!dbUser?.id) {
+                    toast({
+                      title: "Ошибка авторизации",
+                      description: "Необходимо войти в систему для добавления товаров в корзину",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+
+                  // Определяем тип товара (product vs box) на основе наличия sizes
+                  const itemType = product.sizes && product.sizes.length > 0 ? "product" : "box";
+                  
+                  // Добавляем товар в корзину
+                  addToCartMutation.mutate({
+                    userId: dbUser.id,
+                    productId: product.id,
+                    quantity: 1,
+                    selectedSize: selectedSize || undefined,
+                    itemType: itemType
+                  });
                 }}
               />
             ))}
