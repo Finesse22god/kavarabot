@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 export default function AdminCreateBox() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  // Check if admin is authenticated
+  useEffect(() => {
+    const token = localStorage.getItem("adminToken");
+    console.log("🔑 Проверка авторизации:", token ? "ТОКЕН НАЙДЕН" : "ТОКЕН НЕ НАЙДЕН");
+    if (!token) {
+      setLocation("/admin/login");
+    }
+  }, [setLocation]);
   const [boxData, setBoxData] = useState({
     name: "",
     description: "",
@@ -76,6 +85,12 @@ export default function AdminCreateBox() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Отладочная информация
+    const token = localStorage.getItem("adminToken");
+    console.log("🔍 Отладка создания бокса:");
+    console.log("Токен из localStorage:", token ? "ЕСТЬ" : "НЕТ");
+    console.log("Данные формы:", boxData);
+    
     if (!boxData.name || !boxData.price) {
       toast({
         title: "Ошибка",
@@ -97,6 +112,7 @@ export default function AdminCreateBox() {
       isAvailable: true,
     };
 
+    console.log("Отправляемые данные:", createData);
     createBoxMutation.mutate(createData);
   };
 
