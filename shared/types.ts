@@ -50,6 +50,7 @@ export interface Product {
   description?: string;
   price: number;
   imageUrl?: string;
+  images?: string[];
   category?: string;
   brand?: string;
   color?: string;
@@ -63,6 +64,7 @@ export interface CreateProductDto {
   description?: string;
   price: number;
   imageUrl?: string;
+  images?: string[];
   category?: string;
   brand?: string;
   color?: string;
