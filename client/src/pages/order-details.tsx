@@ -1,13 +1,156 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Package, Clock, CheckCircle, Truck, RefreshCw, CreditCard } from "lucide-react";
+import { ArrowLeft, Package, Clock, CheckCircle, Truck, RefreshCw, CreditCard, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useToast } from "@/hooks/use-toast";
-import type { Order } from "@shared/schema";
+import type { Order, Box, Product } from "@shared/schema";
+
+// Component to display order items (box or individual products)
+function OrderItems({ order }: { order: Order }) {
+  const { data: box } = useQuery<Box>({
+    queryKey: [`/api/boxes/${order.boxId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/boxes/${order.boxId}`);
+      if (!response.ok) throw new Error("Failed to fetch box");
+      return response.json();
+    },
+    enabled: !!order.boxId,
+  });
+
+  const { data: product } = useQuery<Product>({
+    queryKey: [`/api/products/${order.productId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${order.productId}`);
+      if (!response.ok) throw new Error("Failed to fetch product");
+      return response.json();
+    },
+    enabled: !!order.productId,
+  });
+
+  // Parse cart items if available
+  const cartItems = order.cartItems ? JSON.parse(order.cartItems) : null;
+
+  return (
+    <div className="space-y-4">
+      {/* Single Box Order */}
+      {box && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+            {box.imageUrl ? (
+              <img 
+                src={box.imageUrl} 
+                alt={box.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ShoppingBag className="w-8 h-8 text-gray-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{box.name}</h3>
+            <p className="text-gray-600 text-sm mt-1">{box.description}</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Готовый бокс
+              </Badge>
+              <span className="font-medium">
+                {Number(box.price).toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+            {order.selectedSize && (
+              <p className="text-sm text-gray-500 mt-1">
+                Размер: {order.selectedSize}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Single Product Order */}
+      {product && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+            {product.imageUrl ? (
+              <img 
+                src={product.imageUrl} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package className="w-8 h-8 text-gray-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{product.name}</h3>
+            <p className="text-gray-600 text-sm mt-1">{product.description}</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Товар
+              </Badge>
+              <span className="font-medium">
+                {product.price.toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+            {product.brand && (
+              <p className="text-sm text-gray-500">
+                Бренд: {product.brand}
+              </p>
+            )}
+            {product.color && (
+              <p className="text-sm text-gray-500">
+                Цвет: {product.color}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cart Items */}
+      {cartItems && cartItems.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-700">
+            Товары из корзины ({cartItems.length}):
+          </p>
+          {cartItems.map((item: any, index: number) => (
+            <div key={index} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-gray-400" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium">{item.name || `Товар ${index + 1}`}</h4>
+                {item.description && (
+                  <p className="text-gray-600 text-sm">{item.description}</p>
+                )}
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-sm text-gray-500">
+                    Количество: {item.quantity || 1}
+                  </span>
+                  <span className="font-medium text-sm">
+                    {item.price ? `${item.price}₽` : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* No items found */}
+      {!box && !product && (!cartItems || cartItems.length === 0) && (
+        <div className="text-center py-8">
+          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600">
+            Информация о составе заказа недоступна
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function OrderDetails() {
   const [, setLocation] = useLocation();
@@ -302,18 +445,12 @@ export default function OrderDetails() {
         </Card>
 
         {/* Order Items */}
-        {/* Note: This would require additional API to fetch order items */}
         <Card>
           <CardHeader>
             <CardTitle>Состав заказа</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">
-                Детали товаров в заказе будут добавлены в следующем обновлении
-              </p>
-            </div>
+            <OrderItems order={order} />
           </CardContent>
         </Card>
 
