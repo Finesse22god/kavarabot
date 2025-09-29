@@ -332,15 +332,18 @@ export default function OrderDetails() {
     if (!orderTotal || orderTotal <= 0) {
       toast({
         title: "Ошибка",
-        description: "Не удается определить стоимость заказа",
+        description: "Не удается определить стоимость заказа. Обратитесь в поддержку.",
         variant: "destructive",
       });
       return;
     }
     
-    // Use calculated total for payment
-    const orderWithTotal = { ...order, totalPrice: orderTotal };
-    paymentMutation.mutate(orderWithTotal);
+    // Show confirmation before payment
+    if (window.confirm(`Оплатить заказ ${order.orderNumber} на сумму ${orderTotal.toLocaleString('ru-RU')}₽?`)) {
+      // Use calculated total for payment
+      const orderWithTotal = { ...order, totalPrice: orderTotal };
+      paymentMutation.mutate(orderWithTotal);
+    }
   };
 
   const getStatusIcon = (status: string | null) => {
@@ -494,15 +497,33 @@ export default function OrderDetails() {
             {/* Payment Button for Pending Orders */}
             {order.status === "pending" && (
               <div className="mt-4 pt-4 border-t">
-                <Button
-                  onClick={() => handlePayment(order)}
-                  disabled={paymentMutation.isPending}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  data-testid={`button-pay-order-details-${order.orderNumber}`}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  {paymentMutation.isPending ? "Создание платежа..." : "Оплатить заказ"}
-                </Button>
+                <div className="space-y-3">
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800 font-medium">
+                      💳 Заказ ожидает оплаты
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-1">
+                      Завершите оплату, чтобы мы начали обработку вашего заказа
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handlePayment(order)}
+                    disabled={paymentMutation.isPending}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3"
+                    size="lg"
+                    data-testid={`button-pay-order-details-${order.orderNumber}`}
+                  >
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    {paymentMutation.isPending ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                        Создание платежа...
+                      </>
+                    ) : (
+                      `Оплатить ${calculateOrderTotal(order).toLocaleString('ru-RU')}₽`
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

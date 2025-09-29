@@ -13,7 +13,7 @@ export default function MyOrders() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
   const { data: orders, isLoading, refetch } = useQuery({
     queryKey: ["/api/orders/user", user?.id],
     queryFn: async () => {
@@ -65,7 +65,7 @@ export default function MyOrders() {
     }
 
     let total = 0;
-    
+
     // Try to calculate from cart items first
     if (order.cartItems) {
       try {
@@ -78,7 +78,7 @@ export default function MyOrders() {
         console.error('Error parsing cart items:', error);
       }
     }
-    
+
     // Fallback to box or product price from the order relation
     // Note: We don't have access to box/product here, but the server should handle this
     // If server-side calculation fails, we return the current totalPrice (which might be 0)
@@ -87,7 +87,7 @@ export default function MyOrders() {
 
   const handlePayment = (order: Order) => {
     const orderTotal = calculateOrderTotal(order);
-    
+
     if (!orderTotal || orderTotal <= 0) {
       toast({
         title: "Ошибка",
@@ -96,7 +96,7 @@ export default function MyOrders() {
       });
       return;
     }
-    
+
     // Use calculated total for payment
     const orderWithTotal = { ...order, totalPrice: orderTotal };
     paymentMutation.mutate(orderWithTotal);
@@ -105,7 +105,7 @@ export default function MyOrders() {
   const currentOrders = orders?.filter(order => 
     order.status === "pending" || order.status === "paid" || order.status === "processing" || order.status === "shipped"
   ) || [];
-  
+
   const historyOrders = orders?.filter(order => 
     order.status === "delivered" || order.status === "cancelled"
   ) || [];
@@ -162,7 +162,7 @@ export default function MyOrders() {
           <span className="text-sm font-medium">{getStatusText(order.status)}</span>
         </div>
       </div>
-      
+
       <div className="mb-3">
         <p className="text-sm text-gray-600">Клиент: {order.customerName}</p>
         <p className="text-sm text-gray-600">Доставка: {order.deliveryMethod}</p>
@@ -172,12 +172,19 @@ export default function MyOrders() {
               variant="default"
               size="sm"
               onClick={() => handlePayment(order)}
-              className="text-xs bg-green-600 hover:bg-green-700"
+              className="text-xs bg-green-600 hover:bg-green-700 font-semibold"
               disabled={paymentMutation.isPending}
               data-testid={`button-pay-order-${order.orderNumber}`}
             >
               <CreditCard className="w-3 h-3 mr-1" />
-              {paymentMutation.isPending ? "Загружается..." : "Оплатить заказ"}
+              {paymentMutation.isPending ? (
+                <>
+                  <div className="animate-spin w-2 h-2 border border-white border-t-transparent rounded-full mr-1" />
+                  Загружается...
+                </>
+              ) : (
+                `Оплатить ${calculateOrderTotal(order).toLocaleString('ru-RU')}₽`
+              )}
             </Button>
           )}
           <Button
@@ -249,7 +256,7 @@ export default function MyOrders() {
             <TabsTrigger value="current">Текущие заказы</TabsTrigger>
             <TabsTrigger value="history">История</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="current" className="mt-4 space-y-4">
             {currentOrders.length > 0 ? (
               currentOrders.map((order) => (
@@ -265,7 +272,7 @@ export default function MyOrders() {
               </div>
             )}
           </TabsContent>
-          
+
           <TabsContent value="history" className="mt-4 space-y-4">
             {historyOrders.length > 0 ? (
               historyOrders.map((order) => (
