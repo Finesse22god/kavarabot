@@ -26,80 +26,35 @@ export interface PaymentIntent {
   orderId: string;
 }
 
-// Create payment intent for YooMoney
-export async function createPaymentIntent({
-  amount,
-  description,
-  orderId,
-  returnUrl
-}: {
-  amount: number;
-  description: string;
-  orderId: string;
-  returnUrl?: string;
-}) {
-  try {
-    console.log("Creating YooKassa payment:", { amount, description, orderId });
+// Create payment intent for YooMoney P2P
+export async function createPaymentIntent(paymentData: PaymentData): Promise<PaymentIntent> {
+  const paymentId = uuidv4();
+  
+  // For YooMoney P2P, we create a payment form URL
+  const paymentUrl = createPaymentFormUrl({
+    receiver: process.env.YOOMONEY_WALLET || '4100119160773859',
+    'quickpay-form': 'shop',
+    targets: paymentData.description,
+    'paymentType': 'AC',
+    sum: paymentData.amount,
+    'formcomment': paymentData.orderId,
+    'short-dest': paymentData.description,
+    label: paymentId,
+    successURL: `https://t.me/kavaraappbot/app?startapp=payment_success`,
+    'need-fio': false,
+    'need-email': false,
+    'need-phone': false,
+    'need-address': false
+  });
 
-    // Валидация параметров
-    if (!process.env.YOOMONEY_SHOP_ID || !process.env.YOOMONEY_SECRET_KEY) {
-      throw new Error("YooMoney credentials not configured");
-    }
-
-    if (amount <= 0) {
-      throw new Error("Amount must be greater than 0");
-    }
-
-    if (amount > 100000) {
-      throw new Error("Amount exceeds maximum limit");
-    }
-
-    const paymentData = {
-      amount: {
-        value: amount.toFixed(2),
-        currency: "RUB"
-      },
-      confirmation: {
-        type: "redirect",
-        return_url: returnUrl || `https://ffda1710-e4e3-438f-aee0-891e4f004ca7-00-2fhb8prkicvnj.kirk.replit.dev/payment-success`
-      },
-      capture: true,
-      description: description.substring(0, 128), // Ограничиваем длину описания
-      metadata: {
-        order_id: orderId,
-        order_number: orderId // Добавляем номер заказа для удобства
-      }
-    };
-
-    console.log("Payment data:", JSON.stringify(paymentData, null, 2));
-
-    const authHeader = `Basic ${Buffer.from(`${process.env.YOOMONEY_SHOP_ID}:${process.env.YOOMONEY_SECRET_KEY}`).toString("base64")}`;
-
-    const response = await fetch("https://api.yookassa.ru/v3/payments", {
-      method: "POST",
-      headers: {
-        "Authorization": authHeader,
-        "Content-Type": "application/json",
-        "Idempotence-Key": `${orderId}_${Date.now()}` // Уникальный ключ
-      },
-      body: JSON.stringify(paymentData)
-    });
-
-    console.log("YooKassa response status:", response.status);
-
-    const result = await response.json();
-    console.log("YooKassa response:", result);
-
-    if (!response.ok) {
-      console.error("Payment creation failed:", result);
-      throw new Error(result.description || `Payment creation failed: ${response.status}`);
-    }
-
-    return result;
-  } catch (error) {
-    console.error("Payment creation error:", error);
-    throw error;
-  }
+  return {
+    id: paymentId,
+    amount: paymentData.amount,
+    status: 'pending',
+    paymentUrl,
+    description: paymentData.description,
+    orderId: paymentData.orderId
+  };
 }
 
 // Generate YooMoney payment form URL
