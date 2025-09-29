@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft, Filter, ShoppingCart } from "lucide-react";
 import { useTelegram } from "@/hooks/use-telegram";
 import BoxCard from "@/components/box-card";
+import ProductCard from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -121,12 +122,26 @@ export default function Catalog() {
   }) || [];
 
   // Show loading while data is being fetched
-  if (!catalogItems) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Загружаем каталог...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if fetch failed
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Ошибка загрузки каталога</p>
+          <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+            Попробовать снова
+          </button>
         </div>
       </div>
     );
@@ -266,29 +281,17 @@ export default function Catalog() {
 
       {/* Products Grid */}
       <div className="p-6">
-        {/* DEBUG INFO */}
-        <div className="bg-yellow-100 border-2 border-yellow-400 p-4 mb-4 rounded">
-          <h3 className="font-bold text-yellow-800">🔍 ОТЛАДКА ТОВАРОВ:</h3>
-          <p>catalogItems: {catalogItems?.length || 0}</p>
-          <p>filteredItems: {filteredItems.length}</p>
-          <p>selectedCategory: {selectedCategory}</p>
-          <p>searchQuery: "{searchQuery}"</p>
-          {filteredItems.length > 0 && (
-            <p>Первый товар: {filteredItems[0]?.name}</p>
-          )}
-        </div>
         
         {filteredItems.length > 0 ? (
           <div className="space-y-6 mb-8">
             {filteredItems.map((item) => (
-              <BoxCard
+              <ProductCard
                 key={item.id}
-                box={item}
+                product={item as Product}
                 variant="default"
                 userId={dbUser?.id}
-                onAddToCart={(item) => {
-                  // Add to cart logic
-                  console.log('Add to cart:', item.name);
+                onAddToCart={(product) => {
+                  console.log('Add product to cart:', product.name);
                   // TODO: Implement actual cart functionality
                 }}
               />
