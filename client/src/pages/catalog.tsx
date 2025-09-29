@@ -266,6 +266,18 @@ export default function Catalog() {
 
       {/* Products Grid */}
       <div className="p-6">
+        {/* DEBUG INFO */}
+        <div className="bg-yellow-100 border-2 border-yellow-400 p-4 mb-4 rounded">
+          <h3 className="font-bold text-yellow-800">🔍 ОТЛАДКА ТОВАРОВ:</h3>
+          <p>catalogItems: {catalogItems?.length || 0}</p>
+          <p>filteredItems: {filteredItems.length}</p>
+          <p>selectedCategory: {selectedCategory}</p>
+          <p>searchQuery: "{searchQuery}"</p>
+          {filteredItems.length > 0 && (
+            <p>Первый товар: {filteredItems[0]?.name}</p>
+          )}
+        </div>
+        
         {filteredItems.length > 0 ? (
           <div className="space-y-6 mb-8">
             {filteredItems.map((item) => (
@@ -283,12 +295,15 @@ export default function Catalog() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">
-              Товары не найдены
+          <div className="text-center py-12 bg-red-100 border-2 border-red-400 rounded">
+            <p className="text-red-600 text-lg mb-4">
+              ❌ Товары не найдены
             </p>
-            <p className="text-gray-400">
+            <p className="text-red-500">
               Попробуйте изменить фильтры поиска
+            </p>
+            <p className="text-sm text-red-400 mt-2">
+              catalogItems: {catalogItems?.length || 0}, filteredItems: {filteredItems.length}
             </p>
           </div>
         )}
