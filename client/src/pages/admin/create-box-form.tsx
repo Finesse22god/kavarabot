@@ -55,16 +55,13 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
 
   // Load products for selection
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/admin/products"],
+    queryKey: ["/api/products"],
     retry: false,
   });
 
   const createBoxMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/admin/boxes", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", "/api/admin/boxes", data);
     },
     onSuccess: () => {
       toast({

@@ -46,7 +46,7 @@ export default function ProductCard({
         {/* Favorite Button */}
         <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
           <FavoriteButton 
-            productId={product.id} 
+            boxId={product.id} 
             userId={userId} 
             size="sm" 
             variant="ghost"
@@ -178,7 +178,7 @@ export default function ProductCard({
                     
                     onAddToCart?.(product, selectedSize);
                   }}
-                  disabled={product.sizes && product.sizes.length > 0 && !selectedSize}
+                  disabled={(product.sizes && product.sizes.length > 0 && !selectedSize) || false}
                   className={`flex-1 py-3 font-semibold tracking-wide transition-colors flex items-center justify-center gap-2 rounded-xl ${
                     product.sizes && product.sizes.length > 0 && !selectedSize
                       ? "border border-gray-300 text-gray-400 cursor-not-allowed"
