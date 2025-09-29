@@ -17,6 +17,7 @@ interface Product {
   price: number;
   category: string;
   image: string;
+  images?: string[];
 }
 
 interface EditProductProps {
@@ -31,11 +32,11 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     name: product?.name || "",
     description: product?.description || "",
     price: product?.price || 0,
-    category: product?.category || "personal",
+    category: product?.category || "",
     image: product?.image || "",
+    images: product?.images || [],
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState(product?.image || "");
+  const [imagePreviews, setImagePreviews] = useState<string[]>(product?.images || [product?.image].filter(Boolean) || []);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -118,13 +119,23 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length + imagePreviews.length > 3) {
+      toast({
+        title: "Ошибка",
+        description: "Можно добавить максимум 3 изображения",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    for (const file of files) {
       // Проверяем тип файла
       if (!file.type.startsWith('image/')) {
         toast({
           title: "Ошибка",
-          description: "Пожалуйста, выберите изображение",
+          description: "Пожалуйста, выберите изображения",
           variant: "destructive",
         });
         return;
@@ -132,8 +143,12 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
       
       try {
         const compressedImage = await compressImage(file);
-        setImagePreview(compressedImage);
-        setFormData({ ...formData, image: compressedImage });
+        setImagePreviews(prev => [...prev, compressedImage]);
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, compressedImage],
+          image: prev.images.length === 0 ? compressedImage : prev.image // Первое изображение как основное
+        }));
       } catch (error) {
         toast({
           title: "Ошибка",
@@ -142,6 +157,18 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
         });
       }
     }
+  };
+
+  const removeImage = (index: number) => {
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    const newImages = formData.images.filter((_, i) => i !== index);
+    
+    setImagePreviews(newPreviews);
+    setFormData({
+      ...formData,
+      images: newImages,
+      image: newImages.length > 0 ? newImages[0] : "" // Первое изображение как основное
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -208,50 +235,83 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
               required
             >
               <option value="">Выберите категорию</option>
-              <option value="Топы и футболки">Топы и футболки</option>
-              <option value="Низы">Низы</option>
+              <option value="Рашгарды">Рашгарды</option>
+              <option value="Лосины">Лосины</option>
+              <option value="Рубашки">Рубашки</option>
+              <option value="Поло">Поло</option>
+              <option value="Шорты">Шорты</option>
+              <option value="Футболки">Футболки</option>
+              <option value="Майки">Майки</option>
+              <option value="Худи">Худи</option>
+              <option value="Брюки">Брюки</option>
+              <option value="Жилеты">Жилеты</option>
+              <option value="Олимпийки">Олимпийки</option>
+              <option value="Джемперы">Джемперы</option>
+              <option value="Куртки">Куртки</option>
+              <option value="Свитшоты">Свитшоты</option>
+              <option value="Сумки">Сумки</option>
               <option value="Аксессуары">Аксессуары</option>
-              <option value="Обувь">Обувь</option>
             </select>
           </div>
 
 
           <div>
-            <Label htmlFor="image">Изображение</Label>
-            <div className="space-y-2">
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-32 h-32 object-cover rounded-lg"
-                />
+            <Label htmlFor="images">Изображения товара (до 3 фото)</Label>
+            <div className="space-y-4">
+              {/* Preview uploaded images */}
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-4">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-32 object-cover rounded-lg"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-1 right-1 h-6 w-6 p-0"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                      {index === 0 && (
+                        <Badge className="absolute bottom-1 left-1 text-xs">
+                          Основное
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
-              <div className="flex items-center gap-2">
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => document.getElementById('image')?.click()}
-                  className="flex items-center gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  Загрузить фото
-                </Button>
-                <Input
-                  placeholder="Или введите URL изображения"
-                  value={formData.image}
-                  onChange={(e) => {
-                    setFormData({ ...formData, image: e.target.value });
-                    setImagePreview(e.target.value);
-                  }}
-                />
-              </div>
+              
+              {/* Upload buttons */}
+              {imagePreviews.length < 3 && (
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('images')?.click()}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Загрузить фото ({imagePreviews.length}/3)
+                  </Button>
+                  <p className="text-sm text-gray-500">
+                    Первое изображение будет основным для отображения
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
