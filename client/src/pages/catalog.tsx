@@ -267,24 +267,16 @@ export default function Catalog() {
 
   // Фильтрация товаров
   const filteredItems = catalogItems?.filter(item => {
-    // Фильтр по виду спорта
-    const sportMatch = selectedSportType === "Все виды спорта" || 
-      (item.sportTypes && item.sportTypes.includes(selectedSportType));
-    
     // Фильтр по категории
     const categoryMatch = selectedCategory === "Все категории" || 
       ((item as any).category === selectedCategory);
-    
-    // Фильтр по цене
-    const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-    const priceMatch = itemPrice >= selectedPriceRange.min && itemPrice <= selectedPriceRange.max;
     
     // Фильтр по поиску
     const searchMatch = searchQuery === "" || 
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    return sportMatch && categoryMatch && priceMatch && searchMatch;
+    return categoryMatch && searchMatch;
   }) || [];
 
   // Show loading while data is being fetched
@@ -304,30 +296,19 @@ export default function Catalog() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <button 
-              className="p-2 -ml-2" 
-              onClick={() => setLocation("/")}
-            >
-              <ArrowLeft className="w-6 h-6 text-black" />
-            </button>
-            <div>
-              <h2 className="text-2xl font-bold text-black tracking-wide">КАТАЛОГ KAVARA</h2>
-              <p className="text-gray-600 font-medium">
-                {catalogItems?.length || 0} товаров
-              </p>
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 rounded-xl"
+        <div className="flex items-center space-x-4">
+          <button 
+            className="p-2 -ml-2" 
+            onClick={() => setLocation("/")}
           >
-            <Filter className="w-4 h-4" />
-            Фильтры
-          </Button>
+            <ArrowLeft className="w-6 h-6 text-black" />
+          </button>
+          <div>
+            <h2 className="text-2xl font-bold text-black tracking-wide">КАТАЛОГ KAVARA</h2>
+            <p className="text-gray-600 font-medium">
+              {catalogItems?.length || 0} товаров
+            </p>
+          </div>
         </div>
       </div>
 
@@ -377,7 +358,18 @@ export default function Catalog() {
 
       {/* Catalog Products Header */}
       <div className="p-6 pb-4">
-        <h3 className="text-xl font-bold text-black tracking-wide">КАТАЛОГ ТОВАРОВ</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold text-black tracking-wide">КАТАЛОГ ТОВАРОВ</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 rounded-xl"
+          >
+            <Filter className="w-4 h-4" />
+            Фильтры
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -414,57 +406,12 @@ export default function Catalog() {
             </Select>
           </div>
 
-          {/* Sport Type Filter */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Вид спорта
-            </label>
-            <Select value={selectedSportType} onValueChange={setSelectedSportType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SPORT_TYPES.map((sport) => (
-                  <SelectItem key={sport} value={sport}>
-                    {sport}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Price Range Filter */}
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
-              Ценовой диапазон
-            </label>
-            <Select 
-              value={selectedPriceRange.label} 
-              onValueChange={(value) => {
-                const range = PRICE_RANGES.find(r => r.label === value);
-                if (range) setSelectedPriceRange(range);
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PRICE_RANGES.map((range) => (
-                  <SelectItem key={range.label} value={range.label}>
-                    {range.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
           {/* Reset Filters */}
           <Button
             variant="outline"
             onClick={() => {
               setSelectedCategory("Все категории");
-              setSelectedSportType("Все виды спорта");
-              setSelectedPriceRange(PRICE_RANGES[0]);
               setSearchQuery("");
             }}
             className="w-full"
