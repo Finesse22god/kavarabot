@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square } from "lucide-react";
+import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import OrderDetails from "./order-details";
