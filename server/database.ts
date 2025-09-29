@@ -1,5 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import * as fs from "fs";
+import * as path from "path";
 import { User } from "./entities/User";
 import { QuizResponse } from "./entities/QuizResponse";
 import { Box } from "./entities/Box";
@@ -32,6 +34,18 @@ export async function initializeDatabase() {
     await AppDataSource.initialize();
     console.log("Database connected successfully with TypeORM");
 
+    // Run additional migrations
+    try {
+      const migrationPath = path.join(__dirname, "../db/migrations/02-update-products.sql");
+      if (fs.existsSync(migrationPath)) {
+        const migrationSql = fs.readFileSync(migrationPath, "utf8");
+        await AppDataSource.query(migrationSql);
+        console.log("✅ Products migration executed successfully");
+      }
+    } catch (migrationError) {
+      console.log("Migration already applied or not needed:", migrationError.message);
+    }
+
     // Seed initial data in background (non-blocking)
     seedDatabase().catch(error => {
       console.error("Database seeding failed (non-critical):", error);
@@ -44,7 +58,7 @@ export async function initializeDatabase() {
 
 async function seedDatabase() {
   let boxRepository, productRepository, existingBoxes, existingProducts;
-  
+
   try {
     boxRepository = AppDataSource.getRepository(Box);
     productRepository = AppDataSource.getRepository(Product);
@@ -54,7 +68,7 @@ async function seedDatabase() {
       boxRepository.find({ take: 1 }),
       productRepository.find({ take: 1 })
     ]);
-    
+
     if (existingBoxes.length > 0 && existingProducts.length > 0) {
       console.log("Database already seeded (skipping)");
       return;
@@ -94,7 +108,7 @@ async function seedDatabase() {
         description: "Поддерживающие леггинсы для женщин",
         price: 3200,
         imageUrl: "https://images.unsplash.com/photo-1506629905877-c1e5027f5b6c",
-        category: "clothing", 
+        category: "clothing",
         sizes: ["XS", "S", "M", "L"],
         colors: ["Черный", "Фиолетовый"],
         isAvailable: true

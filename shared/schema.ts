@@ -125,7 +125,7 @@ export const products = pgTable("products", {
   price: integer("price").notNull(),
   imageUrl: text("image_url"),
   images: json("images").$type<string[]>(),
-  category: varchar("category", { length: 50 }),
+  category: varchar("category", { length: 100 }),
   brand: varchar("brand", { length: 100 }),
   color: varchar("color", { length: 50 }),
   sizes: json("sizes").$type<string[]>(),

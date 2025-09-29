@@ -2,18 +2,18 @@ import { Router } from "express";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
 import { parseKavaraCatalog } from "./parser";
-import { 
-  createPaymentIntent, 
-  checkPaymentStatus, 
+import {
+  createPaymentIntent,
+  checkPaymentStatus,
   parseYooMoneyNotification,
   verifyNotification,
   getAccountInfo
 } from "./payment";
-import type { 
-  User, 
-  QuizResponse, 
-  Box, 
-  Order, 
+import type {
+  User,
+  QuizResponse,
+  Box,
+  Order,
   Notification,
   LoyaltyTransaction,
   Referral,
@@ -23,7 +23,8 @@ import type {
   CreateOrderDto,
   CreateNotificationDto,
   CreateLoyaltyTransactionDto,
-  CreateReferralDto
+  CreateReferralDto,
+  CreateProductDto
 } from "@shared/types";
 
 const router = Router();
@@ -36,18 +37,18 @@ router.put("/api/users/:id", async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     // Update user data
     const updatedUser = await storage.updateUser(req.params.id, {
       firstName: firstName || user.firstName,
       lastName: lastName || user.lastName,
       username: username || user.username
     });
-    
+
     if (!updatedUser) {
       return res.status(500).json({ error: "Failed to update user" });
     }
-    
+
     res.json(updatedUser);
   } catch (error) {
     console.error("Error updating user:", error);
@@ -85,7 +86,7 @@ router.get("/api/users/telegram/:telegramId", async (req, res) => {
 router.post("/api/users", async (req, res) => {
   try {
     const { telegramId, username, firstName, lastName, referralCode } = req.body;
-    
+
     // Check if user already exists
     if (telegramId) {
       const existingUser = await storage.getUserByTelegramId(telegramId);
@@ -93,7 +94,7 @@ router.post("/api/users", async (req, res) => {
         return res.json(existingUser);
       }
     }
-    
+
     // Create new user
     const user = await storage.createUser({
       telegramId,
@@ -131,7 +132,7 @@ router.post("/api/users", async (req, res) => {
         // Don't fail user creation if referral processing fails
       }
     }
-    
+
     res.status(201).json(user);
   } catch (error) {
     console.error("Error creating user:", error);
@@ -162,7 +163,7 @@ router.get("/api/quiz-responses/user/:userId", async (req, res) => {
     } else {
       response = await storage.getQuizResponse(req.params.userId);
     }
-    
+
     if (!response) {
       return res.status(404).json({ error: "Quiz response not found" });
     }
@@ -217,7 +218,7 @@ router.get("/api/boxes", async (req, res) => {
   try {
     const { category, userId } = req.query;
     let boxes: Box[];
-    
+
     if (category && typeof category === "string") {
       // Если запрашиваются персональные боксы с userId, применяем фильтрацию
       if (category === "personal" && userId && typeof userId === "string") {
@@ -229,26 +230,26 @@ router.get("/api/boxes", async (req, res) => {
           } else {
             quizResponse = await storage.getQuizResponse(userId);
           }
-          
+
           if (quizResponse) {
             console.log(`\n🔍 НАЙДЕН КВИЗ ДЛЯ ПОЛЬЗОВАТЕЛЯ: ${userId}`);
             console.log(`Ответы квиза:`, JSON.stringify(quizResponse, null, 2));
-            
+
             // Получаем все персональные боксы
             const allPersonalBoxes = await storage.getBoxesByCategory("personal");
             console.log(`\n📦 ВСЕГО ПЕРСОНАЛЬНЫХ БОКСОВ: ${allPersonalBoxes.length}`);
-            
+
             // Применяем фильтрацию по видам спорта и бюджету
             const filteredBoxes = allPersonalBoxes.filter(box => {
               // Фильтр по видам спорта
-              const hasMatchingSport = box.sportTypes && box.sportTypes.some(sportType => 
+              const hasMatchingSport = box.sportTypes && box.sportTypes.some(sportType =>
                 quizResponse.goals && quizResponse.goals.includes(sportType)
               );
-              
+
               // Фильтр по бюджету
               const budgetValue = quizResponse.budget;
               let isWithinBudget = true;
-              
+
               if (budgetValue) {
                 if (budgetValue === "10000") {
                   // "До 10к" - цена <= 10000
@@ -264,7 +265,7 @@ router.get("/api/boxes", async (req, res) => {
                   isWithinBudget = box.price > 20000;
                 }
               }
-              
+
               // Детальная отладка
               console.log(`\n=== Фильтрация бокса: ${box.name} ===`);
               console.log(`Цена: ${box.price}`);
@@ -274,15 +275,15 @@ router.get("/api/boxes", async (req, res) => {
               console.log(`Совпадает спорт: ${hasMatchingSport}`);
               console.log(`В бюджете: ${isWithinBudget}`);
               console.log(`Итоговый результат: ${hasMatchingSport && isWithinBudget}`);
-              
+
               return hasMatchingSport && isWithinBudget;
             });
-            
+
             console.log(`\n✅ РЕЗУЛЬТАТ ФИЛЬТРАЦИИ: ${filteredBoxes.length} боксов`);
             filteredBoxes.forEach(box => {
               console.log(`   - ${box.name}: ${box.price}₽, спорт: ${JSON.stringify(box.sportTypes)}`);
             });
-            
+
             boxes = filteredBoxes;
           } else {
             console.log(`\n❌ КВИЗ НЕ НАЙДЕН для пользователя: ${userId}`);
@@ -300,7 +301,7 @@ router.get("/api/boxes", async (req, res) => {
     } else {
       boxes = await storage.getAllBoxes();
     }
-    
+
     res.json(boxes);
   } catch (error) {
     console.error("Error fetching boxes:", error);
@@ -335,17 +336,17 @@ router.post("/api/boxes", async (req, res) => {
 router.put("/api/boxes/:id/price", async (req, res) => {
   try {
     const { price } = req.body;
-    
+
     if (!price || typeof price !== 'number' || price <= 0) {
       return res.status(400).json({ error: "Valid price is required" });
     }
-    
+
     const updatedBox = await storage.updateBoxPrice(req.params.id, price);
-    
+
     if (!updatedBox) {
       return res.status(404).json({ error: "Box not found" });
     }
-    
+
     res.json(updatedBox);
   } catch (error) {
     console.error("Error updating box price:", error);
@@ -424,22 +425,22 @@ router.put("/api/orders/:orderId/payment-id", async (req, res) => {
 router.post("/api/yoomoney-webhook", async (req, res) => {
   try {
     console.log("YooMoney webhook received:", req.body);
-    
+
     const { notification_type, operation_id, label } = req.body;
-    
+
     // Check for both card-incoming and p2p-incoming notifications
     if ((notification_type === "p2p-incoming" || notification_type === "card-incoming") && label) {
       console.log(`Received payment notification for payment ID: ${label}`);
-      
+
       // Update order status to paid using the payment label as order identifier
       const order = await storage.updateOrderStatusByPaymentId(label, "paid");
-      
+
       if (order) {
         console.log(`Order ${label} marked as paid via YooMoney webhook`);
-        
+
         // Send admin notification about successful payment
         const adminNotification = `💰 Новая оплата!
-        
+
 Заказ: ${order.orderNumber}
 Сумма: ${order.totalPrice}₽
 Покупатель: ${order.customerName}
@@ -458,7 +459,7 @@ Email: ${order.customerEmail}
         });
       }
     }
-    
+
     // Always respond with OK to YooMoney
     res.status(200).send("OK");
   } catch (error) {
@@ -485,11 +486,11 @@ router.post("/api/promo-codes/validate", async (req, res) => {
 
 router.post("/api/orders", async (req, res) => {
   try {
-    const orderData: CreateOrderDto & { 
-      promoCode?: string; 
-      loyaltyPointsUsed?: number 
+    const orderData: CreateOrderDto & {
+      promoCode?: string;
+      loyaltyPointsUsed?: number
     } = req.body;
-    
+
     let finalOrderData = { ...orderData };
     let trainer = null;
     let promoCodeData = null;
@@ -500,7 +501,7 @@ router.post("/api/orders", async (req, res) => {
       if (validation.isValid && validation.promoCode) {
         promoCodeData = validation.promoCode;
         trainer = validation.trainer;
-        
+
         // Apply discount
         const discountPercent = validation.discountPercent || 0;
         const discount = Math.floor(orderData.totalPrice * (discountPercent / 100));
@@ -523,7 +524,7 @@ router.post("/api/orders", async (req, res) => {
     }
 
     const order = await storage.createOrder(finalOrderData);
-    
+
     // Award loyalty points ONLY if purchase was made with trainer promo code
     if (order.userId && trainer) {
       const loyaltyPoints = Math.floor(orderData.totalPrice * 0.05); // 5% of original price
@@ -555,10 +556,10 @@ router.post("/api/orders", async (req, res) => {
     if (trainer && orderData.totalPrice) {
       await storage.updateTrainerStats(trainer.id, orderData.totalPrice);
     }
-    
+
     // Send notification to admin
     await notifyAdminAboutNewOrder(order);
-    
+
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);
@@ -626,7 +627,7 @@ router.put("/api/admin/trainers/:id/discount", verifyAdminToken, async (req, res
 router.post("/api/admin/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-    
+
     // Simple admin check - in production use proper authentication
     if (username === "admin" && password === process.env.ADMIN_PASSWORD) {
       const token = "admin-token-" + Date.now(); // Simple token generation
@@ -644,19 +645,19 @@ router.post("/api/admin/login", async (req, res) => {
 router.get("/api/admin/orders", verifyAdminToken, async (req, res) => {
   try {
     const orders = await storage.getAllOrders();
-    
+
     // Добавляем информацию о боксах и пользователях к заказам
     const ordersWithFullInfo = await Promise.all(
       orders.map(async (order) => {
         let boxName = 'Неизвестный набор';
         let userInfo = null;
-        
+
         // Получаем информацию о боксе
         if (order.boxId) {
           const box = await storage.getBox(order.boxId);
           boxName = box?.name || 'Неизвестный набор';
         }
-        
+
         // Получаем информацию о пользователе
         if (order.userId) {
           const user = await storage.getUser(order.userId);
@@ -669,7 +670,7 @@ router.get("/api/admin/orders", verifyAdminToken, async (req, res) => {
             };
           }
         }
-        
+
         return {
           ...order,
           boxName,
@@ -677,7 +678,7 @@ router.get("/api/admin/orders", verifyAdminToken, async (req, res) => {
         };
       })
     );
-    
+
     res.json(ordersWithFullInfo);
   } catch (error) {
     console.error("Error fetching all orders:", error);
@@ -729,12 +730,12 @@ router.get("/api/admin/boxes", verifyAdminToken, async (req, res) => {
 router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
   try {
     const createData = req.body;
-    
+
     // Детальное логирование для отладки
     console.log("🔍 DEBUG: Создание бокса - начало обработки");
     console.log("Полученные данные:", JSON.stringify(createData, null, 2));
     console.log("Authorization присутствует:", req.headers.authorization ? "ДА" : "НЕТ");
-    
+
     // Validate required fields
     if (!createData.name || !createData.price) {
       console.log("❌ Ошибка валидации: отсутствуют name или price");
@@ -747,7 +748,7 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
     if (createData.productIds && createData.productIds.length > 4) {
       return res.status(400).json({ error: "Box can contain maximum 4 products" });
     }
-    
+
     // Преобразуем данные для совместимости с сущностью Box
     const boxCreateData: CreateBoxDto = {
       name: createData.name,
@@ -760,18 +761,18 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
       productIds: createData.productIds || [],
       productQuantities: createData.productQuantities || []
     };
-    
+
     console.log("📦 Создаем бокс с данными:", JSON.stringify(boxCreateData, null, 2));
     const newBox = await storage.createBox(boxCreateData);
     console.log("✅ Бокс создан успешно:", newBox.id);
-    
+
     // Если были переданы товары, создаем связи BoxProduct
     if (createData.productIds && createData.productIds.length > 0) {
       console.log("🔗 Добавляем товары в бокс:", createData.productIds);
       for (let i = 0; i < createData.productIds.length; i++) {
         const productId = createData.productIds[i];
         const quantity = createData.productQuantities?.[i] || 1;
-        
+
         try {
           await storage.addProductToBox(newBox.id, productId, quantity);
           console.log(`✅ Товар ${productId} добавлен в бокс`);
@@ -781,7 +782,7 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
         }
       }
     }
-    
+
     console.log("🎉 Бокс полностью создан и настроен");
     res.status(201).json(newBox);
   } catch (error) {
@@ -794,7 +795,7 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     // Преобразуем данные для совместимости с сущностью Box
     const boxUpdateData: Partial<CreateBoxDto> = {
       name: updateData.name,
@@ -804,7 +805,7 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
       imageUrl: updateData.image, // преобразуем image в imageUrl
       sportTypes: updateData.sportTypes || [], // добавляем поддержку видов спорта
     };
-    
+
     const updatedBox = await storage.updateBox(id, boxUpdateData);
     if (!updatedBox) {
       return res.status(404).json({ error: "Box not found" });
@@ -842,12 +843,12 @@ router.get("/api/admin/box-products/stats", verifyAdminToken, async (req, res) =
     // Get all boxes with their products
     const boxes = await storage.getAllBoxes();
     let totalProductsInBoxes = 0;
-    
+
     for (const box of boxes) {
       const boxProducts = await storage.getBoxProducts(box.id);
       totalProductsInBoxes += boxProducts.reduce((sum, bp) => sum + bp.quantity, 0);
     }
-    
+
     res.json({
       totalBoxes: boxes.length,
       totalProductsInBoxes,
@@ -862,7 +863,7 @@ router.get("/api/admin/box-products/stats", verifyAdminToken, async (req, res) =
 router.post("/api/admin/products", verifyAdminToken, async (req, res) => {
   try {
     const productData: CreateProductDto = req.body;
-    
+
     // Validate required fields
     if (!productData.name || !productData.price) {
       return res.status(400).json({ error: "Name and price are required" });
@@ -880,10 +881,10 @@ router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
     const productData: Partial<CreateProductDto> = req.body;
-    
+
     // Validate required fields if provided
-    if ((productData.name !== undefined && !productData.name) || 
-        (productData.price !== undefined && !productData.price)) {
+    if ((productData.name !== undefined && !productData.name) ||
+      (productData.price !== undefined && !productData.price)) {
       return res.status(400).json({ error: "Name and price cannot be empty" });
     }
 
@@ -891,7 +892,7 @@ router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
-    
+
     res.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
@@ -924,7 +925,7 @@ router.get('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
 router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
   try {
     const { code, discountPercent, maxUses, partnerName, partnerContact, expiresAt } = req.body;
-    
+
     // Check if code already exists
     const existingCode = await storage.getPromoCodeByCode(code);
     if (existingCode) {
@@ -951,12 +952,12 @@ router.put('/api/admin/promo-codes/:id/toggle', verifyAdminToken, async (req, re
   try {
     const { id } = req.params;
     const { isActive } = req.body;
-    
+
     const promoCode = await storage.updatePromoCodeStatus(id, isActive);
     if (!promoCode) {
       return res.status(404).json({ error: 'Promo code not found' });
     }
-    
+
     res.json(promoCode);
   } catch (error) {
     console.error('Error updating promo code status:', error);
@@ -979,16 +980,16 @@ router.get('/api/admin/promo-codes/:id/orders', verifyAdminToken, async (req, re
 router.post("/api/create-payment-intent", async (req, res) => {
   try {
     const { amount, description, orderId, returnUrl } = req.body;
-    
+
     console.log("Creating payment intent:", { amount, description, orderId, returnUrl });
-    
+
     if (!amount || !description || !orderId) {
       console.log("Missing required fields:", { amount, description, orderId });
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     const paymentAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    
+
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
       console.log("Invalid amount:", paymentAmount);
       return res.status(400).json({ error: "Invalid amount" });
@@ -1005,7 +1006,7 @@ router.post("/api/create-payment-intent", async (req, res) => {
     res.json(paymentIntent);
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Internal server error",
       details: error instanceof Error ? error.message : String(error)
     });
@@ -1027,7 +1028,7 @@ router.post("/webhook/yoomoney", async (req, res) => {
   try {
     const notification = parseYooMoneyNotification(req.body);
     const secret = process.env.YOOMONEY_NOTIFICATION_SECRET;
-    
+
     if (!secret || !verifyNotification(notification, secret)) {
       return res.status(400).json({ error: "Invalid notification" });
     }
@@ -1035,14 +1036,14 @@ router.post("/webhook/yoomoney", async (req, res) => {
     // Handle successful payment
     if (notification.notification_type === 'p2p-incoming') {
       console.log('Payment received:', notification);
-      
+
       // Find order by payment label and update status
       if (notification.label) {
         try {
           // Update order status to 'paid'
           await storage.updateOrderStatus(notification.label, 'paid');
           console.log(`Payment confirmed for order: ${notification.label}`);
-          
+
           // Optionally send confirmation notification via Telegram
           // await notifyAdminAboutPayment(notification);
         } catch (error) {
@@ -1077,7 +1078,7 @@ export function registerRoutes(app: any) {
 router.post("/api/send-feedback", async (req, res) => {
   try {
     const { type, message, username } = req.body;
-    
+
     if (!message || !type) {
       return res.status(400).json({ error: "Type and message are required" });
     }
@@ -1092,7 +1093,7 @@ router.post("/api/send-feedback", async (req, res) => {
 ${message}
 
 📅 Дата: ${new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
-    
+
     // Send directly to telegram bot instead of using order notification function
     const telegramMessage = {
       chat_id: '-1002812810825',
@@ -1109,7 +1110,7 @@ ${message}
     if (!response.ok) {
       throw new Error(`Telegram API error: ${response.status}`);
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error("Error sending feedback:", error);
@@ -1132,12 +1133,12 @@ router.put("/api/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { firstName, lastName } = req.body;
-    
+
     const updatedUser = await storage.updateUser(id, { firstName, lastName });
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     res.json(updatedUser);
   } catch (error) {
     console.error("Error updating user:", error);
@@ -1149,12 +1150,12 @@ router.put("/api/users/:id", async (req, res) => {
 router.get("/api/users/measurements/:telegramId", async (req, res) => {
   try {
     const { telegramId } = req.params;
-    
+
     const user = await storage.getUserByTelegramId(telegramId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     res.json({
       height: user.height,
       weight: user.weight,
@@ -1175,7 +1176,7 @@ router.put("/api/users/measurements/:telegramId", async (req, res) => {
   try {
     const { telegramId } = req.params;
     const { height, weight, sleeveLength, chestSize, waistSize, hipSize, preferredSize } = req.body;
-    
+
     const updatedUser = await storage.updateUserMeasurements(telegramId, {
       height,
       weight,
@@ -1185,11 +1186,11 @@ router.put("/api/users/measurements/:telegramId", async (req, res) => {
       hipSize,
       preferredSize
     });
-    
+
     if (!updatedUser) {
       return res.status(404).json({ error: "User not found" });
     }
-    
+
     res.json(updatedUser);
   } catch (error) {
     console.error("Error updating user measurements:", error);
@@ -1222,10 +1223,10 @@ router.post("/api/loyalty/transactions", async (req, res) => {
   try {
     const transactionData: CreateLoyaltyTransactionDto = req.body;
     const transaction = await storage.createLoyaltyTransaction(transactionData);
-    
+
     // Update user's loyalty points
     await storage.updateUserLoyaltyPoints(transactionData.userId, transactionData.points);
-    
+
     res.status(201).json(transaction);
   } catch (error) {
     console.error("Error creating loyalty transaction:", error);
@@ -1298,7 +1299,7 @@ router.put("/api/referrals/:referralId/complete", async (req, res) => {
 
     // Award bonus points to both referrer and referred user
     const bonusPoints = 500; // 500 points for successful referral
-    
+
     // Give bonus to referrer
     await storage.createLoyaltyTransaction({
       userId: referral.referrerId,
@@ -1328,10 +1329,10 @@ router.put("/api/referrals/:referralId/complete", async (req, res) => {
 router.post("/api/admin/import-catalog", verifyAdminToken, async (req, res) => {
   try {
     console.log("Начинаем импорт каталога...");
-    
+
     const products = await parseKavaraCatalog();
     const importedProducts = [];
-    
+
     for (const product of products) {
       try {
         const newProduct = await storage.createProduct({
@@ -1348,12 +1349,12 @@ router.post("/api/admin/import-catalog", verifyAdminToken, async (req, res) => {
         console.error(`Ошибка при создании товара ${product.name}:`, error);
       }
     }
-    
+
     console.log(`Успешно импортировано ${importedProducts.length} товаров`);
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       imported: importedProducts.length,
-      products: importedProducts 
+      products: importedProducts
     });
   } catch (error) {
     console.error("Ошибка импорта каталога:", error);
@@ -1365,31 +1366,31 @@ router.post("/api/admin/import-catalog", verifyAdminToken, async (req, res) => {
 router.get("/api/catalog", async (req, res) => {
   try {
     const { sportType, minPrice, maxPrice, category } = req.query;
-    
+
     // Получаем все продукты
     let allProducts = await storage.getAllProducts();
-    
+
     // Применяем фильтры
     if (category && typeof category === "string" && category !== "Все категории") {
       allProducts = allProducts.filter(product => product.category === category);
     }
-    
+
     if (sportType && typeof sportType === "string" && sportType !== "Все виды спорта") {
-      allProducts = allProducts.filter(product => 
+      allProducts = allProducts.filter(product =>
         product.sportTypes && product.sportTypes.includes(sportType)
       );
     }
-    
+
     if (minPrice && typeof minPrice === "string") {
       const min = parseInt(minPrice);
       allProducts = allProducts.filter(product => product.price >= min);
     }
-    
+
     if (maxPrice && typeof maxPrice === "string") {
       const max = parseInt(maxPrice);
       allProducts = allProducts.filter(product => product.price <= max);
     }
-    
+
     res.json(allProducts);
   } catch (error) {
     console.error("Error fetching catalog:", error);
@@ -1401,7 +1402,7 @@ router.get("/api/catalog", async (req, res) => {
 router.get("/api/cart/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     // Handle user validation and conversion
     let actualUserId = userId;
     if (userId && /^\d+$/.test(userId)) {
@@ -1413,7 +1414,7 @@ router.get("/api/cart/:userId", async (req, res) => {
         return res.status(400).json({ error: "User not found" });
       }
     }
-    
+
     const cartItems = await storage.getUserCart(actualUserId);
     res.json(cartItems);
   } catch (error) {
@@ -1425,10 +1426,10 @@ router.get("/api/cart/:userId", async (req, res) => {
 router.post("/api/cart", async (req, res) => {
   try {
     const { userId, boxId, productId, quantity = 1, selectedSize, itemType } = req.body;
-    
+
     // Determine which ID to use (backwards compatibility)
     const itemId = productId || boxId;
-    
+
     // Handle user validation and conversion
     let actualUserId = userId;
     if (userId && /^\d+$/.test(userId)) {
@@ -1443,7 +1444,7 @@ router.post("/api/cart", async (req, res) => {
       // Not a valid UUID and not a Telegram ID
       return res.status(400).json({ error: "Invalid user ID format" });
     }
-    
+
     const cartItem = await storage.addToCart(actualUserId, itemId, quantity, selectedSize, itemType);
     res.json(cartItem);
   } catch (error) {
@@ -1490,7 +1491,7 @@ router.delete("/api/cart/clear/:userId", async (req, res) => {
 router.post("/api/favorites", async (req, res) => {
   try {
     const { userId, boxId } = req.body;
-    
+
     if (!userId || !boxId) {
       return res.status(400).json({ error: "userId and boxId are required" });
     }
@@ -1506,7 +1507,7 @@ router.post("/api/favorites", async (req, res) => {
 router.delete("/api/favorites", async (req, res) => {
   try {
     const { userId, boxId } = req.body;
-    
+
     if (!userId || !boxId) {
       return res.status(400).json({ error: "userId and boxId are required" });
     }
@@ -1526,7 +1527,7 @@ router.delete("/api/favorites", async (req, res) => {
 router.get("/api/users/:userId/favorites", async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     if (!userId) {
       return res.status(400).json({ error: "userId is required" });
     }
@@ -1542,7 +1543,7 @@ router.get("/api/users/:userId/favorites", async (req, res) => {
 router.get("/api/favorites/check", async (req, res) => {
   try {
     const { userId, boxId } = req.query;
-    
+
     if (!userId || !boxId) {
       return res.status(400).json({ error: "userId and boxId are required" });
     }
@@ -1560,13 +1561,13 @@ router.get("/api/products", async (req, res) => {
   try {
     const { category } = req.query;
     let products;
-    
+
     if (category && typeof category === "string") {
       products = await storage.getProductsByCategory(category);
     } else {
       products = await storage.getAllProducts();
     }
-    
+
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -1603,11 +1604,11 @@ router.put("/api/products/:id", async (req, res) => {
     const { id } = req.params;
     const productData = req.body;
     const product = await storage.updateProduct(id, productData);
-    
+
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
-    
+
     res.json(product);
   } catch (error) {
     console.error("Error updating product:", error);
@@ -1631,7 +1632,7 @@ router.post("/api/boxes/:boxId/products", async (req, res) => {
   try {
     const { boxId } = req.params;
     const { productId, quantity = 1 } = req.body;
-    
+
     const boxProduct = await storage.addProductToBox(boxId, productId, quantity);
     res.status(201).json(boxProduct);
   } catch (error) {

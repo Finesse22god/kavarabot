@@ -21,6 +21,9 @@ export class Product {
   @Column({ type: "varchar", nullable: true })
   imageUrl?: string;
 
+  @Column({ type: "simple-array", nullable: true })
+  images?: string[];
+
   @Column({ type: "varchar", nullable: true })
   category?: string;
 

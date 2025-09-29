@@ -16,6 +16,9 @@ interface Product {
   description: string;
   price: number;
   category: string;
+  brand?: string;
+  color?: string;
+  sizes?: string[];
   image: string;
   images?: string[];
 }
@@ -33,6 +36,9 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     description: product?.description || "",
     price: product?.price || 0,
     category: product?.category || "",
+    brand: product?.brand || "",
+    color: product?.color || "",
+    sizes: product?.sizes || [],
     image: product?.image || "",
     images: product?.images || [],
   });
@@ -252,6 +258,61 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
               <option value="Сумки">Сумки</option>
               <option value="Аксессуары">Аксессуары</option>
             </select>
+          </div>
+
+          <div>
+            <Label htmlFor="brand">Бренд</Label>
+            <Input
+              id="brand"
+              value={formData.brand || ""}
+              onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+              placeholder="Название бренда"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="color">Цвет</Label>
+            <Input
+              id="color"
+              value={formData.color || ""}
+              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+              placeholder="Цвет товара"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="sizes">Доступные размеры</Label>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                  <Button
+                    key={size}
+                    type="button"
+                    variant={formData.sizes?.includes(size) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      const currentSizes = formData.sizes || [];
+                      if (currentSizes.includes(size)) {
+                        setFormData({
+                          ...formData,
+                          sizes: currentSizes.filter(s => s !== size)
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          sizes: [...currentSizes, size]
+                        });
+                      }
+                    }}
+                  >
+                    {size}
+                  </Button>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500">
+                Выберите доступные размеры для товара. Если товар не имеет размеров (например, аксессуары), оставьте поле пустым.
+              </p>
+            </div>
           </div>
 
 
