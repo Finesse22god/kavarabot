@@ -399,7 +399,14 @@ export default function AdminDashboard() {
     totalRevenue: orders?.reduce((sum, order) => sum + order.totalPrice, 0) || 0,
     activeBoxes: boxes?.length || 0,
     totalProducts: products?.length || 0,
-    totalProductsInBoxes: boxProductsStats?.totalProductsInBoxes || 0
+    totalProductsInBoxes: boxProductsStats?.totalProductsInBoxes || 0,
+    // Новая расширенная аналитика
+    todaysOrders: orders?.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString()).length || 0,
+    todaysRevenue: orders?.filter(o => o.status === 'paid' && new Date(o.createdAt).toDateString() === new Date().toDateString())
+      .reduce((sum, o) => sum + o.totalPrice, 0) || 0,
+    paidOrders: orders?.filter(o => o.status === 'paid').length || 0,
+    pendingOrders: orders?.filter(o => o.status === 'pending').length || 0,
+    averageOrderValue: orders?.length > 0 ? (orders?.reduce((sum, order) => sum + order.totalPrice, 0) / orders?.length) : 0
   };
 
   return (
@@ -433,6 +440,9 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalOrders}</div>
+                <p className="text-xs text-muted-foreground">
+                  +{stats.todaysOrders} сегодня
+                </p>
               </CardContent>
             </Card>
             
@@ -453,6 +463,9 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString('ru-RU')}₽</div>
+                <p className="text-xs text-muted-foreground">
+                  +{stats.todaysRevenue.toLocaleString('ru-RU')}₽ сегодня
+                </p>
               </CardContent>
             </Card>
             
@@ -485,6 +498,50 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-bold">{stats.totalProductsInBoxes}</div>
                 <p className="text-xs text-muted-foreground">
                   Общее количество товаров во всех боксах
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Analytics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Оплаченные заказы</CardTitle>
+                <ShoppingCart className="h-4 w-4 text-green-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{stats.paidOrders}</div>
+                <p className="text-xs text-muted-foreground">
+                  {stats.totalOrders > 0 ? Math.round((stats.paidOrders / stats.totalOrders) * 100) : 0}% от всех заказов
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">В ожидании</CardTitle>
+                <Clock className="h-4 w-4 text-orange-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</div>
+                <p className="text-xs text-muted-foreground">
+                  Ожидают оплаты
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Средний чек</CardTitle>
+                <BarChart3 className="h-4 w-4 text-blue-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  {Math.round(stats.averageOrderValue).toLocaleString('ru-RU')}₽
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  На один заказ
                 </p>
               </CardContent>
             </Card>
