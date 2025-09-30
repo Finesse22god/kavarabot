@@ -4,6 +4,14 @@
 
 KAVARA is a Telegram-based sports fashion styling service offering personalized athletic wear recommendations through a web interface. Users can take a quiz for custom box recommendations or browse pre-curated boxes. The system manages the entire purchase flow, from selection to order completion, and includes integrated notification systems. The project aims to provide a streamlined, personalized shopping experience for sports fashion.
 
+## Recent Changes
+
+### September 30, 2025 - Product Size Handling Enhancement
+- **Database Schema**: Updated Product entity to use JSON columns for `sizes`, `images`, and `sportTypes` (replacing simple-array for consistency)
+- **Frontend Parsing**: Added safe parsing logic for product sizes with error handling to support both string and array formats
+- **UI Validation**: Unified size selection validation between UI rendering and add-to-cart logic using `hasSizes` computed from parsed data
+- **UX Improvement**: Increased bottom padding to pb-32 for proper button visibility
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
