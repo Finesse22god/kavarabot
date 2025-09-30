@@ -322,69 +322,95 @@ export default function BoxDetail() {
           )}
         </div>
 
-        {/* Size Selection */}
-        <div className="space-y-6">
-          <div>
-            <h5 className="font-semibold mb-3">Выберите размер:</h5>
-            {getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize) && (
-              <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-                💡 Рекомендуем размер <strong>{getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize)}</strong> на основе ваших параметров
-              </div>
-            )}
-            <div className="grid grid-cols-3 gap-3">
+        {/* Size Selection with Tabs - same as product-detail.tsx */}
+        <div className="bg-gray-50 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-black">ВЫБЕРИТЕ РАЗМЕР</h3>
+          </div>
+          
+          {getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize) && (
+            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+              💡 Рекомендуем размер <strong>{getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize)}</strong> на основе ваших параметров
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <div className="grid grid-cols-6 gap-2">
               {["XS", "S", "M", "L", "XL", "XXL"].map((size) => {
                 const isRecommended = getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize) === size;
+                const isSelected = selectedSize === size;
                 return (
-                  <Button
+                  <button
                     key={size}
-                    variant={selectedSize === size ? "default" : "outline"}
                     onClick={() => setSelectedSize(size)}
-                    className={`h-12 font-semibold relative ${isRecommended ? 'ring-2 ring-green-400' : ''}`}
+                    className={`
+                      border-2 rounded-lg py-3 font-bold transition-colors relative
+                      ${isSelected 
+                        ? 'border-black bg-black text-white' 
+                        : 'border-gray-300 bg-white text-black hover:border-gray-400'
+                      }
+                      ${isRecommended ? 'ring-2 ring-green-400' : ''}
+                    `}
+                    data-testid={`button-size-${size.toLowerCase()}`}
                   >
                     {size}
                     {isRecommended && (
                       <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></span>
                     )}
-                  </Button>
+                  </button>
                 );
               })}
             </div>
+            
+            {selectedSize && (
+              <div className="text-sm text-green-600 font-medium mt-3">
+                ✓ Размер {selectedSize} выбран
+              </div>
+            )}
+            
+            {!selectedSize && (
+              <div className="text-sm text-orange-600 mt-2">
+                ⚠️ Выберите размер для добавления в корзину
+              </div>
+            )}
           </div>
 
-          {/* Size Chart */}
-          <div>
+          {/* Size Chart - Always visible */}
+          <div className="border-t border-gray-200 pt-4">
             <h5 className="font-semibold mb-3">Размерная сетка KAVARA</h5>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="space-y-2 text-sm">
-                <div className="grid grid-cols-4 gap-2 font-semibold border-b pb-2">
+            <div className="overflow-x-auto">
+              <div className="space-y-2 text-sm min-w-max">
+                <div className="grid grid-cols-4 gap-4 font-semibold border-b pb-2">
                   <span>Размер</span>
-                  <span>Грудь</span>
-                  <span>Талия</span>
-                  <span>Бедра</span>
+                  <span>Грудь (см)</span>
+                  <span>Талия (см)</span>
+                  <span>Бедра (см)</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <span>XS</span><span>82-86</span><span>62-66</span><span>88-92</span>
+                <div className="grid grid-cols-4 gap-4">
+                  <span className="font-medium">XS</span><span>82-86</span><span>62-66</span><span>88-92</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <span>S</span><span>86-90</span><span>66-70</span><span>92-96</span>
+                <div className="grid grid-cols-4 gap-4">
+                  <span className="font-medium">S</span><span>86-90</span><span>66-70</span><span>92-96</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <span>M</span><span>90-94</span><span>70-74</span><span>96-100</span>
+                <div className="grid grid-cols-4 gap-4">
+                  <span className="font-medium">M</span><span>90-94</span><span>70-74</span><span>96-100</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <span>L</span><span>94-98</span><span>74-78</span><span>100-104</span>
+                <div className="grid grid-cols-4 gap-4">
+                  <span className="font-medium">L</span><span>94-98</span><span>74-78</span><span>100-104</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <span>XL</span><span>98-102</span><span>78-82</span><span>104-108</span>
+                <div className="grid grid-cols-4 gap-4">
+                  <span className="font-medium">XL</span><span>98-102</span><span>78-82</span><span>104-108</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  <span>XXL</span><span>102-106</span><span>82-86</span><span>108-112</span>
+                <div className="grid grid-cols-4 gap-4">
+                  <span className="font-medium">XXL</span><span>102-106</span><span>82-86</span><span>108-112</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* My Parameters */}
+        {/* My Parameters */}
+        <div className="space-y-6">
           <div>
             <h5 className="font-semibold mb-3 flex items-center gap-2">
               <User className="w-4 h-4" />
