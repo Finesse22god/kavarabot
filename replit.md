@@ -6,7 +6,19 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### September 30, 2025 - Box-Product Integration & Real Product Display
+### September 30, 2025 - Critical Fixes: Image Upload & Favorites Functionality
+- **Image Upload Fix**: Resolved field mapping issue in admin panel product editing
+  - Changed `edit-product.tsx` to use correct field name `imageUrl` instead of `image`
+  - Updated Product interface to match database schema
+  - Images now correctly save and display after product updates
+- **Favorites Fix**: Implemented proper userId handling in boxes page
+  - Added `useTelegram` hook import and dbUser query in `boxes.tsx`
+  - userId now passed to `BoxCard` component enabling favorites functionality
+  - FavoriteButton correctly handles undefined userId with proper error messaging
+  - Consistent behavior between catalog.tsx and boxes.tsx
+- **Architect Review**: Both fixes validated and confirmed working correctly
+
+### September 30, 2025 (Earlier) - Box-Product Integration & Real Product Display
 - **Backend Enhancement**: Updated `PUT /api/admin/boxes/:id` to properly handle product associations during box updates
   - Added logic to delete old box-product relationships before creating new ones
   - Implemented proper handling of `productIds` and `productQuantities` arrays
