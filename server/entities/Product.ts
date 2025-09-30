@@ -21,7 +21,7 @@ export class Product {
   @Column({ type: "varchar", nullable: true })
   imageUrl?: string;
 
-  @Column({ type: "simple-array", nullable: true })
+  @Column({ type: "json", nullable: true })
   images?: string[];
 
   @Column({ type: "varchar", nullable: true })
@@ -33,13 +33,13 @@ export class Product {
   @Column({ type: "varchar", nullable: true })
   color?: string;
 
-  @Column({ type: "simple-array", nullable: true })
+  @Column({ type: "json", nullable: true })
   sizes?: string[];
 
   @Column({ type: "boolean", default: true })
   isAvailable!: boolean;
 
-  @Column({ type: "simple-array", nullable: true })
+  @Column({ type: "json", nullable: true })
   sportTypes?: string[];
 
   @OneToMany(() => BoxProduct, (boxProduct) => boxProduct.product)

@@ -77,9 +77,7 @@ export default function ProductDetail() {
   });
 
   const handleAddToCart = () => {
-    const hasProductSizes = product?.sizes && product.sizes.length > 0;
-    
-    if (hasProductSizes && !selectedSize) {
+    if (hasSizes && !selectedSize) {
       toast({
         title: "Выберите размер",
         description: "Пожалуйста, выберите размер перед добавлением в корзину",
@@ -115,10 +113,21 @@ export default function ProductDetail() {
     );
   }
 
-  const hasSizes = product.sizes && product.sizes.length > 0;
+  let parsedSizes = product.sizes;
+  
+  if (typeof product.sizes === 'string') {
+    try {
+      parsedSizes = JSON.parse(product.sizes);
+    } catch (e) {
+      console.error('Failed to parse sizes:', e);
+      parsedSizes = [];
+    }
+  }
+  
+  const hasSizes = parsedSizes && Array.isArray(parsedSizes) && parsedSizes.length > 0;
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-32">
       <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
         <button 
           className="p-2 -ml-2" 
@@ -192,7 +201,7 @@ export default function ProductDetail() {
             
             <Tabs value={selectedSize} onValueChange={setSelectedSize} className="w-full">
               <TabsList className="grid w-full grid-cols-5 gap-2 bg-transparent h-auto p-0">
-                {product.sizes?.map((size) => (
+                {parsedSizes?.map((size) => (
                   <TabsTrigger 
                     key={size} 
                     value={size}
@@ -203,7 +212,7 @@ export default function ProductDetail() {
                   </TabsTrigger>
                 ))}
               </TabsList>
-              {product.sizes?.map((size) => (
+              {parsedSizes?.map((size) => (
                 <TabsContent key={size} value={size} className="mt-3">
                   <div className="text-sm text-green-600 font-medium">
                     ✓ Размер {size} выбран
