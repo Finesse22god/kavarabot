@@ -796,13 +796,16 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
+    console.log("📝 Обновление бокса:", id);
+    console.log("Данные для обновления:", JSON.stringify(updateData, null, 2));
+
     // Преобразуем данные для совместимости с сущностью Box
     const boxUpdateData: Partial<CreateBoxDto> = {
       name: updateData.name,
       description: updateData.description,
       price: updateData.price,
       category: updateData.category,
-      imageUrl: updateData.image, // преобразуем image в imageUrl
+      imageUrl: updateData.imageUrl || updateData.image, // поддерживаем оба поля
       sportTypes: updateData.sportTypes || [], // добавляем поддержку видов спорта
     };
 
@@ -810,6 +813,40 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
     if (!updatedBox) {
       return res.status(404).json({ error: "Box not found" });
     }
+
+    // Обработка товаров, если они переданы
+    if (updateData.productIds !== undefined) {
+      console.log("🔄 Обновляем товары в боксе");
+      
+      // Получаем текущие товары
+      const currentProducts = await storage.getBoxProducts(id);
+      console.log(`Текущих товаров: ${currentProducts.length}`);
+      
+      // Удаляем все текущие связи
+      for (const boxProduct of currentProducts) {
+        await storage.removeProductFromBox(id, boxProduct.productId);
+        console.log(`🗑️ Удалена связь с товаром ${boxProduct.productId}`);
+      }
+      
+      // Добавляем новые товары
+      if (updateData.productIds && updateData.productIds.length > 0) {
+        console.log(`➕ Добавляем ${updateData.productIds.length} товаров`);
+        
+        for (let i = 0; i < updateData.productIds.length; i++) {
+          const productId = updateData.productIds[i];
+          const quantity = updateData.productQuantities?.[i] || 1;
+          
+          try {
+            await storage.addProductToBox(id, productId, quantity);
+            console.log(`✅ Товар ${productId} добавлен (количество: ${quantity})`);
+          } catch (productError) {
+            console.error(`❌ Ошибка добавления товара ${productId}:`, productError);
+          }
+        }
+      }
+    }
+
+    console.log("✅ Бокс успешно обновлен");
     res.json(updatedBox);
   } catch (error) {
     console.error("Error updating box:", error);
