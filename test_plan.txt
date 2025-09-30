@@ -1,1 +1,0 @@
-Testing admin panel display of order content information and payment buttons for pending orders. This tests the critical fixes made.

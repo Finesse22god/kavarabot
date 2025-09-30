@@ -43,6 +43,7 @@ Preferred communication style: Simple, everyday language.
 - **Payment Integration**: ЮMoney payment system with webhook verification for automatic status updates and Telegram Mini App redirection.
 - **Admin Panel**: Web-based admin panel (`/admin`) for order, user, and product management, including detailed user profiles and loyalty statistics.
 - **Referral System**: Client-based referral program using personalized promo codes for loyalty points.
+- **Product UI**: Simplified product cards in catalog (photo, name, price, button only). Detailed product pages use tabs for size selection and collapsible sections for descriptions/characteristics. Optimized for Telegram WebApp compatibility (September 2025).
 
 ## External Dependencies
 
