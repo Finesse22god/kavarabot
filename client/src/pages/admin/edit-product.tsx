@@ -19,7 +19,7 @@ interface Product {
   brand?: string;
   color?: string;
   sizes?: string[];
-  image: string;
+  imageUrl?: string;
   images?: string[];
 }
 
@@ -39,11 +39,11 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     brand: product?.brand || "",
     color: product?.color || "",
     sizes: product?.sizes || [],
-    image: product?.image || "",
+    imageUrl: product?.imageUrl || "",
     images: product?.images || [],
   });
   const [imagePreviews, setImagePreviews] = useState<string[]>(
-    product?.images || (product?.image ? [product.image] : [])
+    product?.images || (product?.imageUrl ? [product.imageUrl] : [])
   );
 
   const { toast } = useToast();
@@ -155,7 +155,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
         setFormData(prev => ({
           ...prev,
           images: [...prev.images, compressedImage],
-          image: prev.images.length === 0 ? compressedImage : prev.image // Первое изображение как основное
+          imageUrl: prev.images.length === 0 ? compressedImage : prev.imageUrl // Первое изображение как основное
         }));
       } catch (error) {
         toast({
@@ -175,7 +175,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     setFormData({
       ...formData,
       images: newImages,
-      image: newImages.length > 0 ? newImages[0] : "" // Первое изображение как основное
+      imageUrl: newImages.length > 0 ? newImages[0] : "" // Первое изображение как основное
     });
   };
 

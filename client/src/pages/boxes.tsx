@@ -5,9 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, ShoppingCart, Eye } from "lucide-react";
 import BoxCard from "@/components/box-card";
+import { useTelegram } from "@/hooks/use-telegram";
 
 export default function Boxes() {
   const [, setLocation] = useLocation();
+  const { user: telegramUser } = useTelegram();
+
+  // Get database user by telegram ID
+  const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
+    queryKey: [`/api/users/telegram/${telegramUser?.id}`],
+    enabled: !!telegramUser?.id
+  });
 
   // Fetch all boxes
   const { data: boxes, isLoading } = useQuery({
@@ -51,6 +59,7 @@ export default function Boxes() {
               <BoxCard 
                 key={box.id}
                 box={box}
+                userId={dbUser?.id}
                 onSelect={handleSelectBox}
                 data-testid={`box-card-${box.id}`}
               />
