@@ -42,7 +42,9 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     image: product?.image || "",
     images: product?.images || [],
   });
-  const [imagePreviews, setImagePreviews] = useState<string[]>(product?.images || [product?.image].filter(Boolean) || []);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(
+    product?.images || (product?.image ? [product.image] : [])
+  );
 
   const { toast } = useToast();
   const queryClient = useQueryClient();

@@ -1,11 +1,6 @@
-
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Info } from "lucide-react";
-import type { Product } from "@shared/schema";
-import { FavoriteButton } from "@/components/FavoriteButton";
 import { useLocation } from "wouter";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import type { Product } from "@shared/schema";
 
 interface ProductCardProps {
   product: Product;
@@ -18,47 +13,30 @@ interface ProductCardProps {
 
 export default function ProductCard({ 
   product, 
-  onSelect, 
   onNotify, 
-  onAddToCart, 
   variant = "default", 
   userId 
 }: ProductCardProps) {
   const isComingSoon = variant === "coming-soon" || !product.isAvailable;
   const [, setLocation] = useLocation();
-  const [selectedSize, setSelectedSize] = useState<string>("");
-  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   const handleCardClick = () => {
     if (!isComingSoon) {
-      // Navigate to product detail page
       setLocation(`/product/${product.id}`);
     }
   };
 
-  const handleAddToCart = () => {
-    // Проверяем нужен ли размер для этого товара
-    const hasProductSizes = product.sizes && product.sizes.length > 0;
-    
-    if (hasProductSizes && !selectedSize) {
-      // Если у товара есть размеры, но размер не выбран - показываем предупреждение
-      return;
-    }
-    
-    onAddToCart?.(product, selectedSize);
-    // Сбрасываем выбранный размер после добавления
-    setSelectedSize("");
-  };
-
   return (
-    <div className={`border-2 border-black bg-white rounded-2xl overflow-hidden ${isComingSoon ? "opacity-60" : ""}`}>
-      <div className="aspect-[4/3] relative overflow-hidden" onClick={handleCardClick}>
+    <div 
+      className={`bg-white rounded-2xl overflow-hidden border-2 border-black ${isComingSoon ? "opacity-60" : "cursor-pointer"}`}
+      onClick={handleCardClick}
+    >
+      <div className="aspect-[4/3] relative overflow-hidden">
         <img 
           src={product.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={product.name}
-          className={`w-full h-full object-cover cursor-pointer ${isComingSoon ? "grayscale" : ""}`}
+          className={`w-full h-full object-cover ${isComingSoon ? "grayscale" : ""}`}
         />
-        {/* Favorite Button */}
         <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
           <FavoriteButton 
             boxId={product.id} 
@@ -76,140 +54,37 @@ export default function ProductCard({
       </div>
       
       <div className="p-4">
-        <h3 className="text-lg font-bold text-black mb-2 tracking-wide">{product.name.toUpperCase()}</h3>
-        <p className="text-gray-600 mb-3 text-sm line-clamp-2">{product.description}</p>
+        <h3 className="text-lg font-bold text-black mb-3 tracking-wide line-clamp-2" data-testid={`text-product-name-${product.id}`}>
+          {product.name.toUpperCase()}
+        </h3>
         
-        {/* Product-specific info: sizes, brand, color */}
-        {!isComingSoon && (
-          <div className="mb-4">
-            {product.sizes && product.sizes.length > 0 && (
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs font-bold text-black tracking-wide">РАЗМЕРЫ:</div>
-                  <Dialog open={showSizeGuide} onOpenChange={setShowSizeGuide}>
-                    <DialogTrigger asChild>
-                      <button 
-                        className="text-xs text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                        data-testid="button-size-guide"
-                      >
-                        <Info className="w-3 h-3" />
-                        Размерная сетка
-                      </button>
-                    </DialogTrigger>
-                    <DialogContent onClick={(e) => e.stopPropagation()}>
-                      <DialogHeader>
-                        <DialogTitle>Размерная сетка</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="text-sm text-gray-600">
-                          Рекомендации по выбору размера для спортивной одежды:
-                        </div>
-                        <div className="grid grid-cols-4 gap-2 text-xs">
-                          <div className="font-bold">Размер</div>
-                          <div className="font-bold">Грудь (см)</div>
-                          <div className="font-bold">Талия (см)</div>
-                          <div className="font-bold">Бедра (см)</div>
-                          
-                          <div>XS</div><div>82-86</div><div>66-70</div><div>90-94</div>
-                          <div>S</div><div>86-90</div><div>70-74</div><div>94-98</div>
-                          <div>M</div><div>90-94</div><div>74-78</div><div>98-102</div>
-                          <div>L</div><div>94-98</div><div>78-82</div><div>102-106</div>
-                          <div>XL</div><div>98-102</div><div>82-86</div><div>106-110</div>
-                          <div>XXL</div><div>102-108</div><div>86-92</div><div>110-116</div>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          💡 Спортивная одежда должна сидеть плотно, но не сковывать движения. При сомнениях выбирайте больший размер.
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {product.sizes.map((size: string, index: number) => (
-                    <button
-                      key={index}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedSize(size === selectedSize ? "" : size);
-                      }}
-                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border-2 transition-all ${
-                        selectedSize === size
-                          ? "border-black bg-black text-white"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
-                      }`}
-                      data-testid={`button-size-${size.toLowerCase()}`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-                {product.sizes.length > 0 && !selectedSize && (
-                  <div className="text-xs text-red-500 mb-2">
-                    ⚠️ Выберите размер для добавления в корзину
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {(product.brand || product.color || product.category) && (
-              <div className="text-xs text-gray-600 space-y-1 mb-3">
-                {product.brand && <div><strong>Бренд:</strong> {product.brand}</div>}
-                {product.color && <div><strong>Цвет:</strong> {product.color}</div>}
-                {product.category && <div><strong>Категория:</strong> {product.category}</div>}
-              </div>
-            )}
-          </div>
-        )}
-        
-        <div className="border-t border-gray-200 pt-3">
-          {isComingSoon ? (
-            <button 
-              className="w-full border border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors rounded-xl"
-              onClick={(e) => {
-                e.stopPropagation();
-                onNotify?.(product);
-              }}
-            >
-              УВЕДОМИТЬ О ПОСТУПЛЕНИИ
-            </button>
-          ) : (
-            <div className="space-y-3">
-              <div className="text-xl font-bold text-black text-center">
-                {typeof product.price === 'string' ? parseFloat(product.price).toLocaleString('ru-RU') : product.price.toLocaleString('ru-RU')} ₽
-              </div>
-              <div className="flex gap-2">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddToCart();
-                  }}
-                  disabled={(product.sizes && product.sizes.length > 0 && !selectedSize) || false}
-                  className={`flex-1 py-2.5 font-semibold tracking-wide transition-colors flex items-center justify-center gap-2 rounded-xl text-sm ${
-                    product.sizes && product.sizes.length > 0 && !selectedSize
-                      ? "border border-gray-300 text-gray-400 cursor-not-allowed"
-                      : "border border-black text-black hover:bg-black hover:text-white"
-                  }`}
-                  data-testid={`button-add-to-cart-${product.id}`}
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  {product.sizes && product.sizes.length > 0 && !selectedSize ? "ВЫБЕРИТЕ РАЗМЕР" : "В КОРЗИНУ"}
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCardClick();
-                  }}
-                  className="px-3 border border-gray-300 text-gray-600 py-2.5 font-semibold tracking-wide hover:bg-gray-100 transition-colors rounded-xl text-sm"
-                  data-testid={`button-details-${product.id}`}
-                  title="Подробнее"
-                >
-                  📝
-                </button>
-              </div>
-            </div>
-          )}
+        <div className="text-2xl font-bold text-black mb-4 text-center" data-testid={`text-price-${product.id}`}>
+          {typeof product.price === 'string' ? parseFloat(product.price).toLocaleString('ru-RU') : product.price.toLocaleString('ru-RU')} ₽
         </div>
+        
+        {isComingSoon ? (
+          <button 
+            className="w-full border-2 border-black text-black py-3 font-semibold tracking-wide hover:bg-black hover:text-white transition-colors rounded-xl"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNotify?.(product);
+            }}
+            data-testid={`button-notify-${product.id}`}
+          >
+            УВЕДОМИТЬ О ПОСТУПЛЕНИИ
+          </button>
+        ) : (
+          <button 
+            className="w-full bg-black text-white py-3 font-semibold tracking-wide hover:bg-gray-800 transition-colors rounded-xl flex items-center justify-center gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+            data-testid={`button-add-to-cart-${product.id}`}
+          >
+            🛒 ДОБАВИТЬ В КОРЗИНУ
+          </button>
+        )}
       </div>
     </div>
   );

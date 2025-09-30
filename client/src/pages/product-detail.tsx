@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Heart, ShoppingCart, User, Ruler } from "lucide-react";
+import { ArrowLeft, ShoppingCart, ChevronDown, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useTelegram } from "@/hooks/use-telegram";
-import { apiRequest } from "@/lib/queryClient";
 
 interface Product {
   id: string;
@@ -32,79 +30,18 @@ export default function ProductDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get database user by telegram ID
   const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
     queryKey: [`/api/users/telegram/${telegramUser?.id}`],
     enabled: !!telegramUser?.id
   });
   
   const [selectedSize, setSelectedSize] = useState("");
-  const [measurements, setMeasurements] = useState({
-    height: "",
-    weight: "",
-    sleeveLength: "",
-    chestSize: "",
-    waistSize: "",
-    hipSize: ""
-  });
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
-  // Fetch product details
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${params?.id}`],
     enabled: !!params?.id,
   });
-
-  // Fetch existing user measurements
-  const { data: existingMeasurements } = useQuery({
-    queryKey: [`/api/users/measurements/${dbUser?.id}`],
-    enabled: !!dbUser?.id,
-    retry: 1,
-  });
-
-  // Auto size recommendation based on measurements
-  const getSuggestedSize = (chest: string, waist: string, hip: string) => {
-    if (!chest || !waist || !hip) return null;
-    
-    const chestNum = parseInt(chest);
-    const waistNum = parseInt(waist);
-    const hipNum = parseInt(hip);
-    
-    if (isNaN(chestNum) || isNaN(waistNum) || isNaN(hipNum)) return null;
-    
-    // Size chart logic
-    if (chestNum <= 86 && waistNum <= 66 && hipNum <= 92) return "XS";
-    if (chestNum <= 90 && waistNum <= 70 && hipNum <= 96) return "S";
-    if (chestNum <= 94 && waistNum <= 74 && hipNum <= 100) return "M";
-    if (chestNum <= 98 && waistNum <= 78 && hipNum <= 104) return "L";
-    if (chestNum <= 102 && waistNum <= 82 && hipNum <= 108) return "XL";
-    return "XXL";
-  };
-
-  // Load existing measurements when they're fetched
-  useEffect(() => {
-    if (existingMeasurements && typeof existingMeasurements === 'object') {
-      const measurements_data = existingMeasurements as any;
-      setMeasurements({
-        height: measurements_data.height || "",
-        weight: measurements_data.weight || "",
-        sleeveLength: measurements_data.sleeveLength || "",
-        chestSize: measurements_data.chestSize || "",
-        waistSize: measurements_data.waistSize || "",
-        hipSize: measurements_data.hipSize || ""
-      });
-      if (measurements_data.preferredSize) {
-        setSelectedSize(measurements_data.preferredSize);
-      }
-    }
-  }, [existingMeasurements]);
-
-  // Auto-select size when measurements change
-  useEffect(() => {
-    const suggestedSize = getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize);
-    if (suggestedSize && !selectedSize && product?.sizes?.includes(suggestedSize)) {
-      setSelectedSize(suggestedSize);
-    }
-  }, [measurements.chestSize, measurements.waistSize, measurements.hipSize, selectedSize, product?.sizes]);
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -128,6 +65,7 @@ export default function ProductDetail() {
         title: "Добавлено в корзину",
         description: "Товар успешно добавлен в корзину",
       });
+      setLocation("/cart");
     },
     onError: () => {
       toast({
@@ -139,7 +77,6 @@ export default function ProductDetail() {
   });
 
   const handleAddToCart = () => {
-    // Проверяем нужен ли размер для этого товара
     const hasProductSizes = product?.sizes && product.sizes.length > 0;
     
     if (hasProductSizes && !selectedSize) {
@@ -178,83 +115,163 @@ export default function ProductDetail() {
     );
   }
 
+  const hasSizes = product.sizes && product.sizes.length > 0;
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center space-x-4">
-          <button 
-            className="p-2 -ml-2" 
-            onClick={() => setLocation("/catalog")}
-          >
-            <ArrowLeft className="w-6 h-6 text-black" />
-          </button>
-          <div>
-            <h2 className="text-2xl font-bold text-black tracking-wide">{product.name}</h2>
-            <p className="text-gray-600 font-medium">
-              {(typeof product.price === 'string' ? parseFloat(product.price) : product.price).toLocaleString()}₽
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-white pb-20">
+      <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+        <button 
+          className="p-2 -ml-2" 
+          onClick={() => setLocation("/catalog")}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-6 h-6 text-black" />
+        </button>
       </div>
 
-      <div className="p-6 space-y-8">
-        {/* Product Image and Info */}
-        <div className="space-y-4">
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="w-full h-64 object-cover rounded-lg"
-          />
-          <div>
-            <h3 className="text-xl font-bold text-black mb-2">{product.name}</h3>
-            <p className="text-gray-600 mb-4">{product.description}</p>
-            <p className="text-2xl font-bold text-black">{(typeof product.price === 'string' ? parseFloat(product.price) : product.price).toLocaleString()}₽</p>
+      <div className="aspect-square relative overflow-hidden">
+        <img
+          src={product.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"}
+          alt={product.name}
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      <div className="p-4 space-y-4">
+        <div>
+          <h1 className="text-2xl font-bold text-black mb-2 tracking-wide" data-testid="text-product-name">
+            {product.name.toUpperCase()}
+          </h1>
+          <div className="text-3xl font-bold text-black" data-testid="text-product-price">
+            {typeof product.price === 'string' ? parseFloat(product.price).toLocaleString('ru-RU') : product.price.toLocaleString('ru-RU')} ₽
           </div>
         </div>
 
-        {/* Size Selection */}
-        {product.sizes && product.sizes.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center space-x-2">
-                <Ruler className="w-5 h-5" />
-                <span>Выбор размера</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="size-select" className="text-sm font-medium">
-                  Доступные размеры
-                </Label>
-                <Select value={selectedSize} onValueChange={setSelectedSize}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Выберите размер" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {product.sizes.map((size) => (
-                      <SelectItem key={size} value={size}>
-                        {size}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {hasSizes && (
+          <div className="bg-gray-50 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-black">ВЫБЕРИТЕ РАЗМЕР</h3>
+              <Dialog open={showSizeGuide} onOpenChange={setShowSizeGuide}>
+                <DialogTrigger asChild>
+                  <button 
+                    className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+                    data-testid="button-size-guide"
+                  >
+                    <Info className="w-4 h-4" />
+                    Размерная сетка
+                  </button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Размерная сетка</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600">
+                      Рекомендации по выбору размера для спортивной одежды:
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 text-xs">
+                      <div className="font-bold">Размер</div>
+                      <div className="font-bold">Грудь (см)</div>
+                      <div className="font-bold">Талия (см)</div>
+                      <div className="font-bold">Бедра (см)</div>
+                      
+                      <div>XS</div><div>82-86</div><div>66-70</div><div>90-94</div>
+                      <div>S</div><div>86-90</div><div>70-74</div><div>94-98</div>
+                      <div>M</div><div>90-94</div><div>74-78</div><div>98-102</div>
+                      <div>L</div><div>94-98</div><div>78-82</div><div>102-106</div>
+                      <div>XL</div><div>98-102</div><div>82-86</div><div>106-110</div>
+                      <div>XXL</div><div>102-108</div><div>86-92</div><div>110-116</div>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      💡 Спортивная одежда должна сидеть плотно, но не сковывать движения. При сомнениях выбирайте больший размер.
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            
+            <Tabs value={selectedSize} onValueChange={setSelectedSize} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 gap-2 bg-transparent h-auto p-0">
+                {product.sizes?.map((size) => (
+                  <TabsTrigger 
+                    key={size} 
+                    value={size}
+                    className="border-2 border-gray-300 data-[state=active]:border-black data-[state=active]:bg-black data-[state=active]:text-white rounded-lg py-3 font-bold"
+                    data-testid={`tab-size-${size.toLowerCase()}`}
+                  >
+                    {size}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {product.sizes?.map((size) => (
+                <TabsContent key={size} value={size} className="mt-3">
+                  <div className="text-sm text-green-600 font-medium">
+                    ✓ Размер {size} выбран
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+            
+            {!selectedSize && (
+              <div className="text-sm text-orange-600 mt-2">
+                ⚠️ Выберите размер для добавления в корзину
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
         )}
 
-        {/* Add to Cart Button */}
-        <div className="space-y-4">
+        {product.description && (
+          <Collapsible>
+            <CollapsibleTrigger className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors" data-testid="button-description">
+              <span className="font-bold text-black">ОПИСАНИЕ</span>
+              <ChevronDown className="w-5 h-5 text-black" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 py-3">
+              <p className="text-gray-700 leading-relaxed">{product.description}</p>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        {(product.brand || product.color || product.category) && (
+          <Collapsible>
+            <CollapsibleTrigger className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors" data-testid="button-details">
+              <span className="font-bold text-black">ХАРАКТЕРИСТИКИ</span>
+              <ChevronDown className="w-5 h-5 text-black" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 py-3 space-y-2">
+              {product.brand && (
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Бренд</span>
+                  <span className="font-medium text-black">{product.brand}</span>
+                </div>
+              )}
+              {product.color && (
+                <div className="flex justify-between py-2 border-b border-gray-200">
+                  <span className="text-gray-600">Цвет</span>
+                  <span className="font-medium text-black">{product.color}</span>
+                </div>
+              )}
+              {product.category && (
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-600">Категория</span>
+                  <span className="font-medium text-black">{product.category}</span>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <Button
             onClick={handleAddToCart}
-            disabled={addToCartMutation.isPending || (product?.sizes && product.sizes.length > 0 && !selectedSize)}
-            className="w-full bg-black text-white hover:bg-gray-800 py-4 text-lg font-semibold tracking-wide"
+            disabled={addToCartMutation.isPending || (hasSizes && !selectedSize)}
+            className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500"
+            data-testid="button-add-to-cart"
           >
             {addToCartMutation.isPending ? (
               <div className="flex items-center space-x-2">
-                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                <span>Добавляем...</span>
+                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                <span>ДОБАВЛЯЕМ...</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
@@ -263,12 +280,6 @@ export default function ProductDetail() {
               </div>
             )}
           </Button>
-          
-          {product?.sizes && product.sizes.length > 0 && !selectedSize && (
-            <p className="text-sm text-gray-500 text-center">
-              Выберите размер для добавления в корзину
-            </p>
-          )}
         </div>
       </div>
     </div>
