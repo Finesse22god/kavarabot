@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
-import { ArrowLeft, ShoppingCart, Heart, User, Ruler } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Heart, Ruler } from "lucide-react";
 import { useTelegram } from "@/hooks/use-telegram";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Box } from "@shared/schema";
@@ -24,14 +22,6 @@ export default function BoxDetail() {
   });
   
   const [selectedSize, setSelectedSize] = useState("");
-  const [measurements, setMeasurements] = useState({
-    height: "",
-    weight: "",
-    sleeveLength: "",
-    chestSize: "",
-    waistSize: "",
-    hipSize: ""
-  });
 
   // Fetch box details
   const { data: box, isLoading, error } = useQuery<Box>({
@@ -44,92 +34,6 @@ export default function BoxDetail() {
     queryKey: [`/api/boxes/${params?.id}/products`],
     enabled: !!params?.id,
   });
-
-  // Fetch existing user measurements
-  const { data: existingMeasurements } = useQuery<{
-    height?: string;
-    weight?: string;
-    sleeveLength?: string;
-    chestSize?: string;
-    waistSize?: string;
-    hipSize?: string;
-    preferredSize?: string;
-  }>({
-    queryKey: [`/api/users/measurements/${dbUser?.id}`],
-    enabled: !!dbUser?.id,
-    retry: 1,
-  });
-
-  // Auto size recommendation based on measurements
-  const getSuggestedSize = (chest: string, waist: string, hip: string) => {
-    if (!chest || !waist || !hip) return null;
-    
-    const chestNum = parseInt(chest);
-    const waistNum = parseInt(waist);
-    const hipNum = parseInt(hip);
-    
-    if (isNaN(chestNum) || isNaN(waistNum) || isNaN(hipNum)) return null;
-    
-    // Size chart logic
-    if (chestNum <= 86 && waistNum <= 66 && hipNum <= 92) return "XS";
-    if (chestNum <= 90 && waistNum <= 70 && hipNum <= 96) return "S";
-    if (chestNum <= 94 && waistNum <= 74 && hipNum <= 100) return "M";
-    if (chestNum <= 98 && waistNum <= 78 && hipNum <= 104) return "L";
-    if (chestNum <= 102 && waistNum <= 82 && hipNum <= 108) return "XL";
-    return "XXL";
-  };
-
-  // Load existing measurements when they're fetched
-  useEffect(() => {
-    if (existingMeasurements) {
-      setMeasurements({
-        height: existingMeasurements.height || "",
-        weight: existingMeasurements.weight || "",
-        sleeveLength: existingMeasurements.sleeveLength || "",
-        chestSize: existingMeasurements.chestSize || "",
-        waistSize: existingMeasurements.waistSize || "",
-        hipSize: existingMeasurements.hipSize || ""
-      });
-      if (existingMeasurements.preferredSize) {
-        setSelectedSize(existingMeasurements.preferredSize);
-      }
-    }
-  }, [existingMeasurements]);
-
-  // Auto-select size when measurements change
-  useEffect(() => {
-    const suggestedSize = getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize);
-    if (suggestedSize && !selectedSize) {
-      setSelectedSize(suggestedSize);
-    }
-  }, [measurements.chestSize, measurements.waistSize, measurements.hipSize, selectedSize]);
-
-  const saveMeasurements = async () => {
-    if (!dbUser?.id) return;
-    
-    try {
-      await fetch(`/api/users/measurements/${dbUser.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...measurements,
-          preferredSize: selectedSize
-        })
-      });
-      
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/users/measurements/${dbUser.id}`] });
-      
-      toast({
-        title: "Параметры сохранены",
-        description: "Ваши размеры и предпочтения были сохранены",
-      });
-    } catch (error) {
-      console.error('Error saving measurements:', error);
-    }
-  };
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
@@ -328,35 +232,24 @@ export default function BoxDetail() {
             <h3 className="font-bold text-black">ВЫБЕРИТЕ РАЗМЕР</h3>
           </div>
           
-          {getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize) && (
-            <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-              💡 Рекомендуем размер <strong>{getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize)}</strong> на основе ваших параметров
-            </div>
-          )}
-          
           <div className="space-y-2">
             <div className="grid grid-cols-6 gap-2">
               {["XS", "S", "M", "L", "XL", "XXL"].map((size) => {
-                const isRecommended = getSuggestedSize(measurements.chestSize, measurements.waistSize, measurements.hipSize) === size;
                 const isSelected = selectedSize === size;
                 return (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
                     className={`
-                      border-2 rounded-lg py-3 font-bold transition-colors relative
+                      border-2 rounded-lg py-3 font-bold transition-colors
                       ${isSelected 
                         ? 'border-black bg-black text-white' 
                         : 'border-gray-300 bg-white text-black hover:border-gray-400'
                       }
-                      ${isRecommended ? 'ring-2 ring-green-400' : ''}
                     `}
                     data-testid={`button-size-${size.toLowerCase()}`}
                   >
                     {size}
-                    {isRecommended && (
-                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full"></span>
-                    )}
                   </button>
                 );
               })}
@@ -405,96 +298,6 @@ export default function BoxDetail() {
                   <span className="font-medium">XXL</span><span>102-106</span><span>82-86</span><span>108-112</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* My Parameters */}
-        <div className="space-y-6">
-          <div>
-            <h5 className="font-semibold mb-3 flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Мои параметры
-            </h5>
-            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="height" className="text-xs">Рост (см)</Label>
-                  <Input
-                    id="height"
-                    placeholder="170"
-                    value={measurements.height}
-                    onChange={(e) => setMeasurements(prev => ({ ...prev, height: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight" className="text-xs">Вес (кг)</Label>
-                  <Input
-                    id="weight"
-                    placeholder="65"
-                    value={measurements.weight}
-                    onChange={(e) => setMeasurements(prev => ({ ...prev, weight: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="chestSize" className="text-xs">Обхват груди (см)
-                    <span className="text-xs text-gray-500 ml-1">💡 На выдохе</span>
-                  </Label>
-                  <Input
-                    id="chestSize"
-                    placeholder="90"
-                    value={measurements.chestSize}
-                    onChange={(e) => setMeasurements(prev => ({ ...prev, chestSize: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="waistSize" className="text-xs">Обхват талии (см)
-                    <span className="text-xs text-gray-500 ml-1">💡 В самом узком месте</span>
-                  </Label>
-                  <Input
-                    id="waistSize"
-                    placeholder="70"
-                    value={measurements.waistSize}
-                    onChange={(e) => setMeasurements(prev => ({ ...prev, waistSize: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="hipSize" className="text-xs">Обхват бедер (см)
-                    <span className="text-xs text-gray-500 ml-1">💡 В самом широком месте</span>
-                  </Label>
-                  <Input
-                    id="hipSize"
-                    placeholder="95"
-                    value={measurements.hipSize}
-                    onChange={(e) => setMeasurements(prev => ({ ...prev, hipSize: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sleeveLength" className="text-xs">Длина рукава (см)
-                    <span className="text-xs text-gray-500 ml-1">💡 От плеча до запястья</span>
-                  </Label>
-                  <Input
-                    id="sleeveLength"
-                    placeholder="60"
-                    value={measurements.sleeveLength}
-                    onChange={(e) => setMeasurements(prev => ({ ...prev, sleeveLength: e.target.value }))}
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-              <Button
-                onClick={saveMeasurements}
-                className="w-full"
-                variant="outline"
-                size="sm"
-              >
-                Сохранить параметры
-              </Button>
             </div>
           </div>
         </div>
