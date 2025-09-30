@@ -75,7 +75,6 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
         title: "Успешно",
         description: isCreateMode ? "Товар создан" : "Товар обновлен",
       });
-      onBack();
     },
     onError: (error: any) => {
       toast({
@@ -176,6 +175,13 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
       ...formData,
       images: newImages,
       imageUrl: newImages.length > 0 ? newImages[0] : "" // Первое изображение как основное
+    });
+  };
+
+  const setMainImage = (index: number) => {
+    setFormData({
+      ...formData,
+      imageUrl: formData.images[index]
     });
   };
 
@@ -286,7 +292,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
             <Label htmlFor="sizes">Доступные размеры</Label>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                {["XS", "S", "M", "L", "XL", "XXL"].map((size) => (
+                {["XS", "S", "M", "L", "XL", "XXL", "3XL"].map((size) => (
                   <Button
                     key={size}
                     type="button"
@@ -325,7 +331,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
               {imagePreviews.length > 0 && (
                 <div className="grid grid-cols-3 gap-4">
                   {imagePreviews.map((preview, index) => (
-                    <div key={index} className="relative">
+                    <div key={index} className="relative group">
                       <img
                         src={preview}
                         alt={`Preview ${index + 1}`}
@@ -340,10 +346,20 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
                       >
                         <X className="h-3 w-3" />
                       </Button>
-                      {index === 0 && (
-                        <Badge className="absolute bottom-1 left-1 text-xs">
+                      {formData.imageUrl === formData.images[index] ? (
+                        <Badge className="absolute bottom-1 left-1 text-xs bg-green-600">
                           Основное
                         </Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="absolute bottom-1 left-1 text-xs h-6 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => setMainImage(index)}
+                        >
+                          Сделать основным
+                        </Button>
                       )}
                     </div>
                   ))}

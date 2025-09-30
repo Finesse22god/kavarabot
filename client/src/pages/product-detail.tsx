@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ShoppingCart, ChevronDown, Info } from "lucide-react";
+import { ArrowLeft, ShoppingCart, ChevronDown, Info, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useTelegram } from "@/hooks/use-telegram";
+import useEmblaCarousel from "embla-carousel-react";
 
 interface Product {
   id: string;
@@ -15,6 +16,7 @@ interface Product {
   description?: string;
   price: number;
   imageUrl?: string;
+  images?: string[];
   category?: string;
   brand?: string;
   color?: string;
@@ -37,6 +39,31 @@ export default function ProductDetail() {
   
   const [selectedSize, setSelectedSize] = useState("");
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: false });
+  
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCurrentSlide(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
 
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${params?.id}`],
@@ -138,12 +165,76 @@ export default function ProductDetail() {
         </button>
       </div>
 
-      <div className="aspect-square relative overflow-hidden">
-        <img
-          src={product.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
+      <div className="aspect-square relative overflow-hidden bg-gray-100">
+        {(() => {
+          let productImages: string[] = [];
+          
+          if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+            productImages = product.images;
+          } else if (product.imageUrl) {
+            productImages = [product.imageUrl];
+          } else {
+            productImages = ["https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"];
+          }
+
+          if (productImages.length === 1) {
+            return (
+              <img
+                src={productImages[0]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            );
+          }
+
+          return (
+            <>
+              <div className="overflow-hidden" ref={emblaRef}>
+                <div className="flex">
+                  {productImages.map((image, index) => (
+                    <div key={index} className="flex-[0_0_100%] min-w-0">
+                      <img
+                        src={image}
+                        alt={`${product.name} - фото ${index + 1}`}
+                        className="w-full h-full object-cover aspect-square"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {productImages.length > 1 && (
+                <>
+                  <button
+                    onClick={scrollPrev}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all"
+                    data-testid="button-prev-image"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-black" />
+                  </button>
+                  <button
+                    onClick={scrollNext}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all"
+                    data-testid="button-next-image"
+                  >
+                    <ChevronRight className="w-6 h-6 text-black" />
+                  </button>
+                  
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                    {productImages.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-all ${
+                          index === currentSlide ? "bg-white w-6" : "bg-white/60"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          );
+        })()}
       </div>
 
       <div className="p-4 space-y-4">
@@ -244,7 +335,7 @@ export default function ProductDetail() {
         {(product.brand || product.color || product.category) && (
           <Collapsible>
             <CollapsibleTrigger className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors" data-testid="button-details">
-              <span className="font-bold text-black">ХАРАКТЕРИСТИКИ</span>
+              <span className="font-bold text-black">СОСТАВ</span>
               <ChevronDown className="w-5 h-5 text-black" />
             </CollapsibleTrigger>
             <CollapsibleContent className="px-4 py-3 space-y-2">
@@ -270,7 +361,7 @@ export default function ProductDetail() {
           </Collapsible>
         )}
 
-        <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-md mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-md mx-auto">
           <Button
             onClick={handleAddToCart}
             disabled={addToCartMutation.isPending || (hasSizes && !selectedSize)}
