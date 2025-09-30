@@ -67,28 +67,28 @@ export default function Boxes() {
             </p>
           </div>
         )}
+      </div>
 
-        {/* Bottom Action Buttons */}
-        <div className="bg-white border-t border-gray-200 p-4 space-y-3 mt-6">
-          <Button
-            onClick={() => setLocation("/quiz")}
-            className="w-full bg-black text-white py-4 text-lg font-semibold hover:bg-gray-900"
-            data-testid="button-custom-quiz"
-          >
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            Собрать бокс
-          </Button>
-          
-          <Button
-            onClick={() => setLocation("/catalog")}
-            variant="outline"
-            className="w-full border-2 border-black text-black py-4 text-lg font-semibold hover:bg-black hover:text-white"
-            data-testid="button-open-catalog"
-          >
-            <Eye className="w-5 h-5 mr-2" />
-            Открыть каталог
-          </Button>
-        </div>
+      {/* Bottom Action Buttons */}
+      <div className="bg-white border-t border-gray-200 p-4 space-y-3">
+        <Button
+          onClick={() => setLocation("/quiz")}
+          className="w-full bg-black text-white py-4 text-lg font-semibold hover:bg-gray-900"
+          data-testid="button-custom-quiz"
+        >
+          <ShoppingCart className="w-5 h-5 mr-2" />
+          Собрать бокс
+        </Button>
+        
+        <Button
+          onClick={() => setLocation("/catalog")}
+          variant="outline"
+          className="w-full border-2 border-black text-black py-4 text-lg font-semibold hover:bg-black hover:text-white"
+          data-testid="button-open-catalog"
+        >
+          <Eye className="w-5 h-5 mr-2" />
+          Открыть каталог
+        </Button>
       </div>
     </div>
   );
