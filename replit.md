@@ -6,7 +6,23 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### September 30, 2025 - Critical Fixes: Image Upload & Favorites Functionality
+### September 30, 2025 - Admin Panel Enhancements & Photo Carousel
+- **Admin Panel Improvements**:
+  - Added 3XL size option to product creation/editing form
+  - Implemented manual main photo selection: hover over images to see "Set as Main" button
+  - Main photo marked with green badge for visibility
+  - Removed automatic redirect after product save - admin stays on edit page for better workflow
+- **Product Detail Page Carousel**:
+  - Implemented photo carousel with embla-carousel-react for multiple product images
+  - Added navigation buttons (left/right arrows) for manual slide control
+  - Active slide indicators with visual feedback (white elongated dot vs dimmed dots)
+  - Single image products display without carousel controls
+- **UI/UX Refinements**:
+  - Changed "ХАРАКТЕРИСТИКИ" section to "СОСТАВ" in product details
+  - Fixed add-to-cart button spacing: changed from bottom-20 to bottom-0 for proper alignment
+- **Architect Review**: All carousel indicators and admin enhancements validated and confirmed working correctly
+
+### September 30, 2025 (Earlier) - Critical Fixes: Image Upload & Favorites Functionality
 - **Image Upload Fix**: Resolved field mapping issue in admin panel product editing
   - Changed `edit-product.tsx` to use correct field name `imageUrl` instead of `image`
   - Updated Product interface to match database schema
