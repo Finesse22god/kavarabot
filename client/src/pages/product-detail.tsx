@@ -270,7 +270,7 @@ export default function ProductDetail() {
           </Collapsible>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
+        <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-md mx-auto">
           <Button
             onClick={handleAddToCart}
             disabled={addToCartMutation.isPending || (hasSizes && !selectedSize)}
