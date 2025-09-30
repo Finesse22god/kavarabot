@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useRoute } from "wouter";
-import { ArrowLeft, ShoppingCart, Heart, Ruler } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Heart, Ruler, Package } from "lucide-react";
 import { useTelegram } from "@/hooks/use-telegram";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -99,55 +99,17 @@ export default function BoxDetail() {
     );
   }
 
-  // Parse box contents - priority: real products > JSON contents > fallback
-  const parseBoxContents = () => {
-    // First, try to use real box products from API
-    if (boxProducts && boxProducts.length > 0) {
-      return boxProducts.map((boxProduct: any) => ({
+  // Получаем реальные товары из базы данных
+  const boxContents = boxProducts && boxProducts.length > 0
+    ? boxProducts.map((boxProduct: any) => ({
         name: boxProduct.product.name,
         image: boxProduct.product.imageUrl,
         price: boxProduct.product.price,
         description: boxProduct.product.description,
         quantity: boxProduct.quantity,
         isRealProduct: true
-      }));
-    }
-    
-    // Second, try to parse JSON contents from box.contents
-    if (box?.contents && Array.isArray(box.contents)) {
-      return box.contents.map((item: string, index: number) => ({
-        name: item,
-        image: `https://images.unsplash.com/photo-${1571019613454 + index}-1cb2f99b2d8b`,
-        isRealProduct: false
-      }));
-    }
-    
-    // Third, try to parse string contents
-    if (box?.contents && typeof box.contents === 'string') {
-      try {
-        const parsed = JSON.parse(box.contents);
-        if (Array.isArray(parsed)) {
-          return parsed.map((item: string, index: number) => ({
-            name: item,
-            image: `https://images.unsplash.com/photo-${1571019613454 + index}-1cb2f99b2d8b`,
-            isRealProduct: false
-          }));
-        }
-      } catch (e) {
-        // If JSON parsing fails, fallback to mock data
-      }
-    }
-    
-    // Fallback to mock data
-    return [
-      { name: "Спортивная футболка", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab", isRealProduct: false },
-      { name: "Леггинсы", image: "https://images.unsplash.com/photo-1506629905607-ce2a6c06f2a0", isRealProduct: false },
-      { name: "Спортивный бюстгальтер", image: "https://images.unsplash.com/photo-1544966503-7cc5ac882d5e", isRealProduct: false },
-      { name: "Кроссовки", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff", isRealProduct: false }
-    ];
-  };
-
-  const boxContents = parseBoxContents();
+      }))
+    : [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -204,14 +166,9 @@ export default function BoxDetail() {
                     {item.price && (
                       <span className="text-sm font-medium text-primary">{item.price}₽</span>
                     )}
-                    {item.quantity && (
+                    {item.quantity && item.quantity > 1 && (
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                         x{item.quantity}
-                      </span>
-                    )}
-                    {item.isRealProduct && (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                        Настоящий товар
                       </span>
                     )}
                   </div>
@@ -221,7 +178,9 @@ export default function BoxDetail() {
           </div>
           {boxContents.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              <p>Содержимое бокса не определено</p>
+              <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+              <p className="font-medium">Товары еще не добавлены в этот бокс</p>
+              <p className="text-sm mt-1">Администратор добавит их в ближайшее время</p>
             </div>
           )}
         </div>
