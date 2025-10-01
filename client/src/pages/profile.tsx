@@ -16,6 +16,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import { useUserFavorites } from "@/hooks/use-favorites";
 import BoxCard from "@/components/box-card";
+import ProductCard from "@/components/product-card";
 import type { QuizResponse } from "@shared/schema";
 
 export default function Profile() {
@@ -653,15 +654,44 @@ export default function Profile() {
                     <p className="text-gray-600">Загружаем избранное...</p>
                   </div>
                 ) : userFavorites && userFavorites.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {userFavorites.map((favorite: any) => (
-                      <div key={favorite.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                        <BoxCard
-                          box={favorite.box}
-                          onSelect={handleSelectBox}
-                          userId={userData?.id}
-                          variant="default"
-                        />
+                      <div key={favorite.id}>
+                        {favorite.box ? (
+                          <BoxCard
+                            box={favorite.box}
+                            onSelect={handleSelectBox}
+                            userId={userData?.id}
+                            variant="default"
+                          />
+                        ) : favorite.product ? (
+                          <ProductCard
+                            product={favorite.product}
+                            userId={userData?.id}
+                            onAddToCart={async (product, size) => {
+                              try {
+                                await apiRequest("POST", "/api/cart", {
+                                  userId: userData?.id,
+                                  productId: product.id,
+                                  quantity: 1,
+                                  selectedSize: size,
+                                  itemType: "product"
+                                });
+                                queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+                                toast({
+                                  title: "Добавлено в корзину",
+                                  description: `${product.name} добавлен в корзину`,
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: "Ошибка",
+                                  description: "Не удалось добавить товар в корзину",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          />
+                        ) : null}
                       </div>
                     ))}
                   </div>

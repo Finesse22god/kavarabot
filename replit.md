@@ -6,7 +6,7 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### October 1, 2025 (Latest) - Product Favorites Full Support
+### October 1, 2025 (Latest) - Product Favorites Full Support & Profile Page Fix
 - **Product Favorites Implementation**:
   - Added `productId` field to favorites table (previously only supported boxes)
   - Updated FavoriteButton component to accept both `boxId` and `productId` parameters
@@ -17,10 +17,14 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
   - API endpoints POST/DELETE `/api/favorites` now handle both box and product favorites
   - Added foreign key constraint with CASCADE delete for productId referencing products table
   - Tested and verified: adding/removing product favorites works correctly
+  - API `/api/users/:userId/favorites` returns both boxes and products with full relations
 - **Frontend Updates**:
   - useIsFavorite hook updated to accept optional boxId and productId parameters
   - useFavoriteMutations updated with new mutation signatures for both types
   - Test IDs and UI behavior remain consistent across box and product favorites
+  - **Fixed Profile Favorites Page**: Now correctly displays both boxes (BoxCard) and products (ProductCard) in favorites list
+  - Added proper cart functionality for products added from favorites page
+  - Profile page dynamically renders appropriate card component based on favorite type (box vs product)
 
 ### October 1, 2025 (Earlier) - Development Mode Mock User & Favorites Fix
 - **Mock User Implementation for Local Development**:
