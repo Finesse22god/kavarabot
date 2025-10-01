@@ -18,14 +18,11 @@ import { BoxProduct } from "./entities/BoxProduct";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.DATABASE_URL,
+  url: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_R27TSIgPpsr@ep-blue-waterfall-aedknn1n.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require",
   synchronize: true, // Only for development
   logging: true, // Enable logging for debugging
   entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, Favorite, Cart, Product, BoxProduct],
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: { rejectUnauthorized: false },
   dropSchema: false, // Don't drop schema automatically
 });
 
