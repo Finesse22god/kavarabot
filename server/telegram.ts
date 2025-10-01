@@ -44,9 +44,7 @@ export async function setupTelegramBotWithApp(app: express.Application) {
 
   // Get Mini App URL
   app.get('/mini-app-url', (req, res) => {
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-      : `http://localhost:5000`;
+    const baseUrl = getWebAppUrl();
     
     res.json({ 
       miniAppUrl: baseUrl,
@@ -238,9 +236,7 @@ async function answerCallbackQuery(callbackQueryId: string) {
 }
 
 function getWebAppUrl(): string {
-  return process.env.REPLIT_DEV_DOMAIN 
-    ? `https://${process.env.REPLIT_DEV_DOMAIN}`
-    : `http://localhost:5000`;
+  return 'https://kavarabotapp.replit.app';
 }
 
 function getBotUsername(): string {
