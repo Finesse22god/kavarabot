@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock } from "lucide-react";
+import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock, Settings } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import OrderDetails from "./order-details";
@@ -15,6 +15,8 @@ import UserProfile from "./user-profile";
 import PromoCodes from "./promo-codes";
 import CreateBoxForm from "./create-box-form";
 import EditBoxForm from "./edit-box-form";
+import QuizSettings from "./quiz-settings";
+import Analytics from "./analytics";
 import type { Box, Product } from "@shared/schema";
 
 interface Order {
@@ -87,10 +89,14 @@ export default function AdminDashboard() {
   const [editingBox, setEditingBox] = useState<Box | null | undefined | 'create_box'>(undefined);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showPromoCodes, setShowPromoCodes] = useState(false);
+  const [showQuizSettings, setShowQuizSettings] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedBoxes, setSelectedBoxes] = useState<string[]>([]);
   const [showMassActions, setShowMassActions] = useState(false);
+  const [categoryFilterProducts, setCategoryFilterProducts] = useState<string>("all");
+  const [searchQueryProducts, setSearchQueryProducts] = useState("");
 
   const handleImportCatalog = async () => {
     setIsImporting(true);
@@ -418,6 +424,16 @@ export default function AdminDashboard() {
   // Show promo codes modal
   if (showPromoCodes) {
     return <PromoCodes onBack={() => setShowPromoCodes(false)} />;
+  }
+
+  // Show quiz settings modal
+  if (showQuizSettings) {
+    return <QuizSettings onBack={() => setShowQuizSettings(false)} />;
+  }
+
+  // Show analytics modal
+  if (showAnalytics) {
+    return <Analytics onBack={() => setShowAnalytics(false)} />;
   }
 
   const stats = {
@@ -752,14 +768,44 @@ export default function AdminDashboard() {
                     <div className="space-y-4">
                       {products && products.length > 0 ? (
                         <div>
+                          {/* Фильтры и поиск */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                            <Input
+                              placeholder="Поиск по названию..."
+                              value={searchQueryProducts}
+                              onChange={(e) => setSearchQueryProducts(e.target.value)}
+                              data-testid="input-products-search"
+                            />
+                            <select
+                              value={categoryFilterProducts}
+                              onChange={(e) => setCategoryFilterProducts(e.target.value)}
+                              className="w-full p-2 border border-gray-300 rounded-md"
+                              data-testid="select-products-category"
+                            >
+                              <option value="all">Все категории</option>
+                              <option value="футболки">Футболки</option>
+                              <option value="шорты">Шорты</option>
+                              <option value="леггинсы">Леггинсы</option>
+                              <option value="спортивные_костюмы">Спортивные костюмы</option>
+                              <option value="худи">Худи и толстовки</option>
+                              <option value="аксессуары">Аксессуары</option>
+                            </select>
+                          </div>
+
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleSelectAllProducts(products)}
+                                onClick={() => handleSelectAllProducts(products.filter(p => 
+                                  (categoryFilterProducts === "all" || p.category === categoryFilterProducts) &&
+                                  (searchQueryProducts === "" || p.name.toLowerCase().includes(searchQueryProducts.toLowerCase()))
+                                ))}
                               >
-                                {selectedProducts.length === products.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
+                                {selectedProducts.length === products.filter(p => 
+                                  (categoryFilterProducts === "all" || p.category === categoryFilterProducts) &&
+                                  (searchQueryProducts === "" || p.name.toLowerCase().includes(searchQueryProducts.toLowerCase()))
+                                ).length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                                 Выбрать все
                               </Button>
                               {selectedProducts.length > 0 && (
@@ -780,7 +826,12 @@ export default function AdminDashboard() {
                             )}
                           </div>
                           
-                          {products.map((product) => (
+                          {products
+                            .filter(product => 
+                              (categoryFilterProducts === "all" || product.category === categoryFilterProducts) &&
+                              (searchQueryProducts === "" || product.name.toLowerCase().includes(searchQueryProducts.toLowerCase()))
+                            )
+                            .map((product) => (
                             <div
                               key={product.id}
                               className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
@@ -965,23 +1016,44 @@ export default function AdminDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => setShowAnalytics(true)}
+                        data-testid="button-analytics"
+                      >
+                        <BarChart3 className="h-6 w-6" />
+                        Аналитика заказов
+                      </Button>
+
                       <Button
                         variant="outline"
                         className="h-20 flex flex-col gap-2"
                         onClick={() => setShowPromoCodes(true)}
+                        data-testid="button-promo-codes"
                       >
                         <Gift className="h-6 w-6" />
                         Промокоды
                       </Button>
                       
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => setShowQuizSettings(true)}
+                        data-testid="button-quiz-settings"
+                      >
+                        <Settings className="h-6 w-6" />
+                        Настройки квиза
+                      </Button>
                       
                       <Button
                         variant="outline"
                         className="h-20 flex flex-col gap-2"
                         onClick={() => window.location.reload()}
+                        data-testid="button-reload-data"
                       >
-                        <BarChart3 className="h-6 w-6" />
+                        <ShoppingCart className="h-6 w-6" />
                         Обновить данные
                       </Button>
                     </div>

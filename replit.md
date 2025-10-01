@@ -6,7 +6,34 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### October 1, 2025 - Product Cards & Catalog UX Enhancement
+### October 1, 2025 - Admin Panel Pre-Investor Demo Stability & Analytics
+- **Critical Stability Fixes for Investor Demo**:
+  - Fixed EditBoxForm crash risk: Added TypeScript typing for currentBoxProducts as Array<{productId: string}> with Array.isArray guard
+  - Unified product API endpoints: All admin components now use consistent `/api/admin/products` endpoint
+  - Implemented category normalization via `shared/constants.ts` with `matchesCategory` function for robust filtering
+  - Added token validation in EditBoxForm to prevent unauthorized submissions
+  - Fixed all TypeScript LSP errors ensuring clean build
+- **Analytics Dashboard**:
+  - Created comprehensive analytics page with recharts visualizations
+  - Revenue tracking with date range filters (default: last 30 days)
+  - Multiple chart types: sales by day (line chart), order status distribution (pie chart), delivery methods (bar chart)
+  - Key metrics cards: total orders, revenue, average order value, conversion rate
+  - Top 10 recent orders list with status badges
+- **Box Management UX Improvements**:
+  - Added category filters and search for product selection in create/edit box forms
+  - Selected products displayed first in lists for better visibility
+  - Hidden selected products indicator: Shows warning when filters hide selected items
+  - Shared sport types constants for consistency across quiz and box management
+- **Quiz Settings Panel**:
+  - Admin interface for managing quiz questions and answer options
+  - Support for quiz recommendation logic configuration
+- **Product Management Enhancements**:
+  - Category filtering in admin product list
+  - Search functionality for quick product lookup
+  - Consistent category handling across all admin interfaces
+- **Architect Review**: All critical fixes validated. System confirmed demo-ready with PASS verdict.
+
+### October 1, 2025 (Earlier) - Product Cards & Catalog UX Enhancement
 - **Product Detail Page Improvements**:
   - Enhanced "Add to Cart" button with dynamic label: shows "ВЫБЕРИТЕ РАЗМЕР" when size not selected
   - Increased z-index to z-50 and added iOS safe area support for better button visibility

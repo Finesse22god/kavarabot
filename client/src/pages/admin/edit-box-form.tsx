@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { ArrowLeft, Gift, Package, X } from "lucide-react";
 import type { Box } from "@shared/schema";
+import { matchesCategory, SPORT_TYPES } from "@shared/constants";
 
 interface Product {
   id: string;
@@ -41,16 +42,11 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
   
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [newSportType, setNewSportType] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Updated sport categories matching quiz
-  const availableSportTypes = [
-    "Единоборства 🥊",
-    "Бег/кардио",
-    "Силовые тренировки", 
-    "Йога",
-    "Командные виды спорта",
-    "Повседневная носка"
-  ];
+  // Use shared sport types
+  const availableSportTypes = [...SPORT_TYPES];
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -62,15 +58,15 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
   });
 
   // Load current box products
-  const { data: currentBoxProducts } = useQuery({
+  const { data: currentBoxProducts } = useQuery<Array<{productId: string}>>({
     queryKey: [`/api/boxes/${box.id}/products`],
     retry: false,
   });
 
   // Set initial selected products when data loads
   useEffect(() => {
-    if (currentBoxProducts) {
-      const productIds = currentBoxProducts.map((bp: any) => bp.productId);
+    if (currentBoxProducts && Array.isArray(currentBoxProducts)) {
+      const productIds = currentBoxProducts.map(bp => bp.productId);
       setSelectedProducts(productIds);
     }
   }, [currentBoxProducts]);
@@ -113,6 +109,16 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const token = localStorage.getItem("adminToken");
+    if (!token) {
+      toast({
+        title: "Ошибка авторизации",
+        description: "Необходимо войти в систему",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!formData.name || !formData.price) {
       toast({
@@ -349,11 +355,122 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Фильтры и поиск */}
+              <div className="space-y-3 mb-4">
+                <div>
+                  <Label className="text-xs">Поиск товара</Label>
+                  <Input
+                    placeholder="Название товара..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="mt-1"
+                    data-testid="input-product-search"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">Фильтр по категории</Label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md mt-1"
+                    data-testid="select-category-filter"
+                  >
+                    <option value="all">Все категории</option>
+                    <option value="футболки">Футболки</option>
+                    <option value="шорты">Шорты</option>
+                    <option value="леггинсы">Леггинсы</option>
+                    <option value="спортивные_костюмы">Спортивные костюмы</option>
+                    <option value="худи">Худи и толстовки</option>
+                    <option value="аксессуары">Аксессуары</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Hidden selected products indicator */}
+              {selectedProducts.length > 0 && products && (() => {
+                const visibleSelected = products.filter(p => 
+                  selectedProducts.includes(p.id) && 
+                  matchesCategory(p.category, categoryFilter) &&
+                  (searchQuery === "" || p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                ).length;
+                const hiddenCount = selectedProducts.length - visibleSelected;
+                
+                return hiddenCount > 0 ? (
+                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
+                    ⚠️ {hiddenCount} выбранных товар(ов) скрыто текущими фильтрами
+                  </div>
+                ) : null;
+              })()}
+
               {productsLoading ? (
                 <div className="text-center py-4">Загрузка товаров...</div>
               ) : products && products.length > 0 ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {products.filter(product => product.isAvailable).map((product) => (
+                  {/* Выбранные товары (сверху) */}
+                  {products
+                    .filter(product => 
+                      product.isAvailable && 
+                      selectedProducts.includes(product.id) &&
+                      matchesCategory(product.category, categoryFilter) &&
+                      (searchQuery === "" || product.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    )
+                    .map((product) => (
+                    <div
+                      key={product.id}
+                      className="p-3 border-2 border-green-300 bg-green-50 rounded-lg cursor-pointer transition-colors"
+                      onClick={() => handleProductToggle(product.id)}
+                      data-testid={`product-item-${product.id}`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <Checkbox
+                          checked={true}
+                          onChange={() => handleProductToggle(product.id)}
+                          data-testid={`checkbox-product-${product.id}`}
+                        />
+                        {product.imageUrl && (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm">{product.name}</h4>
+                          {product.description && (
+                            <p className="text-xs text-gray-500 truncate">
+                              {product.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm font-semibold">{product.price}₽</span>
+                            {product.brand && (
+                              <Badge variant="outline" className="text-xs">
+                                {product.brand}
+                              </Badge>
+                            )}
+                            {product.category && (
+                              <Badge variant="secondary" className="text-xs">
+                                {product.category}
+                              </Badge>
+                            )}
+                            <Badge variant="default" className="text-xs bg-green-600">
+                              ✓ В боксе
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Остальные товары */}
+                  {products
+                    .filter(product => 
+                      product.isAvailable && 
+                      !selectedProducts.includes(product.id) &&
+                      matchesCategory(product.category, categoryFilter) &&
+                      (searchQuery === "" || product.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    )
+                    .map((product) => (
                     <div
                       key={product.id}
                       className={`p-3 border rounded-lg cursor-pointer transition-colors ${
