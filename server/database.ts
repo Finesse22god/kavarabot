@@ -18,7 +18,7 @@ import { BoxProduct } from "./entities/BoxProduct";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  url: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_R27TSIgPpsr@ep-blue-waterfall-aedknn1n.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require",
+  url: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_R27TStjgPpsr@ep-blue-waterfall-aedknn1n.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require",
   synchronize: true, // Only for development
   logging: true, // Enable logging for debugging
   entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, Favorite, Cart, Product, BoxProduct],
