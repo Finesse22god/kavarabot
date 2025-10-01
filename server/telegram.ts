@@ -29,9 +29,6 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // Setup bot commands and menu
   app.post('/setup-bot', async (req, res) => {
     try {
-      // Set webhook
-      await setWebhook();
-      
       // Set bot commands
       await setMyCommands();
       
@@ -74,71 +71,36 @@ async function handleMessage(message: any) {
   const chatId = message.chat.id;
   const text = message.text;
 
-  let responseMessage = '';
-  let keyboard: any = null;
+  if (text === '/start') {
+    const welcomeMessage = `
+🎽 Добро пожаловать в KAVARA! 
 
-  switch (text) {
-    case '/start':
-      responseMessage = `Снова рад тебя видеть в KAVARA Brand 💪
-Заходи в приложение — смотри новинки и подбирай стиль под себя.`;
-      keyboard = {
-        inline_keyboard: [
-          [{ text: "🔓 Открыть приложение", web_app: { url: getWebAppUrl() } }]
+Я ваш персональный стилист спортивной одежды. Готов подобрать идеальный спортивный образ специально для вас!
+
+🎯 Что я умею:
+• Провожу персональную стилистическую диагностику
+• Подбираю готовые спортивные боксы
+• Создаю индивидуальные комплекты
+• Отслеживаю ваши заказы
+
+Нажмите кнопку "Открыть приложение" или используйте меню ниже ⬇️
+    `;
+
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "🚀 Открыть приложение", web_app: { url: getWebAppUrl() } }],
+        [
+          { text: "📋 Пройти тест", callback_data: "quiz" },
+          { text: "📦 Готовые боксы", callback_data: "ready_boxes" }
+        ],
+        [
+          { text: "📞 Поддержка", callback_data: "support" },
+          { text: "ℹ️ О нас", callback_data: "about" }
         ]
-      };
-      break;
+      ]
+    };
 
-    case '/app':
-      responseMessage = '🔓 Открываем приложение KAVARA для вас!';
-      keyboard = {
-        inline_keyboard: [
-          [{ text: "🔓 Открыть приложение", web_app: { url: getWebAppUrl() } }]
-        ]
-      };
-      break;
-
-    case '/quiz':
-      responseMessage = '🎯 Пройдите персональный тест для подбора идеального спортивного образа!';
-      keyboard = {
-        inline_keyboard: [
-          [{ text: "📋 Начать тест", web_app: { url: `${getWebAppUrl()}/quiz` } }]
-        ]
-      };
-      break;
-
-    case '/boxes':
-      responseMessage = '📦 Посмотрите наши готовые спортивные боксы!';
-      keyboard = {
-        inline_keyboard: [
-          [{ text: "🛍️ Смотреть боксы", web_app: { url: `${getWebAppUrl()}/ready-boxes` } }]
-        ]
-      };
-      break;
-
-    case '/orders':
-      responseMessage = '📋 Ваши заказы в KAVARA';
-      keyboard = {
-        inline_keyboard: [
-          [{ text: "📦 Мои заказы", web_app: { url: `${getWebAppUrl()}/orders` } }]
-        ]
-      };
-      break;
-
-    case '/support':
-      responseMessage = '📞 Служба поддержки KAVARA готова помочь!';
-      keyboard = {
-        inline_keyboard: [
-          [{ text: "💬 Связаться с поддержкой", web_app: { url: `${getWebAppUrl()}/support` } }]
-        ]
-      };
-      break;
-
-    default:
-      return;
-  }
-
-  if (responseMessage) {
-    await sendMessage(chatId, responseMessage, keyboard);
+    await sendMessage(chatId, welcomeMessage, keyboard);
   }
 }
 
@@ -227,20 +189,6 @@ async function setMyCommands() {
   });
 
   return response.json();
-}
-
-async function setWebhook() {
-  const webhookUrl = `${getWebAppUrl()}/webhook`;
-  
-  const response = await fetch(`${TELEGRAM_API_URL}/setWebhook`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: webhookUrl })
-  });
-
-  const result = await response.json();
-  console.log('Webhook setup result:', result);
-  return result;
 }
 
 async function setMenuButton() {
@@ -335,7 +283,7 @@ ${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}
   // Send to orders channel if configured
   if (ORDERS_CHANNEL_ID) {
     try {
-      await sendMessage(parseInt(ORDERS_CHANNEL_ID), message);
+      await sendMessage(ORDERS_CHANNEL_ID, message);
       console.log("Order notification sent to channel successfully");
     } catch (error) {
       console.error("Failed to send order notification to channel:", error);
