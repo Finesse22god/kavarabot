@@ -298,34 +298,36 @@ export default function Catalog() {
 
       {/* Catalog Products Header */}
       <div className="p-6 pb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-black tracking-wide">КАТАЛОГ ТОВАРОВ</h3>
+        <h3 className="text-xl font-bold text-black tracking-wide mb-4">КАТАЛОГ ТОВАРОВ</h3>
+        
+        {/* Filters and Sort in one row */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 rounded-xl"
+            data-testid="button-toggle-filters"
           >
             <Filter className="w-4 h-4" />
             Фильтры
           </Button>
-        </div>
-        
-        {/* Sort Options */}
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600 font-medium">Сортировка:</span>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[200px] border-2 border-gray-200 rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600 font-medium">Сортировка:</span>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[200px] border-2 border-gray-200 rounded-xl" data-testid="select-sort">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
