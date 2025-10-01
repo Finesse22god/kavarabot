@@ -189,13 +189,14 @@ export default function Cart() {
                 if (!currentItem) return null;
                 
                 return (
-                <Card key={item.id}>
+                <Card key={item.id} data-testid={`card-item-${item.id}`}>
                   <CardContent className="p-4">
                     <div className="flex gap-4">
                       <img
                         src={currentItem.imageUrl}
                         alt={currentItem.name}
                         className="w-20 h-20 object-cover rounded-lg"
+                        data-testid={`img-product-${item.id}`}
                       />
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{currentItem.name}</h3>
@@ -203,45 +204,46 @@ export default function Cart() {
                         {item.selectedSize && (
                           <p className="text-sm text-blue-600 font-medium mb-2">Размер: {item.selectedSize}</p>
                         )}
+                        <div className="text-xl font-bold mb-2" data-testid={`text-price-${item.id}`}>{(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽</div>
                         <div className="flex items-center justify-between">
-                          <div className="text-xl font-bold">{(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽</div>
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  updateQuantityMutation.mutate({
-                                    itemId: item.id,
-                                    quantity: Math.max(1, item.quantity - 1),
-                                  })
-                                }
-                                disabled={item.quantity <= 1}
-                              >
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  updateQuantityMutation.mutate({
-                                    itemId: item.id,
-                                    quantity: item.quantity + 1,
-                                  })
-                                }
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            </div>
+                          <div className="flex items-center gap-2">
                             <Button
                               size="sm"
-                              variant="destructive"
-                              onClick={() => removeFromCartMutation.mutate(item.id)}
+                              variant="outline"
+                              onClick={() =>
+                                updateQuantityMutation.mutate({
+                                  itemId: item.id,
+                                  quantity: Math.max(1, item.quantity - 1),
+                                })
+                              }
+                              disabled={item.quantity <= 1}
+                              data-testid={`button-decrease-${item.id}`}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                            <span className="w-8 text-center font-semibold" data-testid={`text-quantity-${item.id}`}>{item.quantity}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                updateQuantityMutation.mutate({
+                                  itemId: item.id,
+                                  quantity: item.quantity + 1,
+                                })
+                              }
+                              data-testid={`button-increase-${item.id}`}
+                            >
+                              <Plus className="w-4 h-4" />
                             </Button>
                           </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => removeFromCartMutation.mutate(item.id)}
+                            data-testid={`button-delete-${item.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -258,12 +260,13 @@ export default function Cart() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center text-lg">
-                  <span>Товары ({totalItems} шт.)</span>
-                  <span className="font-bold">{totalPrice.toLocaleString()}₽</span>
+                  <span data-testid="text-items-count">Товары ({totalItems} шт.)</span>
+                  <span className="font-bold" data-testid="text-total-price">{totalPrice.toLocaleString()}₽</span>
                 </div>
                 <Button
                   className="w-full bg-black hover:bg-gray-800 text-white py-6 text-lg"
                   onClick={handleCheckout}
+                  data-testid="button-checkout"
                 >
                   Оформить заказ
                 </Button>
