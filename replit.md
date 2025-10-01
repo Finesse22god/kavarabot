@@ -6,6 +6,27 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
+### October 1, 2025 - Product Cards & Catalog UX Enhancement
+- **Product Detail Page Improvements**:
+  - Enhanced "Add to Cart" button with dynamic label: shows "ВЫБЕРИТЕ РАЗМЕР" when size not selected
+  - Increased z-index to z-50 and added iOS safe area support for better button visibility
+  - Added visual improvements to size selector: borders, hover states, success indicators
+  - Imported Product type from shared schema for type consistency
+- **Product Card Enhancements**:
+  - Implemented quick size selection directly in product cards
+  - Added "View" button (eye icon) for viewing product details
+  - Display brand name and size count indicator
+  - Hover effects on image (scale) and card (shadow)
+  - Size selection panel appears when clicking "В КОРЗИНУ" button
+- **Catalog Page Improvements**:
+  - Added sorting functionality: by price (ascending/descending), by name (A-Z, Z-A)
+  - Improved filters layout and visual design
+  - Sort reset included in "Reset Filters" button
+- **Unified Card Design**:
+  - All product and box cards now have consistent image-first layout
+  - Unified styling across ProductCard and BoxCard components
+- **Architect Review**: All changes validated and approved after addressing feedback on z-index and safe area support
+
 ### September 30, 2025 - Admin Panel Enhancements & Photo Carousel
 - **Admin Panel Improvements**:
   - Added 3XL size option to product creation/editing form
