@@ -6,7 +6,18 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### October 1, 2025 (Latest) - Product Favorites Full Support & Profile Page Fix
+### October 1, 2025 (Latest) - Critical Fix: Catalog Display Issue Resolved
+- **Problem**: After integrating Telegram bot webhook, catalog products stopped displaying (though API was working correctly)
+- **Root Cause**: React Query's `defaultQueryFn` was not being called for catalog endpoint - queryKey was created with complex dependencies causing React Query to not execute the request
+- **Solution**: Added explicit `queryFn` to catalog query in `client/src/pages/catalog.tsx` similar to boxes query implementation
+- **Technical Details**:
+  - Changed from relying on `defaultQueryFn` to explicit async fetch function in queryFn
+  - Query now explicitly fetches `/api/catalog` endpoint with proper error handling
+  - Verified solution persists after workflow restarts and server reboots
+- **Testing**: Confirmed catalog displays all 9 products correctly, boxes load properly, Telegram webhook continues working
+- **Status**: All functionality restored - catalog, boxes, Telegram bot integration, admin panel all operational
+
+### October 1, 2025 (Earlier) - Product Favorites Full Support & Profile Page Fix
 - **Product Favorites Implementation**:
   - Added `productId` field to favorites table (previously only supported boxes)
   - Updated FavoriteButton component to accept both `boxId` and `productId` parameters
