@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import routes from './routes.js';
 import { initializeDatabase } from './database.js';
+import { setupTelegramBotWithApp } from './telegram.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,6 +83,9 @@ async function createServer() {
       });
     }
   });
+
+  // Setup Telegram bot webhooks and commands
+  await setupTelegramBotWithApp(app);
   
   // Connect all routes
   app.use(routes);
