@@ -70,19 +70,8 @@ async function handleMessage(message: any) {
   const text = message.text;
 
   if (text === '/start') {
-    const welcomeMessage = `
-🎽 Добро пожаловать в KAVARA! 
-
-Я ваш персональный стилист спортивной одежды. Готов подобрать идеальный спортивный образ специально для вас!
-
-🎯 Что я умею:
-• Провожу персональную стилистическую диагностику
-• Подбираю готовые спортивные боксы
-• Создаю индивидуальные комплекты
-• Отслеживаю ваши заказы
-
-Нажмите кнопку "Открыть приложение" или используйте меню ниже ⬇️
-    `;
+    const welcomeMessage = `Снова рад тебя видеть в KAVARA Brand 💪
+Заходи в приложение — смотри новинки и подбирай стиль под себя.`;
 
     const keyboard = {
       inline_keyboard: [
@@ -279,7 +268,7 @@ ${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}
   // Send to orders channel if configured
   if (ORDERS_CHANNEL_ID) {
     try {
-      await sendMessage(ORDERS_CHANNEL_ID, message);
+      await sendMessage(parseInt(ORDERS_CHANNEL_ID), message);
       console.log("Order notification sent to channel successfully");
     } catch (error) {
       console.error("Failed to send order notification to channel:", error);
