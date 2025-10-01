@@ -6,7 +6,23 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### October 1, 2025 - Admin Panel Pre-Investor Demo Stability & Analytics
+### October 1, 2025 (Latest) - Development Mode Mock User & Favorites Fix
+- **Mock User Implementation for Local Development**:
+  - Added automatic mock user (ID: 123456789) when running outside Telegram environment
+  - Enables full testing of favorites, cart, and user-specific features during development
+  - Mock user seamlessly integrates with existing Telegram WebApp detection
+  - Fallback triggers when Telegram WebApp API exists but has no real user (Replit preview scenario)
+- **Favorites Functionality Verified**:
+  - Confirmed POST /api/favorites creates favorites correctly
+  - Confirmed DELETE /api/favorites removes favorites successfully
+  - Database user lookup working correctly with mock user
+  - All queries for favorites status execute properly on page load
+- **Technical Implementation**:
+  - Modified `use-telegram.tsx` to detect missing user and inject mock user
+  - Mock user automatically created in database on first load
+  - Consistent behavior between real Telegram and development environments
+
+### October 1, 2025 (Earlier) - Admin Panel Pre-Investor Demo Stability & Analytics
 - **Critical Stability Fixes for Investor Demo**:
   - Fixed EditBoxForm crash risk: Added TypeScript typing for currentBoxProducts as Array<{productId: string}> with Array.isArray guard
   - Unified product API endpoints: All admin components now use consistent `/api/admin/products` endpoint
