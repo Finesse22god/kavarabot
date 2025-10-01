@@ -81,26 +81,12 @@ export default function Catalog() {
 
 
 
-  const { data: catalogItems, isLoading, error } = useQuery({
-    queryKey: ["/api/catalog", selectedCategory, selectedSportType, selectedPriceRange],
+  const { data: catalogItems, isLoading, error } = useQuery<Product[]>({
+    queryKey: ["/api/catalog"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedCategory && selectedCategory !== "Все категории") {
-        params.append("category", selectedCategory);
-      }
-      if (selectedSportType && selectedSportType !== "Все виды спорта") {
-        params.append("sportType", selectedSportType);
-      }
-      if (selectedPriceRange.min > 0) {
-        params.append("minPrice", selectedPriceRange.min.toString());
-      }
-      if (selectedPriceRange.max < Infinity) {
-        params.append("maxPrice", selectedPriceRange.max.toString());
-      }
-      
-      const response = await fetch(`/api/catalog?${params.toString()}`);
+      const response = await fetch("/api/catalog");
       if (!response.ok) throw new Error("Failed to fetch catalog");
-      return response.json() as Promise<Product[]>;
+      return response.json();
     },
   });
 
