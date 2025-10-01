@@ -82,7 +82,12 @@ export default function Catalog() {
 
 
   const { data: catalogItems, isLoading, error } = useQuery({
-    queryKey: ["/api/catalog", selectedCategory, selectedSportType, selectedPriceRange],
+    queryKey: [
+      "/api/catalog",
+      selectedCategory,
+      selectedSportType,
+      selectedPriceRange.label, // Use label instead of whole object
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== "Все категории") {
