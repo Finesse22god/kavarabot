@@ -50,6 +50,14 @@ const PRICE_RANGES = [
   { label: "Свыше 20.000₽", min: 20000, max: Infinity }
 ];
 
+const SORT_OPTIONS = [
+  { label: "По умолчанию", value: "default" },
+  { label: "Цена: по возрастанию", value: "price-asc" },
+  { label: "Цена: по убыванию", value: "price-desc" },
+  { label: "Название: А-Я", value: "name-asc" },
+  { label: "Название: Я-А", value: "name-desc" },
+];
+
 export default function Catalog() {
   const [, setLocation] = useLocation();
   const { user: telegramUser } = useTelegram();
@@ -66,6 +74,7 @@ export default function Catalog() {
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("default");
 
 
 
@@ -161,7 +170,7 @@ export default function Catalog() {
 
 
   // Фильтрация товаров
-  const filteredItems = catalogItems?.filter(item => {
+  let filteredItems = catalogItems?.filter(item => {
     // Фильтр по категории - пока отключен, так как товары имеют другие категории (clothing, accessories)
     const categoryMatch = selectedCategory === "Все категории" || true; // Показать все товары пока фильтр не настроен
     
@@ -172,6 +181,27 @@ export default function Catalog() {
     
     return categoryMatch && searchMatch;
   }) || [];
+
+  // Сортировка товаров
+  if (sortBy !== "default" && filteredItems) {
+    filteredItems = [...filteredItems].sort((a, b) => {
+      const priceA = typeof a.price === 'string' ? parseFloat(a.price) : a.price;
+      const priceB = typeof b.price === 'string' ? parseFloat(b.price) : b.price;
+
+      switch (sortBy) {
+        case "price-asc":
+          return priceA - priceB;
+        case "price-desc":
+          return priceB - priceA;
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        default:
+          return 0;
+      }
+    });
+  }
 
   // Show loading while data is being fetched
   if (isLoading) {
@@ -268,7 +298,7 @@ export default function Catalog() {
 
       {/* Catalog Products Header */}
       <div className="p-6 pb-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold text-black tracking-wide">КАТАЛОГ ТОВАРОВ</h3>
           <Button
             variant="outline"
@@ -279,6 +309,23 @@ export default function Catalog() {
             <Filter className="w-4 h-4" />
             Фильтры
           </Button>
+        </div>
+        
+        {/* Sort Options */}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-gray-600 font-medium">Сортировка:</span>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[200px] border-2 border-gray-200 rounded-xl">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -323,8 +370,9 @@ export default function Catalog() {
             onClick={() => {
               setSelectedCategory("Все категории");
               setSearchQuery("");
+              setSortBy("default");
             }}
-            className="w-full"
+            className="w-full rounded-xl"
           >
             Сбросить фильтры
           </Button>

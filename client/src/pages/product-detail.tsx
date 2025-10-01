@@ -9,21 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useToast } from "@/hooks/use-toast";
 import { useTelegram } from "@/hooks/use-telegram";
 import useEmblaCarousel from "embla-carousel-react";
-
-interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  imageUrl?: string;
-  images?: string[];
-  category?: string;
-  brand?: string;
-  color?: string;
-  sizes?: string[];
-  isAvailable: boolean;
-  sportTypes?: string[];
-}
+import type { Product } from "@shared/schema";
 
 export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
@@ -248,7 +234,7 @@ export default function ProductDetail() {
         </div>
 
         {hasSizes && (
-          <div className="bg-gray-50 rounded-xl p-4">
+          <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-black">ВЫБЕРИТЕ РАЗМЕР</h3>
               <Dialog open={showSizeGuide} onOpenChange={setShowSizeGuide}>
@@ -296,7 +282,7 @@ export default function ProductDetail() {
                   <TabsTrigger 
                     key={size} 
                     value={size}
-                    className="border-2 border-gray-300 data-[state=active]:border-black data-[state=active]:bg-black data-[state=active]:text-white rounded-lg py-3 font-bold"
+                    className="border-2 border-gray-300 data-[state=active]:border-black data-[state=active]:bg-black data-[state=active]:text-white rounded-lg py-3 font-bold transition-all hover:border-gray-400"
                     data-testid={`tab-size-${size.toLowerCase()}`}
                   >
                     {size}
@@ -305,7 +291,7 @@ export default function ProductDetail() {
               </TabsList>
               {parsedSizes?.map((size) => (
                 <TabsContent key={size} value={size} className="mt-3">
-                  <div className="text-sm text-green-600 font-medium">
+                  <div className="text-sm text-green-600 font-medium bg-green-50 p-2 rounded-lg">
                     ✓ Размер {size} выбран
                   </div>
                 </TabsContent>
@@ -313,7 +299,7 @@ export default function ProductDetail() {
             </Tabs>
             
             {!selectedSize && (
-              <div className="text-sm text-orange-600 mt-2">
+              <div className="text-sm text-orange-600 mt-3 bg-orange-50 p-2 rounded-lg">
                 ⚠️ Выберите размер для добавления в корзину
               </div>
             )}
@@ -361,25 +347,32 @@ export default function ProductDetail() {
           </Collapsible>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 max-w-md mx-auto">
-          <Button
-            onClick={handleAddToCart}
-            disabled={addToCartMutation.isPending || (hasSizes && !selectedSize)}
-            className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500"
-            data-testid="button-add-to-cart"
-          >
-            {addToCartMutation.isPending ? (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-                <span>ДОБАВЛЯЕМ...</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <ShoppingCart className="w-5 h-5" />
-                <span>ДОБАВИТЬ В КОРЗИНУ</span>
-              </div>
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white border-t-2 border-gray-200 shadow-lg z-50">
+          <div className="max-w-md mx-auto">
+            <Button
+              onClick={handleAddToCart}
+              disabled={addToCartMutation.isPending || (hasSizes && !selectedSize)}
+              className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-xl transition-all"
+              data-testid="button-add-to-cart"
+            >
+              {addToCartMutation.isPending ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span>ДОБАВЛЯЕМ...</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center space-x-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>{hasSizes && !selectedSize ? 'ВЫБЕРИТЕ РАЗМЕР' : 'ДОБАВИТЬ В КОРЗИНУ'}</span>
+                </div>
+              )}
+            </Button>
+            {hasSizes && !selectedSize && (
+              <p className="text-xs text-center text-gray-500 mt-2">
+                Сначала выберите размер выше
+              </p>
             )}
-          </Button>
+          </div>
         </div>
       </div>
     </div>
