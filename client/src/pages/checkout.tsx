@@ -304,11 +304,13 @@ export default function Checkout() {
                     <p className="text-sm text-green-600 mb-3">
                       Откройте страницу оплаты в новом окне и завершите платеж
                     </p>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-col space-y-2">
                       <Button 
                         onClick={() => window.open(paymentIntent.paymentUrl, '_blank')}
                         variant="outline"
                         size="sm"
+                        className="w-full"
+                        data-testid="button-open-payment"
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Открыть оплату
@@ -316,6 +318,8 @@ export default function Checkout() {
                       <Button 
                         onClick={checkPaymentStatus}
                         size="sm"
+                        className="w-full"
+                        data-testid="button-check-status"
                       >
                         Проверить статус
                       </Button>

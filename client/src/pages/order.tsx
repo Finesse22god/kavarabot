@@ -397,30 +397,21 @@ export default function Order() {
               <RadioGroupItem value="courier" id="courier" />
               <Label htmlFor="courier" className="flex items-center space-x-2 cursor-pointer">
                 <span className="text-xl">🚚</span>
-                <div>
-                  <span className="font-medium">Курьер по Москве</span>
-                  <div className="text-sm text-gray-600">Бесплатно</div>
-                </div>
+                <span className="font-medium">Курьер по Москве</span>
               </Label>
             </div>
             <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
               <RadioGroupItem value="cdek" id="cdek" />
               <Label htmlFor="cdek" className="flex items-center space-x-2 cursor-pointer">
                 <span className="text-xl">📦</span>
-                <div>
-                  <span className="font-medium">СДЭК</span>
-                  <div className="text-sm text-gray-600">Уточнить стоимость</div>
-                </div>
+                <span className="font-medium">СДЭК</span>
               </Label>
             </div>
             <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
               <RadioGroupItem value="pickup" id="pickup" />
               <Label htmlFor="pickup" className="flex items-center space-x-2 cursor-pointer">
                 <span className="text-xl">🏪</span>
-                <div>
-                  <span className="font-medium">Самовывоз</span>
-                  <div className="text-sm text-gray-600">бесплатно</div>
-                </div>
+                <span className="font-medium">Самовывоз</span>
               </Label>
             </div>
           </RadioGroup>
@@ -438,13 +429,6 @@ export default function Order() {
               <Label htmlFor="card" className="flex items-center space-x-2 cursor-pointer">
                 <span className="text-xl">💳</span>
                 <span className="font-medium">Банковская карта</span>
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
-              <RadioGroupItem value="cash" id="cash" />
-              <Label htmlFor="cash" className="flex items-center space-x-2 cursor-pointer">
-                <span className="text-xl">💰</span>
-                <span className="font-medium">При получении</span>
               </Label>
             </div>
           </RadioGroup>
@@ -481,10 +465,6 @@ export default function Order() {
             <div className="flex justify-between">
               <span>Товар:</span>
               <span>{selectedBox ? (typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString('ru-RU') : 0}₽</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Доставка:</span>
-              <span>Бесплатно</span>
             </div>
             {appliedPromoCode && (
               <div className="flex justify-between text-green-600">
