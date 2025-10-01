@@ -376,12 +376,22 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
                     data-testid="select-category-filter"
                   >
                     <option value="all">Все категории</option>
-                    <option value="футболки">Футболки</option>
-                    <option value="шорты">Шорты</option>
-                    <option value="леггинсы">Леггинсы</option>
-                    <option value="спортивные_костюмы">Спортивные костюмы</option>
-                    <option value="худи">Худи и толстовки</option>
-                    <option value="аксессуары">Аксессуары</option>
+                    <option value="Рашгарды">Рашгарды</option>
+                    <option value="Лосины">Лосины</option>
+                    <option value="Рубашки">Рубашки</option>
+                    <option value="Поло">Поло</option>
+                    <option value="Шорты">Шорты</option>
+                    <option value="Футболки">Футболки</option>
+                    <option value="Майки">Майки</option>
+                    <option value="Худи">Худи</option>
+                    <option value="Брюки">Брюки</option>
+                    <option value="Жилеты">Жилеты</option>
+                    <option value="Олимпийки">Олимпийки</option>
+                    <option value="Джемперы">Джемперы</option>
+                    <option value="Куртки">Куртки</option>
+                    <option value="Свитшоты">Свитшоты</option>
+                    <option value="Сумки">Сумки</option>
+                    <option value="Аксессуары">Аксессуары</option>
                   </select>
                 </div>
               </div>
