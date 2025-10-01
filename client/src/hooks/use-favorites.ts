@@ -3,15 +3,19 @@ import { apiRequest } from "@/lib/queryClient";
 // Updated favorite hook
 
 // Hook to check if an item is favorited
-export function useIsFavorite(userId: string | undefined, boxId: string) {
+export function useIsFavorite(userId: string | undefined, boxId?: string, productId?: string) {
   return useQuery({
-    queryKey: ["favorites", "check", userId, boxId],
+    queryKey: ["favorites", "check", userId, boxId, productId],
     queryFn: async () => {
       if (!userId) return { isFavorite: false };
       
-      return await apiRequest("GET", `/api/favorites/check?userId=${userId}&boxId=${boxId}`);
+      const params = new URLSearchParams({ userId });
+      if (boxId) params.append('boxId', boxId);
+      if (productId) params.append('productId', productId);
+      
+      return await apiRequest("GET", `/api/favorites/check?${params.toString()}`);
     },
-    enabled: !!userId && !!boxId,
+    enabled: !!userId && (!!boxId || !!productId),
   });
 }
 
@@ -33,36 +37,34 @@ export function useFavoriteMutations(userId: string | undefined) {
   const queryClient = useQueryClient();
 
   const addFavorite = useMutation({
-    mutationFn: async (boxId: string) => {
+    mutationFn: async ({ boxId, productId }: { boxId?: string; productId?: string }) => {
       if (!userId) throw new Error("User ID is required");
       
-      return await apiRequest("POST", "/api/favorites", { userId, boxId });
+      return await apiRequest("POST", "/api/favorites", { userId, boxId, productId });
     },
-    onSuccess: (_, boxId) => {
+    onSuccess: () => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["favorites", "check", userId, boxId] });
-      queryClient.invalidateQueries({ queryKey: ["favorites", "user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
   });
 
   const removeFavorite = useMutation({
-    mutationFn: async (boxId: string) => {
+    mutationFn: async ({ boxId, productId }: { boxId?: string; productId?: string }) => {
       if (!userId) throw new Error("User ID is required");
       
-      return await apiRequest("DELETE", "/api/favorites", { userId, boxId });
+      return await apiRequest("DELETE", "/api/favorites", { userId, boxId, productId });
     },
-    onSuccess: (_, boxId) => {
+    onSuccess: () => {
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["favorites", "check", userId, boxId] });
-      queryClient.invalidateQueries({ queryKey: ["favorites", "user", userId] });
+      queryClient.invalidateQueries({ queryKey: ["favorites"] });
     },
   });
 
-  const toggleFavorite = async (boxId: string, currentlyFavorited: boolean) => {
+  const toggleFavorite = async (boxId: string | undefined, productId: string | undefined, currentlyFavorited: boolean) => {
     if (currentlyFavorited) {
-      await removeFavorite.mutateAsync(boxId);
+      await removeFavorite.mutateAsync({ boxId, productId });
     } else {
-      await addFavorite.mutateAsync(boxId);
+      await addFavorite.mutateAsync({ boxId, productId });
     }
   };
 

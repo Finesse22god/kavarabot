@@ -75,7 +75,7 @@ export default function ProductCard({
         />
         <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
           <FavoriteButton 
-            boxId={product.id} 
+            productId={product.id} 
             userId={userId} 
             size="sm" 
             variant="ghost"

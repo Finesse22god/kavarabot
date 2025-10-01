@@ -109,9 +109,9 @@ export interface IStorage {
 
   // Favorites System
   createFavorite(favorite: CreateFavoriteDto): Promise<any>;
-  removeFavorite(userId: string, boxId: string): Promise<boolean>;
+  removeFavorite(userId: string, boxId?: string, productId?: string): Promise<boolean>;
   getUserFavorites(userId: string): Promise<any[]>;
-  isFavorite(userId: string, boxId: string): Promise<boolean>;
+  isFavorite(userId: string, boxId?: string, productId?: string): Promise<boolean>;
 
   // Cart System
   addToCart(userId: string, itemId: string, quantity?: number, selectedSize?: string, itemType?: string): Promise<Cart>;
@@ -840,8 +840,16 @@ export class DatabaseStorage implements IStorage {
   // Favorites System Methods
   async createFavorite(favoriteData: CreateFavoriteDto): Promise<Favorite> {
     // Check if favorite already exists
+    const whereCondition: any = { userId: favoriteData.userId };
+    if (favoriteData.boxId) {
+      whereCondition.boxId = favoriteData.boxId;
+    }
+    if (favoriteData.productId) {
+      whereCondition.productId = favoriteData.productId;
+    }
+
     const existing = await this.favoriteRepository.findOne({
-      where: { userId: favoriteData.userId, boxId: favoriteData.boxId }
+      where: whereCondition
     });
 
     if (existing) {
@@ -850,30 +858,44 @@ export class DatabaseStorage implements IStorage {
 
     const favorite = this.favoriteRepository.create({
       userId: favoriteData.userId,
-      boxId: favoriteData.boxId,
+      boxId: favoriteData.boxId || null,
+      productId: favoriteData.productId || null,
     });
     return await this.favoriteRepository.save(favorite);
   }
 
-  async removeFavorite(userId: string, boxId: string): Promise<boolean> {
-    const result = await this.favoriteRepository.delete({
-      userId,
-      boxId
-    });
+  async removeFavorite(userId: string, boxId?: string, productId?: string): Promise<boolean> {
+    const whereCondition: any = { userId };
+    if (boxId) {
+      whereCondition.boxId = boxId;
+    }
+    if (productId) {
+      whereCondition.productId = productId;
+    }
+
+    const result = await this.favoriteRepository.delete(whereCondition);
     return (result.affected ?? 0) > 0;
   }
 
   async getUserFavorites(userId: string): Promise<Favorite[]> {
     return await this.favoriteRepository.find({
       where: { userId },
-      relations: ["box"],
+      relations: ["box", "product"],
       order: { createdAt: "DESC" }
     });
   }
 
-  async isFavorite(userId: string, boxId: string): Promise<boolean> {
+  async isFavorite(userId: string, boxId?: string, productId?: string): Promise<boolean> {
+    const whereCondition: any = { userId };
+    if (boxId) {
+      whereCondition.boxId = boxId;
+    }
+    if (productId) {
+      whereCondition.productId = productId;
+    }
+
     const favorite = await this.favoriteRepository.findOne({
-      where: { userId, boxId }
+      where: whereCondition
     });
     return !!favorite;
   }

@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface FavoriteButtonProps {
-  boxId: string; // Can be either box ID or product ID
+  boxId?: string;
+  productId?: string;
   userId?: string;
   size?: "sm" | "md" | "lg";
   variant?: "ghost" | "outline" | "default";
@@ -14,13 +15,14 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({
   boxId,
+  productId,
   userId,
   size = "md",
   variant = "ghost",
   className,
 }: FavoriteButtonProps) {
   const { toast } = useToast();
-  const { data: favoriteStatus } = useIsFavorite(userId, boxId);
+  const { data: favoriteStatus } = useIsFavorite(userId, boxId, productId);
   const { toggleFavorite, isLoading } = useFavoriteMutations(userId);
   
   const isFavorited = favoriteStatus?.isFavorite || false;
@@ -36,7 +38,7 @@ export function FavoriteButton({
     }
 
     try {
-      await toggleFavorite(boxId, isFavorited);
+      await toggleFavorite(boxId, productId, isFavorited);
       
       toast({
         title: isFavorited ? "Удалено из избранного" : "Добавлено в избранное",
@@ -79,7 +81,7 @@ export function FavoriteButton({
           : "text-gray-400 hover:text-red-500",
         className
       )}
-      data-testid={`button-favorite-${boxId}`}
+      data-testid={`button-favorite-${boxId || productId}`}
     >
       <Heart
         size={iconSizes[size]}

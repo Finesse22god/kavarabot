@@ -6,7 +6,23 @@ KAVARA is a Telegram-based sports fashion styling service offering personalized 
 
 ## Recent Changes
 
-### October 1, 2025 (Latest) - Development Mode Mock User & Favorites Fix
+### October 1, 2025 (Latest) - Product Favorites Full Support
+- **Product Favorites Implementation**:
+  - Added `productId` field to favorites table (previously only supported boxes)
+  - Updated FavoriteButton component to accept both `boxId` and `productId` parameters
+  - Modified use-favorites hooks to support product favorites with proper query parameters
+  - Updated ProductCard to pass `productId` instead of `boxId` to FavoriteButton
+  - Database schema: favorites table now handles both boxes and products with nullable `boxId` and `productId` columns
+- **Backend Updates**:
+  - API endpoints POST/DELETE `/api/favorites` now handle both box and product favorites
+  - Added foreign key constraint with CASCADE delete for productId referencing products table
+  - Tested and verified: adding/removing product favorites works correctly
+- **Frontend Updates**:
+  - useIsFavorite hook updated to accept optional boxId and productId parameters
+  - useFavoriteMutations updated with new mutation signatures for both types
+  - Test IDs and UI behavior remain consistent across box and product favorites
+
+### October 1, 2025 (Earlier) - Development Mode Mock User & Favorites Fix
 - **Mock User Implementation for Local Development**:
   - Added automatic mock user (ID: 123456789) when running outside Telegram environment
   - Enables full testing of favorites, cart, and user-specific features during development

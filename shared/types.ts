@@ -253,12 +253,15 @@ export interface Favorite {
   id: string;
   createdAt: Date;
   userId: string;
-  boxId: string;
+  boxId?: string | null;
+  productId?: string | null;
   user?: User;
   box?: Box;
+  product?: any;
 }
 
 export interface CreateFavoriteDto {
   userId: string;
-  boxId: string;
+  boxId?: string;
+  productId?: string;
 }

@@ -1526,13 +1526,13 @@ router.delete("/api/cart/clear/:userId", async (req, res) => {
 // Favorites endpoints
 router.post("/api/favorites", async (req, res) => {
   try {
-    const { userId, boxId } = req.body;
+    const { userId, boxId, productId } = req.body;
 
-    if (!userId || !boxId) {
-      return res.status(400).json({ error: "userId and boxId are required" });
+    if (!userId || (!boxId && !productId)) {
+      return res.status(400).json({ error: "userId and either boxId or productId are required" });
     }
 
-    const favorite = await storage.createFavorite({ userId, boxId });
+    const favorite = await storage.createFavorite({ userId, boxId, productId });
     res.json(favorite);
   } catch (error) {
     console.error("Error creating favorite:", error);
@@ -1542,13 +1542,13 @@ router.post("/api/favorites", async (req, res) => {
 
 router.delete("/api/favorites", async (req, res) => {
   try {
-    const { userId, boxId } = req.body;
+    const { userId, boxId, productId } = req.body;
 
-    if (!userId || !boxId) {
-      return res.status(400).json({ error: "userId and boxId are required" });
+    if (!userId || (!boxId && !productId)) {
+      return res.status(400).json({ error: "userId and either boxId or productId are required" });
     }
 
-    const removed = await storage.removeFavorite(userId, boxId);
+    const removed = await storage.removeFavorite(userId, boxId, productId);
     if (removed) {
       res.json({ success: true });
     } else {
@@ -1578,13 +1578,13 @@ router.get("/api/users/:userId/favorites", async (req, res) => {
 
 router.get("/api/favorites/check", async (req, res) => {
   try {
-    const { userId, boxId } = req.query;
+    const { userId, boxId, productId } = req.query;
 
-    if (!userId || !boxId) {
-      return res.status(400).json({ error: "userId and boxId are required" });
+    if (!userId || (!boxId && !productId)) {
+      return res.status(400).json({ error: "userId and either boxId or productId are required" });
     }
 
-    const isFavorite = await storage.isFavorite(userId as string, boxId as string);
+    const isFavorite = await storage.isFavorite(userId as string, boxId as string, productId as string);
     res.json({ isFavorite });
   } catch (error) {
     console.error("Error checking favorite status:", error);
