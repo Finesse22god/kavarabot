@@ -1,11 +1,21 @@
 // Product categories - используется в фильтрах админ-панели и каталога
 export const PRODUCT_CATEGORIES = {
-  JACKETS: "куртки",
-  PANTS: "брюки",
-  HOODIES: "худи",
-  SPORT_SUITS: "спортивные_костюмы",
-  SHOES: "обувь",
-  ACCESSORIES: "аксессуары",
+  RASHGUARDS: "Рашгарды",
+  LEGGINGS: "Лосины",
+  SHIRTS: "Рубашки",
+  POLO: "Поло",
+  SHORTS: "Шорты",
+  TSHIRTS: "Футболки",
+  TANK_TOPS: "Майки",
+  HOODIES: "Худи",
+  PANTS: "Брюки",
+  VESTS: "Жилеты",
+  TRACK_JACKETS: "Олимпийки",
+  SWEATERS: "Джемперы",
+  JACKETS: "Куртки",
+  SWEATSHIRTS: "Свитшоты",
+  BAGS: "Сумки",
+  ACCESSORIES: "Аксессуары",
 } as const;
 
 // Нормализация категории для сравнения
