@@ -31,7 +31,8 @@ export default function AdminCreateBox() {
     contents: "",
     availableSizes: "",
     sportTypes: [] as string[],
-    selectedProducts: [] as string[]
+    selectedProducts: [] as string[],
+    isQuizOnly: false
   });
 
   // Fetch all products for selection
@@ -129,6 +130,7 @@ export default function AdminCreateBox() {
       productIds: boxData.selectedProducts,
       productQuantities: boxData.selectedProducts.map(() => 1), // 1 for each product
       isAvailable: true,
+      isQuizOnly: boxData.isQuizOnly,
     };
 
     console.log("Отправляемые данные:", createData);
@@ -264,10 +266,25 @@ export default function AdminCreateBox() {
                 </p>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isQuizOnly"
+                  checked={boxData.isQuizOnly}
+                  onCheckedChange={(checked) => {
+                    setBoxData(prev => ({ ...prev, isQuizOnly: checked === true }));
+                  }}
+                  data-testid="checkbox-quiz-only"
+                />
+                <Label htmlFor="isQuizOnly" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Эксклюзивный бокс только для квиза (не показывать в каталоге)
+                </Label>
+              </div>
+
               <Button 
                 type="submit" 
                 className="w-full" 
                 disabled={createBoxMutation.isPending}
+                data-testid="button-create-box"
               >
                 {createBoxMutation.isPending ? "Создание..." : "Создать бокс"}
               </Button>

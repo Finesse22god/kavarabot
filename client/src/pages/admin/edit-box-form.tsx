@@ -38,6 +38,7 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
     category: box.category || "personal",
     imageUrl: box.imageUrl || "",
     sportTypes: box.sportTypes || [],
+    isQuizOnly: box.isQuizOnly || false,
   });
   
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -152,6 +153,7 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
       productIds: selectedProducts,
       productQuantities: selectedProducts.map(() => 1), // По умолчанию количество 1
       isAvailable: true,
+      isQuizOnly: formData.isQuizOnly,
     };
 
     updateBoxMutation.mutate(boxData);
@@ -332,6 +334,20 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
                       ))}
                     </div>
                   )}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="isQuizOnly"
+                    checked={formData.isQuizOnly}
+                    onCheckedChange={(checked) => {
+                      setFormData(prev => ({ ...prev, isQuizOnly: checked === true }));
+                    }}
+                    data-testid="checkbox-quiz-only"
+                  />
+                  <Label htmlFor="isQuizOnly" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Эксклюзивный бокс только для квиза (не показывать в каталоге)
+                  </Label>
                 </div>
 
                 <Button
