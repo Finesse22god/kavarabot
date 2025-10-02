@@ -33,5 +33,13 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    hmr: {
+      timeout: 30000,
+      overlay: true,
+    },
+    watch: {
+      usePolling: true,
+      interval: 1000,
+    },
   },
 });
