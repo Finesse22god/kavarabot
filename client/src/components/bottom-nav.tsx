@@ -22,7 +22,7 @@ export default function BottomNav() {
   const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black px-2 py-3 max-w-md mx-auto">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black px-2 py-3 max-w-md mx-auto z-50">
       <div className="flex items-center justify-around">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
