@@ -95,6 +95,7 @@ export interface Box {
   category?: string;
   emoji?: string;
   isAvailable: boolean;
+  isQuizOnly?: boolean;
   sportTypes?: string[];
   boxProducts?: BoxProduct[];
 }
@@ -108,6 +109,7 @@ export interface CreateBoxDto {
   category?: string;
   emoji?: string;
   isAvailable?: boolean;
+  isQuizOnly?: boolean;
   sportTypes?: string[];
   productIds?: string[];
   productQuantities?: number[];

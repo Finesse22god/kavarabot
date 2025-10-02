@@ -56,6 +56,7 @@ export const boxes = pgTable("boxes", {
   imageUrl: text("image_url"),
   category: varchar("category", { length: 50 }),
   isAvailable: boolean("is_available").default(true),
+  isQuizOnly: boolean("is_quiz_only").default(false),
   contents: json("contents").$type<string[]>(),
   sportTypes: json("sport_types").$type<string[]>(),
   availableSizes: json("available_sizes").$type<string[]>(),
