@@ -235,12 +235,13 @@ router.get("/api/boxes", async (req, res) => {
             console.log(`\n🔍 НАЙДЕН КВИЗ ДЛЯ ПОЛЬЗОВАТЕЛЯ: ${userId}`);
             console.log(`Ответы квиза:`, JSON.stringify(quizResponse, null, 2));
 
-            // Получаем все персональные боксы
-            const allPersonalBoxes = await storage.getBoxesByCategory("personal");
-            console.log(`\n📦 ВСЕГО ПЕРСОНАЛЬНЫХ БОКСОВ: ${allPersonalBoxes.length}`);
+            // Получаем ВСЕ боксы и фильтруем только квизовые (isQuizOnly=true)
+            const allBoxes = await storage.getAllBoxes();
+            const quizOnlyBoxes = allBoxes.filter(box => box.isQuizOnly === true);
+            console.log(`\n📦 ВСЕГО КВИЗОВЫХ БОКСОВ: ${quizOnlyBoxes.length}`);
 
             // Применяем фильтрацию по видам спорта и бюджету
-            const filteredBoxes = allPersonalBoxes.filter(box => {
+            const filteredBoxes = quizOnlyBoxes.filter(box => {
               // Фильтр по видам спорта
               const hasMatchingSport = box.sportTypes && box.sportTypes.some(sportType =>
                 quizResponse.goals && quizResponse.goals.includes(sportType)
@@ -287,19 +288,23 @@ router.get("/api/boxes", async (req, res) => {
             boxes = filteredBoxes;
           } else {
             console.log(`\n❌ КВИЗ НЕ НАЙДЕН для пользователя: ${userId}`);
-            // Если нет данных квиза, показываем все персональные боксы
-            boxes = await storage.getBoxesByCategory(category);
+            // Если нет данных квиза, не показываем квизовые боксы
+            boxes = [];
           }
         } catch (error) {
           console.error("Error applying personalization filters:", error);
-          // Fallback: показываем все персональные боксы
-          boxes = await storage.getBoxesByCategory(category);
+          // Fallback: не показываем квизовые боксы без данных квиза
+          boxes = [];
         }
       } else {
-        boxes = await storage.getBoxesByCategory(category);
+        // Обычный запрос по категории - исключаем квизовые боксы
+        const categoryBoxes = await storage.getBoxesByCategory(category);
+        boxes = categoryBoxes.filter(box => !box.isQuizOnly);
       }
     } else {
-      boxes = await storage.getAllBoxes();
+      // Запрос всех боксов - исключаем квизовые
+      const allBoxes = await storage.getAllBoxes();
+      boxes = allBoxes.filter(box => !box.isQuizOnly);
     }
 
     res.json(boxes);
