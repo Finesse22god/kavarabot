@@ -41,9 +41,6 @@ async function createServer() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-  // Setup Telegram bot webhook
-  setupTelegramBotWithApp(app);
-
   // Health check endpoints - must be before database initialization
   app.get('/health', (req, res) => {
     res.status(200).json({ 
@@ -86,6 +83,9 @@ async function createServer() {
       });
     }
   });
+  
+  // Setup Telegram bot webhook (must be before catch-all routes)
+  setupTelegramBotWithApp(app);
   
   // Connect all routes
   app.use(routes);
