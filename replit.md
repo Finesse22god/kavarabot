@@ -1,155 +1,9 @@
 # KAVARA - Telegram Sports Fashion Bot
 
 ## Overview
-
-KAVARA is a Telegram-based sports fashion styling service offering personalized athletic wear recommendations through a web interface. Users can take a quiz for custom box recommendations or browse pre-curated boxes. The system manages the entire purchase flow, from selection to order completion, and includes integrated notification systems. The project aims to provide a streamlined, personalized shopping experience for sports fashion.
-
-## Recent Changes
-
-### October 1, 2025 (Latest) - Critical Fix: Catalog Display Issue Resolved
-- **Problem**: After integrating Telegram bot webhook, catalog products stopped displaying (though API was working correctly)
-- **Root Cause**: React Query's `defaultQueryFn` was not being called for catalog endpoint - queryKey was created with complex dependencies causing React Query to not execute the request
-- **Solution**: Added explicit `queryFn` to catalog query in `client/src/pages/catalog.tsx` similar to boxes query implementation
-- **Technical Details**:
-  - Changed from relying on `defaultQueryFn` to explicit async fetch function in queryFn
-  - Query now explicitly fetches `/api/catalog` endpoint with proper error handling
-  - Verified solution persists after workflow restarts and server reboots
-- **Testing**: Confirmed catalog displays all 9 products correctly, boxes load properly, Telegram webhook continues working
-- **Status**: All functionality restored - catalog, boxes, Telegram bot integration, admin panel all operational
-
-### October 1, 2025 (Earlier) - Product Favorites Full Support & Profile Page Fix
-- **Product Favorites Implementation**:
-  - Added `productId` field to favorites table (previously only supported boxes)
-  - Updated FavoriteButton component to accept both `boxId` and `productId` parameters
-  - Modified use-favorites hooks to support product favorites with proper query parameters
-  - Updated ProductCard to pass `productId` instead of `boxId` to FavoriteButton
-  - Database schema: favorites table now handles both boxes and products with nullable `boxId` and `productId` columns
-- **Backend Updates**:
-  - API endpoints POST/DELETE `/api/favorites` now handle both box and product favorites
-  - Added foreign key constraint with CASCADE delete for productId referencing products table
-  - Tested and verified: adding/removing product favorites works correctly
-  - API `/api/users/:userId/favorites` returns both boxes and products with full relations
-- **Frontend Updates**:
-  - useIsFavorite hook updated to accept optional boxId and productId parameters
-  - useFavoriteMutations updated with new mutation signatures for both types
-  - Test IDs and UI behavior remain consistent across box and product favorites
-  - **Fixed Profile Favorites Page**: Now correctly displays both boxes (BoxCard) and products (ProductCard) in favorites list
-  - Added proper cart functionality for products added from favorites page
-  - Profile page dynamically renders appropriate card component based on favorite type (box vs product)
-
-### October 1, 2025 (Earlier) - Development Mode Mock User & Favorites Fix
-- **Mock User Implementation for Local Development**:
-  - Added automatic mock user (ID: 123456789) when running outside Telegram environment
-  - Enables full testing of favorites, cart, and user-specific features during development
-  - Mock user seamlessly integrates with existing Telegram WebApp detection
-  - Fallback triggers when Telegram WebApp API exists but has no real user (Replit preview scenario)
-- **Favorites Functionality Verified**:
-  - Confirmed POST /api/favorites creates favorites correctly
-  - Confirmed DELETE /api/favorites removes favorites successfully
-  - Database user lookup working correctly with mock user
-  - All queries for favorites status execute properly on page load
-- **Technical Implementation**:
-  - Modified `use-telegram.tsx` to detect missing user and inject mock user
-  - Mock user automatically created in database on first load
-  - Consistent behavior between real Telegram and development environments
-
-### October 1, 2025 (Earlier) - Admin Panel Pre-Investor Demo Stability & Analytics
-- **Critical Stability Fixes for Investor Demo**:
-  - Fixed EditBoxForm crash risk: Added TypeScript typing for currentBoxProducts as Array<{productId: string}> with Array.isArray guard
-  - Unified product API endpoints: All admin components now use consistent `/api/admin/products` endpoint
-  - Implemented category normalization via `shared/constants.ts` with `matchesCategory` function for robust filtering
-  - Added token validation in EditBoxForm to prevent unauthorized submissions
-  - Fixed all TypeScript LSP errors ensuring clean build
-- **Analytics Dashboard**:
-  - Created comprehensive analytics page with recharts visualizations
-  - Revenue tracking with date range filters (default: last 30 days)
-  - Multiple chart types: sales by day (line chart), order status distribution (pie chart), delivery methods (bar chart)
-  - Key metrics cards: total orders, revenue, average order value, conversion rate
-  - Top 10 recent orders list with status badges
-- **Box Management UX Improvements**:
-  - Added category filters and search for product selection in create/edit box forms
-  - Selected products displayed first in lists for better visibility
-  - Hidden selected products indicator: Shows warning when filters hide selected items
-  - Shared sport types constants for consistency across quiz and box management
-- **Quiz Settings Panel**:
-  - Admin interface for managing quiz questions and answer options
-  - Support for quiz recommendation logic configuration
-- **Product Management Enhancements**:
-  - Category filtering in admin product list
-  - Search functionality for quick product lookup
-  - Consistent category handling across all admin interfaces
-- **Architect Review**: All critical fixes validated. System confirmed demo-ready with PASS verdict.
-
-### October 1, 2025 (Earlier) - Product Cards & Catalog UX Enhancement
-- **Product Detail Page Improvements**:
-  - Enhanced "Add to Cart" button with dynamic label: shows "ВЫБЕРИТЕ РАЗМЕР" when size not selected
-  - Increased z-index to z-50 and added iOS safe area support for better button visibility
-  - Added visual improvements to size selector: borders, hover states, success indicators
-  - Imported Product type from shared schema for type consistency
-- **Product Card Enhancements**:
-  - Implemented quick size selection directly in product cards
-  - Added "View" button (eye icon) for viewing product details
-  - Display brand name and size count indicator
-  - Hover effects on image (scale) and card (shadow)
-  - Size selection panel appears when clicking "В КОРЗИНУ" button
-- **Catalog Page Improvements**:
-  - Added sorting functionality: by price (ascending/descending), by name (A-Z, Z-A)
-  - Improved filters layout and visual design
-  - Sort reset included in "Reset Filters" button
-- **Unified Card Design**:
-  - All product and box cards now have consistent image-first layout
-  - Unified styling across ProductCard and BoxCard components
-- **Architect Review**: All changes validated and approved after addressing feedback on z-index and safe area support
-
-### September 30, 2025 - Admin Panel Enhancements & Photo Carousel
-- **Admin Panel Improvements**:
-  - Added 3XL size option to product creation/editing form
-  - Implemented manual main photo selection: hover over images to see "Set as Main" button
-  - Main photo marked with green badge for visibility
-  - Removed automatic redirect after product save - admin stays on edit page for better workflow
-- **Product Detail Page Carousel**:
-  - Implemented photo carousel with embla-carousel-react for multiple product images
-  - Added navigation buttons (left/right arrows) for manual slide control
-  - Active slide indicators with visual feedback (white elongated dot vs dimmed dots)
-  - Single image products display without carousel controls
-- **UI/UX Refinements**:
-  - Changed "ХАРАКТЕРИСТИКИ" section to "СОСТАВ" in product details
-  - Fixed add-to-cart button spacing: changed from bottom-20 to bottom-0 for proper alignment
-- **Architect Review**: All carousel indicators and admin enhancements validated and confirmed working correctly
-
-### September 30, 2025 (Earlier) - Critical Fixes: Image Upload & Favorites Functionality
-- **Image Upload Fix**: Resolved field mapping issue in admin panel product editing
-  - Changed `edit-product.tsx` to use correct field name `imageUrl` instead of `image`
-  - Updated Product interface to match database schema
-  - Images now correctly save and display after product updates
-- **Favorites Fix**: Implemented proper userId handling in boxes page
-  - Added `useTelegram` hook import and dbUser query in `boxes.tsx`
-  - userId now passed to `BoxCard` component enabling favorites functionality
-  - FavoriteButton correctly handles undefined userId with proper error messaging
-  - Consistent behavior between catalog.tsx and boxes.tsx
-- **Architect Review**: Both fixes validated and confirmed working correctly
-
-### September 30, 2025 (Earlier) - Box-Product Integration & Real Product Display
-- **Backend Enhancement**: Updated `PUT /api/admin/boxes/:id` to properly handle product associations during box updates
-  - Added logic to delete old box-product relationships before creating new ones
-  - Implemented proper handling of `productIds` and `productQuantities` arrays
-  - Added comprehensive logging for debugging product association process
-- **Frontend Cleanup**: Removed hardcoded product fallbacks from `client/src/pages/box-detail.tsx`
-  - Simplified `parseBoxContents` to only show real products from database via `/api/boxes/:id/products`
-  - Added user-friendly empty state with Package icon when no products are associated
-  - Removed "Real Product" badges as all products are now guaranteed to be real
-  - Fixed quantity badge to only display when quantity > 1
-- **Database Cleanup**: Removed 3 test orders from the system to maintain clean data
-- **Verified Functionality**: Confirmed that boxes with associated products display correctly with product names, descriptions, prices, and images
-
-### September 30, 2025 (Earlier) - Product Size Handling Enhancement
-- **Database Schema**: Updated Product entity to use JSON columns for `sizes`, `images`, and `sportTypes` (replacing simple-array for consistency)
-- **Frontend Parsing**: Added safe parsing logic for product sizes with error handling to support both string and array formats
-- **UI Validation**: Unified size selection validation between UI rendering and add-to-cart logic using `hasSizes` computed from parsed data
-- **UX Improvement**: Increased bottom padding to pb-32 for proper button visibility
+KAVARA is a Telegram-based sports fashion styling service that provides personalized athletic wear recommendations through a web interface. Users can take a quiz for custom box recommendations or browse pre-curated boxes. The system manages the entire purchase flow, from selection to order completion, and includes integrated notification systems. The project aims to deliver a streamlined, personalized shopping experience for sports fashion, featuring quiz-exclusive boxes and robust catalog management.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
@@ -161,6 +15,7 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS
 - **State Management**: TanStack Query for server state, React hooks for local state
 - **Build Tool**: Vite
+- **UI/UX Decisions**: Optimized for Telegram WebApp compatibility. Features simplified product cards in the catalog (photo, name, price, button only) and detailed product pages with tabs for size selection and collapsible sections for descriptions/characteristics. Consistent image-first card layout across products and boxes. Photo carousel with `embla-carousel-react` for multiple product images.
 
 ### Backend
 - **Runtime**: Node.js with Express.js
@@ -169,7 +24,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Data Storage
 - **Primary Database**: PostgreSQL via Neon Database
-- **ORM**: TypeORM with decorators and entity classes
+- **ORM**: TypeORM with decorators and entity classes. Uses JSON columns for `sizes`, `images`, and `sportTypes` within the Product entity.
 - **Session Storage**: Browser sessionStorage for temporary data
 
 ### Authentication and Authorization
@@ -178,16 +33,20 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Stateless approach using Telegram's built-in security
 
 ### Key Architectural Decisions
-- **Database Design**: TypeORM entities with UUID primary keys and defined relationships (users, quiz responses, boxes, orders, notifications).
-- **API Structure**: RESTful endpoints organized by resource type with proper HTTP status codes.
+- **Database Design**: TypeORM entities with UUID primary keys and defined relationships (users, quiz responses, boxes, orders, notifications). Handles both box and product favorites with nullable `boxId` and `productId` in the favorites table.
+- **API Structure**: RESTful endpoints organized by resource type with proper HTTP status codes, supporting both box and product favorite operations.
 - **Component Architecture**: Reusable UI components, custom hooks for logic, and page-level components.
-- **Development vs Production**: Dual-mode configuration for local development (mock data) and production (Telegram WebApp).
+- **Development vs Production**: Dual-mode configuration for local development (mock data, e.g., automatic mock user for testing) and production (Telegram WebApp).
 - **State Management**: Server state via TanStack Query, local state via React hooks, temporary data in sessionStorage.
 - **Error Handling**: Comprehensive error boundaries and HTTP status code handling.
 - **Payment Integration**: ЮMoney payment system with webhook verification for automatic status updates and Telegram Mini App redirection.
-- **Admin Panel**: Web-based admin panel (`/admin`) for order, user, and product management, including detailed user profiles and loyalty statistics.
+- **Admin Panel**: Web-based admin panel (`/admin`) for order, user, and product management, including detailed user profiles, loyalty statistics, and comprehensive analytics (revenue tracking, order distribution, key metrics, top orders). Features include quiz settings management, category filtering, search, and improved box/product association with manual main photo selection.
 - **Referral System**: Client-based referral program using personalized promo codes for loyalty points.
-- **Product UI**: Simplified product cards in catalog (photo, name, price, button only). Detailed product pages use tabs for size selection and collapsible sections for descriptions/characteristics. Optimized for Telegram WebApp compatibility (September 2025).
+- **Feature Specifications**:
+    - **Quiz-Exclusive Boxes**: Implemented `isQuizOnly` flag for boxes, allowing distinct inventories for public catalog and personalized quiz recommendations.
+    - **Product Favorites**: Full support for favoriting individual products, in addition to boxes, with unified API and UI handling.
+    - **Product Size Handling**: Enhanced product entity to store sizes, images, and sport types as JSON columns. UI includes quick size selection on product cards and dynamic "Add to Cart" button labels based on size selection.
+    - **Catalog Enhancements**: Sorting functionality (price, name) and improved filter layout.
 
 ## External Dependencies
 
