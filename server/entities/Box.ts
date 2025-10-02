@@ -35,6 +35,9 @@ export class Box {
   @Column({ type: "boolean", default: true })
   isAvailable!: boolean;
 
+  @Column({ type: "boolean", default: false })
+  isQuizOnly!: boolean;
+
   @Column({ type: "simple-array", nullable: true })
   sportTypes?: string[];
 
