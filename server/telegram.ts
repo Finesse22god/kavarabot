@@ -26,9 +26,38 @@ export async function setupTelegramBotWithApp(app: express.Application) {
     }
   });
 
-  // Setup bot commands and menu
+  // Setup bot commands and menu (GET version for browser access)
+  app.get('/setup-bot', async (req, res) => {
+    try {
+      // Set webhook
+      const webhookUrl = `https://kavarabotapp.replit.app/webhook`;
+      const webhookResponse = await setWebhook(webhookUrl);
+      
+      // Set bot commands
+      await setMyCommands();
+      
+      // Set menu button (Mini App)
+      await setMenuButton();
+      
+      res.json({ 
+        success: true, 
+        message: 'Bot setup completed',
+        webhook: webhookResponse,
+        commands: 'Commands registered: /start, /app, /quiz, /boxes, /orders, /support'
+      });
+    } catch (error) {
+      console.error('Setup error:', error);
+      res.status(500).json({ error: 'Setup failed', details: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  });
+  
+  // POST version for programmatic access
   app.post('/setup-bot', async (req, res) => {
     try {
+      // Set webhook
+      const webhookUrl = `https://kavarabotapp.replit.app/webhook`;
+      await setWebhook(webhookUrl);
+      
       // Set bot commands
       await setMyCommands();
       
@@ -88,6 +117,41 @@ async function handleMessage(message: any) {
     };
 
     await sendMessage(chatId, welcomeMessage, keyboard);
+  } else if (text === '/app') {
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "🚀 Открыть приложение", web_app: { url: getWebAppUrl() } }]
+      ]
+    };
+    await sendMessage(chatId, 'Открывайте приложение KAVARA и выбирайте стиль! 💪', keyboard);
+  } else if (text === '/quiz') {
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "📋 Начать тест", web_app: { url: `${getWebAppUrl()}/quiz` } }]
+      ]
+    };
+    await sendMessage(chatId, '🎯 Пройдите персональный тест для подбора идеального спортивного образа!', keyboard);
+  } else if (text === '/boxes') {
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "🛍️ Смотреть боксы", web_app: { url: `${getWebAppUrl()}/ready-boxes` } }]
+      ]
+    };
+    await sendMessage(chatId, '📦 Посмотрите наши готовые спортивные боксы!', keyboard);
+  } else if (text === '/orders') {
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "📦 Мои заказы", web_app: { url: `${getWebAppUrl()}/orders` } }]
+      ]
+    };
+    await sendMessage(chatId, '📋 Здесь вы можете отслеживать свои заказы', keyboard);
+  } else if (text === '/support') {
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: "💬 Связаться", web_app: { url: `${getWebAppUrl()}/support` } }]
+      ]
+    };
+    await sendMessage(chatId, '📞 Служба поддержки KAVARA готова помочь!', keyboard);
   }
 }
 
@@ -189,6 +253,19 @@ async function setMenuButton() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ menu_button: menuButton })
+  });
+
+  return response.json();
+}
+
+async function setWebhook(webhookUrl: string) {
+  const response = await fetch(`${TELEGRAM_API_URL}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      url: webhookUrl,
+      allowed_updates: ['message', 'callback_query']
+    })
   });
 
   return response.json();
