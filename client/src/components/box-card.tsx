@@ -45,11 +45,11 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
   return (
     <div className={`border-2 border-black bg-white rounded-2xl overflow-hidden ${isComingSoon ? "opacity-60" : "cursor-pointer"}`} onClick={handleCardClick}>
-      <div className="aspect-[4/3] relative overflow-hidden">
+      <div className="aspect-[4/3] relative overflow-hidden bg-gray-50">
         <img 
           src={box.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={box.name}
-          className={`w-full h-full object-cover ${isComingSoon ? "grayscale" : ""}`}
+          className={`w-full h-full object-contain ${isComingSoon ? "grayscale" : ""}`}
         />
         {/* Favorite Button */}
         <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>

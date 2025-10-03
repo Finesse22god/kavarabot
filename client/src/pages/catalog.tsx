@@ -270,11 +270,11 @@ export default function Catalog() {
                 onClick={() => setLocation(`/box/${box.id}`)}
                 data-testid={`box-card-${box.id}`}
               >
-                <div className="relative">
+                <div className="relative bg-gray-50">
                   <img
                     src={box.imageUrl || ''}
                     alt={box.name}
-                    className="w-full h-40 object-cover"
+                    className="w-full h-40 object-contain"
                   />
                   <div className="absolute top-3 right-3 bg-black text-white px-2 py-1 rounded-full text-xs font-semibold">
                     {(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽

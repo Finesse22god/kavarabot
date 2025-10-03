@@ -134,11 +134,13 @@ export default function BoxDetail() {
       <div className="p-6 space-y-8">
         {/* Box Image and Info */}
         <div className="space-y-4">
-          <img
-            src={box.imageUrl || "/placeholder-box.jpg"}
-            alt={box.name}
-            className="w-full h-64 object-cover rounded-lg"
-          />
+          <div className="bg-gray-50 rounded-lg overflow-hidden">
+            <img
+              src={box.imageUrl || "/placeholder-box.jpg"}
+              alt={box.name}
+              className="w-full h-64 object-contain"
+            />
+          </div>
           <div>
             <h3 className="text-xl font-bold text-black mb-2">{box.name}</h3>
             <p className="text-gray-600 mb-4">{box.description}</p>
