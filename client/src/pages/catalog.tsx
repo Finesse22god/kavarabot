@@ -282,9 +282,9 @@ export default function Catalog() {
                 </div>
                 <div className="p-4 flex flex-col flex-1">
                   <h4 className="font-bold text-lg mb-2 line-clamp-1">{box.name}</h4>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{box.description}</p>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{box.description}</p>
                   <Button 
-                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-semibold mt-auto"
+                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-semibold"
                     onClick={(e) => {
                       e.stopPropagation();
                       setLocation(`/box/${box.id}`);
