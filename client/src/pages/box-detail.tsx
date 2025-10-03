@@ -102,6 +102,7 @@ export default function BoxDetail() {
   // Получаем реальные товары из базы данных
   const boxContents = boxProducts && boxProducts.length > 0
     ? boxProducts.map((boxProduct: any) => ({
+        productId: boxProduct.product.id,
         name: boxProduct.product.name,
         image: boxProduct.product.imageUrl,
         price: boxProduct.product.price,
@@ -153,7 +154,16 @@ export default function BoxDetail() {
           <h4 className="text-lg font-bold text-black mb-4">Что внутри бокса:</h4>
           <div className="grid grid-cols-1 gap-3">
             {boxContents.map((item: any, index: number) => (
-              <div key={index} className="bg-gray-50 rounded-xl p-4 flex items-center space-x-4">
+              <div 
+                key={index} 
+                className="bg-gray-50 rounded-xl p-4 flex items-center space-x-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  if (item.productId) {
+                    setLocation(`/product/${item.productId}`);
+                  }
+                }}
+                data-testid={`product-card-${item.productId || index}`}
+              >
                 <img 
                   src={item.image} 
                   alt={item.name}
@@ -162,7 +172,7 @@ export default function BoxDetail() {
                 <div className="flex-1">
                   <h5 className="font-medium text-gray-900">{item.name}</h5>
                   {item.description && (
-                    <p className="text-sm text-gray-600">{item.description}</p>
+                    <p className="text-sm text-gray-600 line-clamp-1">{item.description}</p>
                   )}
                   <div className="flex items-center justify-between mt-2">
                     {item.price && (
