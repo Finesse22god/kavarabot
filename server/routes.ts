@@ -1,4 +1,7 @@
 import { Router } from "express";
+import multer from "multer";
+import path from "path";
+import { promises as fs } from "fs";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
 import { parseKavaraCatalog } from "./parser";
@@ -28,6 +31,52 @@ import type {
 } from "@shared/types";
 
 const router = Router();
+
+// Configure multer for file uploads
+const uploadDir = path.join(process.cwd(), "public", "uploads");
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: async (req, file, cb) => {
+      try {
+        await fs.mkdir(uploadDir, { recursive: true });
+        cb(null, uploadDir);
+      } catch (error) {
+        cb(error as Error, uploadDir);
+      }
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, `box-${uniqueSuffix}${ext}`);
+    },
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF"));
+    }
+  },
+});
+
+// File upload endpoint
+router.post("/api/upload/box-image", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не загружен" });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl, filename: req.file.filename });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    res.status(500).json({ error: "Ошибка при загрузке файла" });
+  }
+});
 
 // Update user profile data
 router.put("/api/users/:id", async (req, res) => {

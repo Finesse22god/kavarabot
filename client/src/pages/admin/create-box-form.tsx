@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Gift, Package, X } from "lucide-react";
+import { ArrowLeft, Gift, Package, X, Upload, Loader2 } from "lucide-react";
 import { matchesCategory, SPORT_TYPES } from "@shared/constants";
 
 interface Product {
@@ -42,12 +42,76 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
   const [newSportType, setNewSportType] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use shared sport types
   const availableSportTypes = [...SPORT_TYPES];
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Ошибка",
+        description: "Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Ошибка",
+        description: "Размер файла не должен превышать 5МБ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/upload/box-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Ошибка при загрузке файла");
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      
+      toast({
+        title: "Успех!",
+        description: "Изображение успешно загружено",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить изображение",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
 
   // Load products for selection
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
@@ -236,14 +300,67 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="imageUrl">URL изображения</Label>
-                  <Input
-                    id="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-                    placeholder="https://example.com/image.jpg"
-                    data-testid="input-box-image"
-                  />
+                  <Label htmlFor="imageUrl">Изображение</Label>
+                  <div className="space-y-2">
+                    <Input
+                      id="imageUrl"
+                      value={formData.imageUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                      placeholder="URL изображения или загрузите файл"
+                      data-testid="input-box-image"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        data-testid="input-file-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="flex-1"
+                        data-testid="button-upload-image"
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Загрузка...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Загрузить файл
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {formData.imageUrl && (
+                      <div className="mt-2 p-2 border rounded-lg bg-gray-50">
+                        <img
+                          src={formData.imageUrl}
+                          alt="Превью"
+                          className="w-full h-32 object-contain rounded"
+                          data-testid="img-preview"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, imageUrl: "" }))}
+                          className="w-full mt-2"
+                          data-testid="button-clear-image"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Удалить изображение
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

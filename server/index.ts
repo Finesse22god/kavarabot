@@ -87,6 +87,9 @@ async function createServer() {
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
   
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+  
   // Connect all routes
   app.use(routes);
 
