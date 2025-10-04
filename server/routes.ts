@@ -798,9 +798,9 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
       return res.status(400).json({ error: "Name and price are required" });
     }
 
-    // Validate products if provided (max 4 products)
-    if (createData.productIds && createData.productIds.length > 4) {
-      return res.status(400).json({ error: "Box can contain maximum 4 products" });
+    // Validate products if provided (max 6 products)
+    if (createData.productIds && createData.productIds.length > 6) {
+      return res.status(400).json({ error: "Box can contain maximum 6 products" });
     }
 
     // Преобразуем данные для совместимости с сущностью Box
