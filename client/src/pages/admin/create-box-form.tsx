@@ -36,6 +36,7 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
     category: "personal",
     imageUrl: "",
     sportTypes: [] as string[],
+    isQuizOnly: false,
   });
   
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
@@ -182,10 +183,10 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
       return;
     }
 
-    if (selectedProducts.length > 4) {
+    if (selectedProducts.length > 6) {
       toast({
         title: "Ошибка",
-        description: "Максимум 4 товара в боксе",
+        description: "Максимум 6 товаров в боксе",
         variant: "destructive",
       });
       return;
@@ -205,12 +206,12 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
     setSelectedProducts(prev => {
       if (prev.includes(productId)) {
         return prev.filter(id => id !== productId);
-      } else if (prev.length < 4) {
+      } else if (prev.length < 6) {
         return [...prev, productId];
       } else {
         toast({
           title: "Лимит товаров",
-          description: "Максимум 4 товара в боксе",
+          description: "Максимум 6 товаров в боксе",
           variant: "destructive",
         });
         return prev;
@@ -378,6 +379,29 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
                   </select>
                 </div>
 
+                {/* Эксклюзивный бокс для квиза */}
+                <div className="flex items-center space-x-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <Checkbox
+                    id="isQuizOnly"
+                    checked={formData.isQuizOnly}
+                    onCheckedChange={(checked) => 
+                      setFormData(prev => ({ ...prev, isQuizOnly: checked === true }))
+                    }
+                    data-testid="checkbox-quiz-only"
+                  />
+                  <div className="flex-1">
+                    <Label 
+                      htmlFor="isQuizOnly" 
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      🎯 Эксклюзивный бокс только для квиза (не показывать в каталоге)
+                    </Label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Этот бокс будет показываться только пользователям, прошедшим квиз
+                    </p>
+                  </div>
+                </div>
+
                 {/* Виды спорта */}
                 <div>
                   <Label>Виды спорта</Label>
@@ -448,7 +472,7 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Package className="h-5 w-5 mr-2" />
-                Выбор товаров ({selectedProducts.length}/4)
+                Выбор товаров ({selectedProducts.length}/6)
               </CardTitle>
             </CardHeader>
             <CardContent>
