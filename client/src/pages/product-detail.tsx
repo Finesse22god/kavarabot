@@ -347,7 +347,7 @@ export default function ProductDetail() {
           </Collapsible>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white border-t-2 border-gray-200 shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white border-t-2 border-gray-200 shadow-lg z-[100]">
           <div className="max-w-md mx-auto">
             <Button
               onClick={handleAddToCart}
