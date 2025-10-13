@@ -1,5 +1,5 @@
-import { YooCheckout } from '@a2seven/yoo-checkout';
-import { v4 as uuidv4 } from 'uuid';
+import { YooCheckout } from "@a2seven/yoo-checkout";
+import { v4 as uuidv4 } from "uuid";
 
 // Initialize YooKassa API
 const getYooKassaClient = () => {
@@ -7,12 +7,12 @@ const getYooKassaClient = () => {
   const secretKey = process.env.YOOKASSA_SECRET_KEY;
 
   if (!shopId || !secretKey) {
-    throw new Error('YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY are required');
+    throw new Error("YOOKASSA_SHOP_ID and YOOKASSA_SECRET_KEY are required");
   }
 
   return new YooCheckout({
     shopId,
-    secretKey
+    secretKey,
   });
 };
 
@@ -26,50 +26,61 @@ export interface PaymentData {
 export interface PaymentIntent {
   id: string;
   amount: number;
-  status: 'pending' | 'succeeded' | 'failed';
+  status: "pending" | "succeeded" | "failed";
   paymentUrl?: string;
   description: string;
   orderId: string;
 }
 
 // Create payment intent for YooKassa
-export async function createPaymentIntent(paymentData: PaymentData): Promise<PaymentIntent> {
+export async function createPaymentIntent(
+  paymentData: PaymentData,
+): Promise<PaymentIntent> {
   const checkout = getYooKassaClient();
   const idempotenceKey = uuidv4();
 
   try {
-    const payment = await checkout.createPayment({
-      amount: {
-        value: paymentData.amount.toFixed(2),
-        currency: 'RUB'
+    const payment = await checkout.createPayment(
+      {
+        amount: {
+          value: paymentData.amount.toFixed(2),
+          currency: "RUB",
+        },
+        confirmation: {
+          type: "redirect",
+          return_url:
+            paymentData.returnUrl ||
+            `https://t.me/kavaraappbot/app?startapp=payment_success`,
+        },
+        capture: true,
+        description: paymentData.description,
+        metadata: {
+          orderId: paymentData.orderId,
+        },
       },
-      confirmation: {
-        type: 'redirect',
-        return_url: paymentData.returnUrl || `https://t.me/kavaraappbot/app?startapp=payment_success`
-      },
-      capture: true,
-      description: paymentData.description,
-      metadata: {
-        orderId: paymentData.orderId
-      }
-    }, idempotenceKey);
+      idempotenceKey,
+    );
+
+    console.log("Payment created:", payment.confirmation);
 
     return {
       id: payment.id,
       amount: parseFloat(payment.amount.value),
-      status: payment.status === 'succeeded' ? 'succeeded' : 'pending',
+      status: payment.status === "succeeded" ? "succeeded" : "pending",
       paymentUrl: payment.confirmation?.confirmation_url,
-      description: payment.description || '',
-      orderId: paymentData.orderId
+      description: payment.description || "",
+      orderId: paymentData.orderId,
     };
   } catch (error) {
-    console.error('Error creating YooKassa payment:', error);
+    console.error("Error creating YooKassa payment:", error);
     throw error;
   }
 }
 
 // Check payment status using YooKassa API
-export async function checkPaymentStatus(paymentId: string): Promise<PaymentIntent> {
+export async function checkPaymentStatus(
+  paymentId: string,
+): Promise<PaymentIntent> {
   const checkout = getYooKassaClient();
 
   try {
@@ -78,18 +89,23 @@ export async function checkPaymentStatus(paymentId: string): Promise<PaymentInte
     return {
       id: payment.id,
       amount: parseFloat(payment.amount.value),
-      status: payment.status === 'succeeded' ? 'succeeded' : payment.status === 'canceled' ? 'failed' : 'pending',
-      description: payment.description || '',
-      orderId: payment.metadata?.orderId || paymentId
+      status:
+        payment.status === "succeeded"
+          ? "succeeded"
+          : payment.status === "canceled"
+            ? "failed"
+            : "pending",
+      description: payment.description || "",
+      orderId: payment.metadata?.orderId || paymentId,
     };
   } catch (error) {
-    console.error('Error checking payment status:', error);
+    console.error("Error checking payment status:", error);
     return {
       id: paymentId,
       amount: 0,
-      status: 'failed',
-      description: '',
-      orderId: paymentId
+      status: "failed",
+      description: "",
+      orderId: paymentId,
     };
   }
 }
@@ -98,7 +114,7 @@ export async function checkPaymentStatus(paymentId: string): Promise<PaymentInte
 export function parseYooKassaNotification(body: any) {
   return {
     type: body.event,
-    object: body.object
+    object: body.object,
   };
 }
 
