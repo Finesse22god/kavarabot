@@ -47,6 +47,10 @@ Preferred communication style: Simple, everyday language.
     - **Product Favorites**: Full support for favoriting individual products, in addition to boxes, with unified API and UI handling.
     - **Product Size Handling**: Enhanced product entity to store sizes, images, and sport types as JSON columns. UI includes quick size selection on product cards and dynamic "Add to Cart" button labels based on size selection.
     - **Catalog Enhancements**: Sorting functionality (price, name) and improved filter layout.
+    - **Phone Number Formatting** (October 2025): Strict +7 prefix enforcement for Russian phone numbers with automatic formatting (+7 (XXX) XXX-XX-XX). Prevents invalid input and ensures exactly 11 digits.
+    - **Telegram Notifications** (October 2025): Optimized to send single comprehensive notification only when payment is confirmed, including all order details, payment info, customer data, and Telegram username. Notifications include discount and loyalty points information when applicable.
+    - **Order Data Enhancement** (October 2025): Added `telegramUsername` field to orders schema to capture customer's Telegram handle for better customer support and communication.
+    - **Analytics Improvements** (October 2025): Fixed revenue calculation to only count paid orders. Added separate tracking for unpaid orders. Date filters now properly apply to all metrics and charts.
 
 ## External Dependencies
 
