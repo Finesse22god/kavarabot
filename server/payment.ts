@@ -21,6 +21,8 @@ export interface PaymentData {
   description: string;
   orderId: string;
   returnUrl?: string;
+  customerEmail?: string;
+  customerPhone?: string;
 }
 
 export interface PaymentIntent {
@@ -40,6 +42,30 @@ export async function createPaymentIntent(
   const idempotenceKey = uuidv4();
 
   try {
+    // Prepare receipt data (required by 54-ФЗ)
+    const receipt: any = {
+      customer: {},
+      items: [
+        {
+          description: paymentData.description,
+          quantity: "1.00",
+          amount: {
+            value: paymentData.amount.toFixed(2),
+            currency: "RUB",
+          },
+          vat_code: 1, // НДС 20%
+        },
+      ],
+    };
+
+    // Add customer contact (email or phone is required)
+    if (paymentData.customerEmail) {
+      receipt.customer.email = paymentData.customerEmail;
+    }
+    if (paymentData.customerPhone) {
+      receipt.customer.phone = paymentData.customerPhone;
+    }
+
     const payment = await checkout.createPayment(
       {
         amount: {
@@ -54,6 +80,7 @@ export async function createPaymentIntent(
         },
         capture: true,
         description: paymentData.description,
+        receipt: receipt,
         metadata: {
           orderId: paymentData.orderId,
         },

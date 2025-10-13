@@ -75,12 +75,15 @@ export default function Checkout() {
           amount: order.totalPrice,
           description,
           orderId: order.orderNumber,
-          returnUrl: `${window.location.origin}/payment/success`
+          returnUrl: `${window.location.origin}/payment/success`,
+          customerEmail: order.customerEmail,
+          customerPhone: order.customerPhone
         })
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create payment");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || "Failed to create payment");
       }
 
       const intent = await response.json();
@@ -109,9 +112,10 @@ export default function Checkout() {
       }
     } catch (error) {
       console.error("Payment creation error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Не удалось создать платеж. Попробуйте ещё раз.";
       toast({
         title: "Ошибка",
-        description: "Не удалось создать платеж. Попробуйте ещё раз.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

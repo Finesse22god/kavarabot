@@ -1074,13 +1074,18 @@ router.get('/api/admin/promo-codes/:id/orders', verifyAdminToken, async (req, re
 // Payment routes
 router.post("/api/create-payment-intent", async (req, res) => {
   try {
-    const { amount, description, orderId, returnUrl } = req.body;
+    const { amount, description, orderId, returnUrl, customerEmail, customerPhone } = req.body;
 
-    console.log("Creating payment intent:", { amount, description, orderId, returnUrl });
+    console.log("Creating payment intent:", { amount, description, orderId, returnUrl, customerEmail, customerPhone });
 
     if (!amount || !description || !orderId) {
       console.log("Missing required fields:", { amount, description, orderId });
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Require either email or phone for receipt (54-ФЗ requirement)
+    if (!customerEmail && !customerPhone) {
+      return res.status(400).json({ error: "Customer email or phone is required for payment" });
     }
 
     const paymentAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -1094,7 +1099,9 @@ router.post("/api/create-payment-intent", async (req, res) => {
       amount: paymentAmount,
       description: String(description),
       orderId: String(orderId),
-      returnUrl: returnUrl || `${req.protocol}://${req.get('host')}/payment-success`
+      returnUrl: returnUrl || `${req.protocol}://${req.get('host')}/payment-success`,
+      customerEmail,
+      customerPhone
     });
 
     console.log("Payment intent created successfully:", paymentIntent);
