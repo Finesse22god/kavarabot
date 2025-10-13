@@ -225,30 +225,9 @@ export default function MyOrders() {
         <Button 
           variant="outline" 
           size="sm"
-          onClick={async () => {
-            // For paid orders, show payment success page with order details
-            if (order.status === 'paid') {
-              // Store order data in session for payment success page
-              sessionStorage.setItem("currentOrder", JSON.stringify(order));
-              
-              // Fetch and store box data if order has a box
-              if (order.boxId) {
-                try {
-                  const response = await fetch(`/api/boxes/${order.boxId}`);
-                  if (response.ok) {
-                    const boxData = await response.json();
-                    sessionStorage.setItem("selectedBox", JSON.stringify(boxData));
-                  }
-                } catch (error) {
-                  console.error("Failed to fetch box data:", error);
-                }
-              }
-              
-              setLocation("/payment/success");
-            } else {
-              // For other statuses, show full order details page
-              setLocation(`/order-details?order=${order.orderNumber}`);
-            }
+          onClick={() => {
+            // Open order details page for all orders
+            setLocation(`/order-details?order=${order.orderNumber}`);
           }}
           data-testid={`button-details-${order.orderNumber}`}
         >
