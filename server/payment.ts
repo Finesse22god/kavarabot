@@ -54,6 +54,8 @@ export async function createPaymentIntent(
             currency: "RUB",
           },
           vat_code: 1, // НДС 20%
+          payment_subject: "commodity", // Товар (согласно 54-ФЗ)
+          payment_mode: "full_prepayment", // Полная предоплата
         },
       ],
     };
