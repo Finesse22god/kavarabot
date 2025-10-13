@@ -66,19 +66,37 @@ export default function Checkout() {
         }
       }
       
-      const intent = await apiRequest("POST", "/api/create-payment-intent", {
-        amount: order.totalPrice,
-        description,
-        orderId: order.orderNumber,
-        returnUrl: `${window.location.origin}/payment/success`
+      const response = await fetch("/api/create-payment-intent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: order.totalPrice,
+          description,
+          orderId: order.orderNumber,
+          returnUrl: `${window.location.origin}/payment/success`
+        })
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to create payment");
+      }
+
+      const intent = await response.json();
       setPaymentIntent(intent);
 
       // Store payment ID in the order
       if (intent.id && order.id) {
         try {
-          await apiRequest("PUT", `/api/orders/${order.id}/payment-id`, {
-            paymentId: intent.id
+          await fetch(`/api/orders/${order.id}/payment-id`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              paymentId: intent.id
+            })
           });
           console.log(`Payment ID ${intent.id} saved for order ${order.orderNumber}`);
         } catch (error) {
@@ -106,7 +124,12 @@ export default function Checkout() {
 
     try {
       // Check order status directly by order number
-      const orderData = await apiRequest("GET", `/api/orders/number/${order.orderNumber}`);
+      const response = await fetch(`/api/orders/number/${order.orderNumber}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch order");
+      }
+      
+      const orderData = await response.json();
 
       if (orderData.status === 'paid') {
         toast({
@@ -122,7 +145,7 @@ export default function Checkout() {
       } else {
         toast({
           title: "Платеж еще не прошел",
-          description: "Проверьте, что оплата завершена в ЮMoney и попробуйте еще раз.",
+          description: "Проверьте, что оплата завершена в ЮKassa и попробуйте еще раз.",
           variant: "destructive",
         });
       }
@@ -264,12 +287,12 @@ export default function Checkout() {
             <div className="p-4 border rounded-lg bg-blue-50">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">Ю</span>
+                  <span className="text-white font-bold text-sm">ЮК</span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold">ЮMoney</h4>
+                  <h4 className="font-semibold">ЮKassa</h4>
                   <p className="text-sm text-gray-600">
-                    Безопасная оплата через ЮMoney
+                    Безопасная оплата через ЮKassa
                   </p>
                 </div>
               </div>
