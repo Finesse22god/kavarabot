@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Package, Home, MessageCircle, User } from "lucide-react";
+import { CheckCircle, Package, Home, MessageCircle, User, ShoppingBag } from "lucide-react";
 import type { Order, Box } from "@shared/schema";
 
 export default function PaymentSuccess() {
@@ -34,9 +34,11 @@ export default function PaymentSuccess() {
     const orderData = sessionStorage.getItem("currentOrder");
     const boxData = sessionStorage.getItem("selectedBox");
     
-    if (orderData && boxData) {
+    if (orderData) {
       setOrder(JSON.parse(orderData));
-      setBox(JSON.parse(boxData));
+      if (boxData) {
+        setBox(JSON.parse(boxData));
+      }
     } else {
       setLocation("/");
     }
@@ -62,7 +64,19 @@ export default function PaymentSuccess() {
     }
   };
 
-  if (!order || !box) {
+  // Parse cart items if available
+  const getCartItems = () => {
+    if (!order?.cartItems) return null;
+    try {
+      return JSON.parse(order.cartItems);
+    } catch {
+      return null;
+    }
+  };
+
+  const cartItems = getCartItems();
+
+  if (!order) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -71,56 +85,118 @@ export default function PaymentSuccess() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20">
       <div className="p-4 bg-green-600 text-white">
         <div className="flex items-center justify-center space-x-3">
           <CheckCircle className="w-8 h-8" />
           <div className="text-center">
-            <h2 className="font-semibold text-lg">Оплата прошла успешно!</h2>
-            <p className="text-sm text-green-100">Ваш заказ принят в обработку</p>
+            <h2 className="font-semibold text-lg">Заказ оплачен!</h2>
+            <p className="text-sm text-green-100">Менеджер свяжется с вами</p>
           </div>
         </div>
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Success Message */}
+        {/* Success Message with Product Info */}
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-6 text-center space-y-4">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <Package className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-2">
                 Спасибо за покупку!
               </h3>
               <p className="text-gray-600 mb-4">
-                Ваш заказ <span className="font-semibold">#{order.orderNumber}</span> успешно оплачен и передан в обработку.
+                Ваш заказ <span className="font-semibold">#{order.orderNumber}</span> успешно оплачен.
               </p>
-              <div className="bg-white rounded-lg p-4 text-left">
-                <div className="flex items-center space-x-4">
-                  <img 
-                    src={box.imageUrl || "/placeholder-box.jpg"} 
-                    alt={box.name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-semibold">{box.name}</h4>
-                    <p className="text-sm text-gray-600">{box.description}</p>
-                    <p className="font-bold text-primary mt-1">
-                      {order.totalPrice}₽
-                    </p>
+
+              {/* Show purchased item(s) */}
+              {box ? (
+                <div className="bg-white rounded-lg p-4 text-left" data-testid={`order-item-${box.id}`}>
+                  <div className="flex items-center space-x-4">
+                    <img 
+                      src={box.imageUrl || "/placeholder-box.jpg"} 
+                      alt={box.name}
+                      className="w-16 h-16 rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{box.name}</h4>
+                      <p className="text-sm text-gray-600">{box.description}</p>
+                      <p className="font-bold text-primary mt-1">
+                        {order.totalPrice.toLocaleString('ru-RU')}₽
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : cartItems && cartItems.length > 0 ? (
+                <div className="bg-white rounded-lg p-4 text-left space-y-3">
+                  <p className="text-sm font-medium text-gray-700">
+                    Товары ({cartItems.length}):
+                  </p>
+                  {cartItems.slice(0, 3).map((item: any, index: number) => (
+                    <div key={index} className="flex items-center space-x-3" data-testid={`cart-item-${index}`}>
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                        {item.imageUrl ? (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.name || `Товар ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ShoppingBag className="w-6 h-6 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="text-sm font-medium">{item.name || `Товар ${index + 1}`}</h5>
+                        {item.selectedSize && (
+                          <p className="text-xs text-gray-500">Размер: {item.selectedSize}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {cartItems.length > 3 && (
+                    <p className="text-xs text-gray-500">+ еще {cartItems.length - 3} товаров</p>
+                  )}
+                  <div className="pt-2 border-t">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Итого:</span>
+                      <span className="font-bold text-primary">
+                        {order.totalPrice.toLocaleString('ru-RU')}₽
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg p-4 text-left">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                      <Package className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold">Заказ #{order.orderNumber}</h4>
+                      <p className="font-bold text-primary mt-1">
+                        {order.totalPrice.toLocaleString('ru-RU')}₽
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Order Details */}
+        {/* Order Status */}
         <Card>
-          <CardContent className="p-6 space-y-4">
-            <h3 className="font-semibold mb-4">Детали заказа</h3>
+          <CardContent className="p-6">
             <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Статус:</span>
+                <span className="text-green-600 font-semibold flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  Оплачен
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Номер заказа:</span>
                 <span className="font-semibold">#{order.orderNumber}</span>
@@ -133,6 +209,12 @@ export default function PaymentSuccess() {
                 <span className="text-gray-600">Телефон:</span>
                 <span>{order.customerPhone}</span>
               </div>
+              {order.customerEmail && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Email:</span>
+                  <span className="text-sm">{order.customerEmail}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Доставка:</span>
                 <span>
@@ -141,51 +223,11 @@ export default function PaymentSuccess() {
                    order.deliveryMethod === 'cdek' ? 'СДЭК' : 'Почта'}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Статус:</span>
-                <span className="text-green-600 font-medium">Оплачен</span>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Next Steps */}
-        <Card>
-          <CardContent className="p-6">
-            <h3 className="font-semibold mb-4">Что дальше?</h3>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-xs font-bold">1</span>
-                </div>
-                <div>
-                  <p className="font-medium">Обработка заказа</p>
-                  <p className="text-gray-600">В течение 1-2 рабочих дней мы подготовим ваш заказ</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-xs font-bold">2</span>
-                </div>
-                <div>
-                  <p className="font-medium">Отправка</p>
-                  <p className="text-gray-600">Мы отправим уведомление с трек-номером</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-blue-600 text-xs font-bold">3</span>
-                </div>
-                <div>
-                  <p className="font-medium">Получение</p>
-                  <p className="text-gray-600">Получите свой персональный бокс KAVARA</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Manager Contact Section */}
+        {/* Manager Contact Section - Highlighted */}
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-6 text-center space-y-4">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -193,7 +235,7 @@ export default function PaymentSuccess() {
             </div>
             <div>
               <h3 className="font-semibold text-lg mb-2">
-                С вами свяжется менеджер
+                Менеджер свяжется с вами
               </h3>
               <p className="text-gray-600 mb-4">
                 Наш менеджер скоро свяжется с вами для уточнения деталей доставки и ответит на все ваши вопросы.
@@ -202,9 +244,10 @@ export default function PaymentSuccess() {
                 onClick={contactManager}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 size="lg"
+                data-testid="button-contact-manager"
               >
                 <User className="w-5 h-5 mr-2" />
-                Написать менеджеру
+                Связаться с менеджером
               </Button>
             </div>
           </CardContent>
@@ -216,6 +259,7 @@ export default function PaymentSuccess() {
             onClick={() => setLocation("/my-orders")}
             className="w-full bg-primary text-white"
             size="lg"
+            data-testid="button-my-orders"
           >
             <Package className="w-5 h-5 mr-2" />
             Мои заказы
@@ -225,6 +269,7 @@ export default function PaymentSuccess() {
             variant="outline"
             className="w-full"
             size="lg"
+            data-testid="button-home"
           >
             <Home className="w-5 h-5 mr-2" />
             На главную
