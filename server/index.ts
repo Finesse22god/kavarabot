@@ -94,10 +94,26 @@ async function createServer() {
   app.use(routes);
 
   if (isProduction) {
-    // Production: serve static files
-    app.use(express.static(path.join(__dirname, '../dist/public')));
+    // Production: serve static files with proper cache control
+    app.use(express.static(path.join(__dirname, '../dist/public'), {
+      setHeaders: (res, filepath) => {
+        // Disable caching for HTML files to prevent stale content
+        if (filepath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+        } else if (filepath.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/)) {
+          // Cache other static assets for 1 hour
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+        }
+      }
+    }));
     
     app.get('*', (req, res) => {
+      // Always send fresh HTML with no-cache headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(__dirname, '../dist/public/index.html'));
     });
   } else {
