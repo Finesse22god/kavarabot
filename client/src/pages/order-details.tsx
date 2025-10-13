@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, MessageCircle, User } from "lucide-react";
+import { ArrowLeft, CheckCircle, MessageCircle, User, Package, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -217,6 +217,29 @@ export default function OrderDetails() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button 
+            onClick={() => setLocation("/my-orders")}
+            className="w-full bg-black hover:bg-gray-800 text-white"
+            size="lg"
+            data-testid="button-my-orders"
+          >
+            <Package className="w-5 h-5 mr-2" />
+            Мои заказы
+          </Button>
+          <Button 
+            onClick={() => setLocation("/")}
+            variant="outline"
+            className="w-full"
+            size="lg"
+            data-testid="button-home"
+          >
+            <Home className="w-5 h-5 mr-2" />
+            На главную
+          </Button>
+        </div>
       </div>
     </div>
   );
