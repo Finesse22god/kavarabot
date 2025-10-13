@@ -100,6 +100,19 @@ export default function OrderDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Success Banner for Paid Orders */}
+      {order.status === 'paid' && (
+        <div className="p-4 bg-green-600 text-white">
+          <div className="flex items-center justify-center space-x-3">
+            <CheckCircle className="w-8 h-8" />
+            <div className="text-center">
+              <h2 className="font-semibold text-lg">Заказ оплачен!</h2>
+              <p className="text-sm text-green-100">Менеджер свяжется с вами</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-4 bg-black text-white">
         <div className="flex items-center space-x-3">
