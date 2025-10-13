@@ -39,7 +39,7 @@ Preferred communication style: Simple, everyday language.
 - **Development vs Production**: Dual-mode configuration for local development (mock data, e.g., automatic mock user for testing) and production (Telegram WebApp).
 - **State Management**: Server state via TanStack Query, local state via React hooks, temporary data in sessionStorage.
 - **Error Handling**: Comprehensive error boundaries and HTTP status code handling.
-- **Payment Integration**: ЮMoney payment system with webhook verification for automatic status updates and Telegram Mini App redirection.
+- **Payment Integration**: YooKassa payment system with webhook verification for automatic status updates and Telegram Mini App redirection. Webhook correctly searches orders by orderNumber from metadata (not paymentId). Payment success page (`/payment/success`) displays purchased items, payment status, and manager contact information for both box and cart orders.
 - **Admin Panel**: Web-based admin panel (`/admin`) for order, user, and product management, including detailed user profiles, loyalty statistics, and comprehensive analytics (revenue tracking, order distribution, key metrics, top orders). Features include quiz settings management, category filtering, search, and improved box/product association with manual main photo selection.
 - **Referral System**: Client-based referral program using personalized promo codes for loyalty points.
 - **Feature Specifications**:
@@ -53,5 +53,5 @@ Preferred communication style: Simple, everyday language.
 - **Database**: Neon Database (PostgreSQL-compatible serverless database)
 - **Telegram Platform**: Telegram WebApp API
 - **UI Framework**: Radix UI
-- **Payment Processing**: ЮMoney
+- **Payment Processing**: YooKassa (ЮKassa)
 - **Image Hosting**: External image URLs (e.g., Unsplash for placeholders)
