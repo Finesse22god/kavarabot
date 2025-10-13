@@ -478,47 +478,53 @@ router.put("/api/orders/:orderId/payment-id", async (req, res) => {
 // YooKassa webhook endpoint for payment notifications
 router.post("/api/yoomoney-webhook", async (req, res) => {
   try {
-    console.log("YooMoney webhook received:", req.body);
+    console.log("YooKassa webhook received:", req.body);
     
-    const { notification_type, operation_id, label } = req.body;
+    const { event, object } = req.body;
     
-    // Check for both card-incoming and p2p-incoming notifications
-    if ((notification_type === "p2p-incoming" || notification_type === "card-incoming") && label) {
-      console.log(`Received payment notification for payment ID: ${label}`);
+    // Handle payment.succeeded event
+    if (event === "payment.succeeded" && object) {
+      const paymentId = object.id;
+      const orderId = object.metadata?.orderId;
       
-      // Update order status to paid using the payment label as order identifier
-      const order = await storage.updateOrderStatusByPaymentId(label, "paid");
+      console.log(`Received payment success notification for payment ID: ${paymentId}, order ID: ${orderId}`);
       
-      if (order) {
-        console.log(`Order ${label} marked as paid via YooMoney webhook`);
+      if (orderId) {
+        // Update order status to paid using the orderId from metadata
+        const order = await storage.updateOrderStatusByPaymentId(paymentId, "paid");
         
-        // Send admin notification about successful payment
-        const adminNotification = `💰 Новая оплата!
-        
+        if (order) {
+          console.log(`Order ${order.orderNumber} marked as paid via YooKassa webhook`);
+          
+          // Send admin notification about successful payment
+          const adminNotification = `💰 Новая оплата через ЮKassa!
+          
 Заказ: ${order.orderNumber}
 Сумма: ${order.totalPrice}₽
 Покупатель: ${order.customerName}
 Телефон: ${order.customerPhone}
 Email: ${order.customerEmail}
-Способ доставки: ${order.deliveryMethod}`;
+Способ доставки: ${order.deliveryMethod}
+ID платежа: ${paymentId}`;
 
-        // Send notification to admin Telegram
-        await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: process.env.ADMIN_CHAT_ID || '-1002812810825',
-            text: adminNotification
-          })
-        });
+          // Send notification to admin Telegram
+          await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: process.env.ADMIN_CHAT_ID || '-1002812810825',
+              text: adminNotification
+            })
+          });
+        }
       }
     }
     
-    // Always respond with OK to YooMoney
+    // Always respond with OK to YooKassa
     res.status(200).send("OK");
   } catch (error) {
-    console.error("Error processing YooMoney webhook:", error);
-    res.status(200).send("OK"); // Still return OK to YooMoney to avoid retries
+    console.error("Error processing YooKassa webhook:", error);
+    res.status(200).send("OK"); // Still return OK to avoid retries
   }
 });
 
