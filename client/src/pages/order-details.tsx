@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, MessageCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -27,6 +27,16 @@ export default function OrderDetails() {
     },
     enabled: !!orderNumber,
   });
+
+  const contactManager = () => {
+    // Open Telegram chat with manager directly in Telegram
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+    } else {
+      // Fallback for non-Telegram environment
+      window.open("https://t.me/kavarateam", "_blank");
+    }
+  };
 
   const getStatusText = (status: string | null) => {
     switch (status) {
@@ -105,7 +115,7 @@ export default function OrderDetails() {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="p-4 space-y-4">
         {/* Order Details Card */}
         <Card>
           <CardContent className="p-6">
@@ -165,6 +175,32 @@ export default function OrderDetails() {
                   )}
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Manager Contact Card */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-6 text-center space-y-4">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+              <MessageCircle className="w-8 h-8 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2">
+                Менеджер свяжется с вами
+              </h3>
+              <p className="text-gray-700 mb-4">
+                Наш менеджер скоро свяжется с вами для уточнения деталей доставки и ответит на все ваши вопросы.
+              </p>
+              <Button 
+                onClick={contactManager}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="lg"
+                data-testid="button-contact-manager"
+              >
+                <User className="w-5 h-5 mr-2" />
+                Связаться с менеджером
+              </Button>
             </div>
           </CardContent>
         </Card>
