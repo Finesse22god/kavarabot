@@ -73,7 +73,6 @@ export async function createPaymentIntent(
     };
   } catch (error) {
     console.error("Error creating YooKassa payment:", error);
-    console.error("Error details:", JSON.stringify(error, null, 2));
     throw error;
   }
 }
