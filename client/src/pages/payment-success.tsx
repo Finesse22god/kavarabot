@@ -75,6 +75,7 @@ export default function PaymentSuccess() {
   };
 
   const cartItems = getCartItems();
+  const itemCount = cartItems?.length || (box ? 1 : 0);
 
   if (!order) {
     return (
@@ -86,6 +87,7 @@ export default function PaymentSuccess() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Success Banner */}
       <div className="p-4 bg-green-600 text-white">
         <div className="flex items-center justify-center space-x-3">
           <CheckCircle className="w-8 h-8" />
@@ -97,99 +99,46 @@ export default function PaymentSuccess() {
       </div>
 
       <div className="p-4 space-y-4">
-        {/* Success Message with Product Info */}
+        {/* Success Message Card */}
         <Card className="border-green-200 bg-green-50">
           <CardContent className="p-6 text-center space-y-4">
+            {/* Success Icon */}
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
+
+            {/* Thank you message */}
             <div>
-              <h3 className="font-semibold text-lg mb-2">
+              <h3 className="font-semibold text-xl mb-2">
                 Спасибо за покупку!
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-700 mb-4">
                 Ваш заказ <span className="font-semibold">#{order.orderNumber}</span> успешно оплачен.
               </p>
 
-              {/* Show purchased item(s) */}
-              {box ? (
-                <div className="bg-white rounded-lg p-4 text-left" data-testid={`order-item-${box.id}`}>
-                  <div className="flex items-center space-x-4">
-                    <img 
-                      src={box.imageUrl || "/placeholder-box.jpg"} 
-                      alt={box.name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{box.name}</h4>
-                      <p className="text-sm text-gray-600">{box.description}</p>
-                      <p className="font-bold text-primary mt-1">
-                        {order.totalPrice.toLocaleString('ru-RU')}₽
-                      </p>
-                    </div>
+              {/* Order Items Summary */}
+              <div className="bg-white rounded-lg p-4 text-left">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <ShoppingBag className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold">Товары из корзины</h4>
+                    <p className="text-sm text-gray-600">{itemCount} товаров</p>
+                    <p className="font-bold text-lg mt-1">
+                      {order.totalPrice?.toLocaleString('ru-RU')}₽
+                    </p>
                   </div>
                 </div>
-              ) : cartItems && cartItems.length > 0 ? (
-                <div className="bg-white rounded-lg p-4 text-left space-y-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Товары ({cartItems.length}):
-                  </p>
-                  {cartItems.slice(0, 3).map((item: any, index: number) => (
-                    <div key={index} className="flex items-center space-x-3" data-testid={`cart-item-${index}`}>
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-                        {item.imageUrl ? (
-                          <img 
-                            src={item.imageUrl} 
-                            alt={item.name || `Товар ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <ShoppingBag className="w-6 h-6 text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h5 className="text-sm font-medium">{item.name || `Товар ${index + 1}`}</h5>
-                        {item.selectedSize && (
-                          <p className="text-xs text-gray-500">Размер: {item.selectedSize}</p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {cartItems.length > 3 && (
-                    <p className="text-xs text-gray-500">+ еще {cartItems.length - 3} товаров</p>
-                  )}
-                  <div className="pt-2 border-t">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Итого:</span>
-                      <span className="font-bold text-primary">
-                        {order.totalPrice.toLocaleString('ru-RU')}₽
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-lg p-4 text-left">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <Package className="w-8 h-8 text-gray-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold">Заказ #{order.orderNumber}</h4>
-                      <p className="font-bold text-primary mt-1">
-                        {order.totalPrice.toLocaleString('ru-RU')}₽
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Order Status */}
+        {/* Order Details Card */}
         <Card>
           <CardContent className="p-6">
-            <div className="space-y-3">
+            <div className="space-y-3 text-base">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Статус:</span>
                 <span className="text-green-600 font-semibold flex items-center gap-2">
@@ -199,25 +148,25 @@ export default function PaymentSuccess() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Номер заказа:</span>
-                <span className="font-semibold">#{order.orderNumber}</span>
+                <span className="font-semibold" data-testid="text-order-number">#{order.orderNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Получатель:</span>
-                <span>{order.customerName}</span>
+                <span data-testid="text-customer-name">{order.customerName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Телефон:</span>
-                <span>{order.customerPhone}</span>
+                <span data-testid="text-customer-phone">{order.customerPhone}</span>
               </div>
               {order.customerEmail && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Email:</span>
-                  <span className="text-sm">{order.customerEmail}</span>
+                  <span className="text-sm" data-testid="text-customer-email">{order.customerEmail}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Доставка:</span>
-                <span>
+                <span data-testid="text-delivery-method">
                   {order.deliveryMethod === 'courier' ? 'Курьер' : 
                    order.deliveryMethod === 'pickup' ? 'Самовывоз' : 
                    order.deliveryMethod === 'cdek' ? 'СДЭК' : 'Почта'}
@@ -227,7 +176,7 @@ export default function PaymentSuccess() {
           </CardContent>
         </Card>
 
-        {/* Manager Contact Section - Highlighted */}
+        {/* Manager Contact Card */}
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-6 text-center space-y-4">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -237,7 +186,7 @@ export default function PaymentSuccess() {
               <h3 className="font-semibold text-lg mb-2">
                 Менеджер свяжется с вами
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-700 mb-4">
                 Наш менеджер скоро свяжется с вами для уточнения деталей доставки и ответит на все ваши вопросы.
               </p>
               <Button 
@@ -257,7 +206,7 @@ export default function PaymentSuccess() {
         <div className="space-y-3">
           <Button 
             onClick={() => setLocation("/my-orders")}
-            className="w-full bg-primary text-white"
+            className="w-full bg-black hover:bg-gray-800 text-white"
             size="lg"
             data-testid="button-my-orders"
           >
