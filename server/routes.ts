@@ -8,9 +8,8 @@ import { parseKavaraCatalog } from "./parser";
 import {
   createPaymentIntent,
   checkPaymentStatus,
-  parseYooMoneyNotification,
-  verifyNotification,
-  getAccountInfo
+  parseYooKassaNotification,
+  verifyNotification
 } from "./payment";
 import type {
   User,
@@ -1119,52 +1118,7 @@ router.get("/api/payment-status/:paymentId", async (req, res) => {
   }
 });
 
-// YooMoney webhook
-router.post("/webhook/yoomoney", async (req, res) => {
-  try {
-    const notification = parseYooMoneyNotification(req.body);
-    const secret = process.env.YOOMONEY_NOTIFICATION_SECRET;
-
-    if (!secret || !verifyNotification(notification, secret)) {
-      return res.status(400).json({ error: "Invalid notification" });
-    }
-
-    // Handle successful payment
-    if (notification.notification_type === 'p2p-incoming') {
-      console.log('Payment received:', notification);
-
-      // Find order by payment label and update status
-      if (notification.label) {
-        try {
-          // Update order status to 'paid'
-          await storage.updateOrderStatus(notification.label, 'paid');
-          console.log(`Payment confirmed for order: ${notification.label}`);
-
-          // Optionally send confirmation notification via Telegram
-          // await notifyAdminAboutPayment(notification);
-        } catch (error) {
-          console.error('Error updating order status:', error);
-        }
-      }
-    }
-
-    res.status(200).send('OK');
-  } catch (error) {
-    console.error("Webhook error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// Get YooMoney account info (admin only)
-router.get("/admin/yoomoney/info", async (req, res) => {
-  try {
-    const accountInfo = await getAccountInfo();
-    res.json(accountInfo);
-  } catch (error) {
-    console.error("Error getting account info:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+// YooKassa webhook is now handled by /api/yoomoney-webhook endpoint above
 
 export function registerRoutes(app: any) {
   app.use(router);
