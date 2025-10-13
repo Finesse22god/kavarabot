@@ -28,6 +28,13 @@ export default function Profile() {
   // Get tab from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const tabFromUrl = urlParams.get('tab') || 'personal';
+  
+  // Redirect to /my-orders when orders tab is accessed
+  useEffect(() => {
+    if (tabFromUrl === 'orders') {
+      setLocation('/my-orders');
+    }
+  }, [tabFromUrl, setLocation]);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",

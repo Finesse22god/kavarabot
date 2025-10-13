@@ -421,9 +421,9 @@ export class DatabaseStorage implements IStorage {
       selectedSize: orderData.selectedSize || null,
       cartItems: orderData.cartItems || null,
       status: "pending",
-    });
+    } as any);
 
-    return await this.orderRepository.save(order);
+    return await this.orderRepository.save(order) as unknown as Order;
   }
 
   async updateOrderPaymentId(orderId: string, paymentId: string): Promise<Order | null> {
