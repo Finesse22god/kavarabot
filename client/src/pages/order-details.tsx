@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle, MessageCircle, User, Package, Home } from "luci
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTelegram } from "@/hooks/use-telegram";
-import type { Order } from "@shared/schema";
+import type { Order } from "@shared/types";
 
 export default function OrderDetails() {
   const [, setLocation] = useLocation();
@@ -31,10 +31,10 @@ export default function OrderDetails() {
   const contactManager = () => {
     // Open Telegram chat with manager directly in Telegram
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
     } else {
       // Fallback for non-Telegram environment
-      window.open("https://t.me/kavarateam", "_blank");
+      window.open("https://t.me/kavarabrand", "_blank");
     }
   };
 
@@ -186,8 +186,68 @@ export default function OrderDetails() {
                       <span data-testid="text-customer-email">{order.customerEmail}</span>
                     </div>
                   )}
+                  {order.userInfo?.username && (
+                    <div>
+                      <span className="font-semibold">Telegram: </span>
+                      <span data-testid="text-customer-telegram">@{order.userInfo.username}</span>
+                    </div>
+                  )}
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Order Items Card */}
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-xl font-semibold mb-4">Товары в заказе</h3>
+            <div className="space-y-3">
+              {order.cartItems ? (
+                // Multiple items from cart
+                (() => {
+                  try {
+                    const items = JSON.parse(order.cartItems);
+                    return items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                          {item.selectedSize && (
+                            <p className="text-sm text-gray-600">Размер: {item.selectedSize}</p>
+                          )}
+                          <p className="text-sm text-gray-600">Количество: {item.quantity || 1}</p>
+                        </div>
+                        <p className="font-semibold">{(item.price * (item.quantity || 1)).toLocaleString('ru-RU')}₽</p>
+                      </div>
+                    ));
+                  } catch (error) {
+                    return (
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-gray-600">Информация о товарах недоступна</p>
+                      </div>
+                    );
+                  }
+                })()
+              ) : (
+                // Single box order
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <p className="font-medium">{order.boxName || 'Товар'}</p>
+                    {order.selectedSize && (
+                      <p className="text-sm text-gray-600">Размер: {order.selectedSize}</p>
+                    )}
+                  </div>
+                  <p className="font-semibold">{order.totalPrice?.toLocaleString('ru-RU')}₽</p>
+                </div>
+              )}
+            </div>
+            
+            {/* Total */}
+            <div className="flex justify-between items-center pt-4 mt-4 border-t">
+              <p className="text-lg font-semibold">Итого:</p>
+              <p className="text-xl font-bold" data-testid="text-total-price">
+                {order.totalPrice?.toLocaleString('ru-RU')}₽
+              </p>
             </div>
           </CardContent>
         </Card>

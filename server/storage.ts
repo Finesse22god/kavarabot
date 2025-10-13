@@ -468,7 +468,7 @@ export class DatabaseStorage implements IStorage {
   async getOrderByNumber(orderNumber: string): Promise<Order | null> {
     const order = await this.orderRepository.findOne({
       where: { orderNumber },
-      relations: ["box", "user"]
+      relations: ["box", "user", "product"]
     });
 
     if (!order) return null;
@@ -507,7 +507,25 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    return order;
+    // Add user info if user exists
+    const orderWithExtras: any = { ...order };
+    if (order.user) {
+      orderWithExtras.userInfo = {
+        username: order.user.username,
+        firstName: order.user.firstName,
+        lastName: order.user.lastName,
+        telegramId: order.user.telegramId,
+      };
+    }
+
+    // Add box name if box exists
+    if (order.box) {
+      orderWithExtras.boxName = order.box.name;
+    } else if (order.product) {
+      orderWithExtras.boxName = order.product.name;
+    }
+
+    return orderWithExtras;
   }
 
   // Notifications
