@@ -71,9 +71,34 @@ export async function createPaymentIntent(
       description: payment.description || "",
       orderId: paymentData.orderId,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating YooKassa payment:", error);
-    throw error;
+    
+    // Extract meaningful error information from axios error
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error("YooKassa API Error Response:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+      
+      // Create a more informative error
+      const apiError = new Error(
+        `YooKassa API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`
+      );
+      throw apiError;
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("No response from YooKassa:", error.request);
+      throw new Error("No response from YooKassa API");
+    } else {
+      // Something happened in setting up the request
+      console.error("Error setting up request:", error.message);
+      throw error;
+    }
   }
 }
 
