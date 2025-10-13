@@ -17,6 +17,7 @@ import { useTelegram } from "@/hooks/use-telegram";
 interface OrderFormData {
   customerName: string;
   customerPhone: string;
+  customerEmail: string;
   deliveryMethod: string;
   paymentMethod: string;
 }
@@ -39,6 +40,7 @@ export default function Order() {
   const [formData, setFormData] = useState<OrderFormData>({
     customerName: "",
     customerPhone: "",
+    customerEmail: "",
     deliveryMethod: "",
     paymentMethod: "",
   });
@@ -168,8 +170,10 @@ export default function Order() {
     
     if (!selectedBox) return;
 
+    // Validate all required fields
     const isValid = formData.customerName && 
                    formData.customerPhone &&
+                   formData.customerEmail &&
                    formData.deliveryMethod && 
                    formData.paymentMethod;
 
@@ -177,6 +181,28 @@ export default function Order() {
       toast({
         title: "Ошибка",
         description: "Заполните все обязательные поля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.customerEmail)) {
+      toast({
+        title: "Ошибка",
+        description: "Введите корректный email адрес",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate phone format (at least 10 digits)
+    const phoneDigits = formData.customerPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      toast({
+        title: "Ошибка",
+        description: "Введите корректный номер телефона (минимум 10 цифр)",
         variant: "destructive",
       });
       return;
@@ -216,7 +242,7 @@ export default function Order() {
           selectedSize: firstItem.selectedSize,
           customerName: formData.customerName,
           customerPhone: formData.customerPhone,
-          customerEmail: telegramUser?.username ? `@${telegramUser.username}` : "",
+          customerEmail: formData.customerEmail,
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
           totalPrice: Math.round(finalPrice), // Общая сумма всех товаров корзины
@@ -261,7 +287,7 @@ export default function Order() {
           boxId: selectedBox.id,
           customerName: formData.customerName,
           customerPhone: formData.customerPhone,
-          customerEmail: telegramUser?.username ? `@${telegramUser.username}` : "",
+          customerEmail: formData.customerEmail,
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
           totalPrice: calculateTotalPrice(),
@@ -370,6 +396,7 @@ export default function Order() {
                 value={formData.customerName}
                 onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
                 required
+                data-testid="input-name"
               />
             </div>
             <div>
@@ -379,8 +406,28 @@ export default function Order() {
                 type="tel"
                 placeholder="+7 (999) 123-45-67"
                 value={formData.customerPhone}
-                onChange={(e) => setFormData(prev => ({ ...prev, customerPhone: e.target.value }))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Allow only numbers, +, spaces, and hyphens
+                  const cleaned = value.replace(/[^\d+\s()-]/g, '');
+                  setFormData(prev => ({ ...prev, customerPhone: cleaned }));
+                }}
+                pattern="^\+?[0-9\s()-]{10,20}$"
                 required
+                data-testid="input-phone"
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="example@mail.com"
+                value={formData.customerEmail}
+                onChange={(e) => setFormData(prev => ({ ...prev, customerEmail: e.target.value }))}
+                pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+                required
+                data-testid="input-email"
               />
             </div>
           </div>
