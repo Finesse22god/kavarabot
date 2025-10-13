@@ -487,16 +487,19 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
     // Handle payment.succeeded event
     if (event === "payment.succeeded" && object) {
       const paymentId = object.id;
-      const orderId = object.metadata?.orderId;
+      const orderNumber = object.metadata?.orderId;  // This is actually the order NUMBER (e.g. "KB825925")
       
-      console.log(`Received payment success notification for payment ID: ${paymentId}, order ID: ${orderId}`);
+      console.log(`Received payment success notification for payment ID: ${paymentId}, order number: ${orderNumber}`);
       
-      if (orderId) {
-        // Update order status to paid using the orderId from metadata
-        const order = await storage.updateOrderStatusByPaymentId(paymentId, "paid");
+      if (orderNumber) {
+        // Find order by order number from metadata and update status
+        const order = await storage.updateOrderStatus(orderNumber, "paid");
         
         if (order) {
           console.log(`Order ${order.orderNumber} marked as paid via YooKassa webhook`);
+          
+          // Also save the payment ID to the order
+          await storage.updateOrderPaymentId(order.id, paymentId);
           
           // Send admin notification about successful payment
           const adminNotification = `💰 Новая оплата через ЮKassa!
