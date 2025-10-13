@@ -477,7 +477,10 @@ router.put("/api/orders/:orderId/payment-id", async (req, res) => {
 // YooKassa webhook endpoint for payment notifications
 router.post("/api/yoomoney-webhook", async (req, res) => {
   try {
-    console.log("YooKassa webhook received:", req.body);
+    console.log("=== YOOKASSA WEBHOOK RECEIVED ===");
+    console.log("Headers:", JSON.stringify(req.headers, null, 2));
+    console.log("Body:", JSON.stringify(req.body, null, 2));
+    console.log("================================");
     
     const { event, object } = req.body;
     
