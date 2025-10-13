@@ -1103,7 +1103,7 @@ router.post("/api/create-payment-intent", async (req, res) => {
     console.error("Error creating payment intent:", error);
     res.status(500).json({
       error: "Internal server error",
-      details: error instanceof Error ? error.message : String(error)
+      details: error instanceof Error ? error.message : JSON.stringify(error)
     });
   }
 });
