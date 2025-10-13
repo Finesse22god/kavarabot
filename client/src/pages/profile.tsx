@@ -208,86 +208,8 @@ export default function Profile() {
   };
 
   const OrdersSection = () => {
-    const { data: orders, isLoading: ordersLoading } = useQuery({
-      queryKey: [`/api/orders/user/${userData?.id}`],
-      enabled: !!userData?.id,
-    });
-
-    if (ordersLoading) {
-      return (
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">Загружаем заказы...</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4">
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="font-semibold mb-4 flex items-center">
-            <Package className="w-5 h-5 mr-2 text-blue-500" />
-            Мои заказы
-          </h3>
-          
-          {orders && (orders as any[]).length > 0 ? (
-            <div className="space-y-4">
-              {(orders as any[]).map((order: any) => (
-                <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-semibold">Заказ #{order.orderNumber}</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">{order.totalPrice.toLocaleString()}₽</p>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        order.status === 'paid' ? 'bg-green-100 text-green-800' :
-                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {order.status === 'paid' ? 'Оплачен' :
-                         order.status === 'pending' ? 'Ожидает оплаты' :
-                         order.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      <p>{order.customerName || 'Не указано'}</p>
-                      <p>Доставка: {order.deliveryMethod}</p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Детали
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 mb-4">У вас пока нет заказов</p>
-              <Button 
-                variant="outline"
-                onClick={() => setLocation("/catalog")}
-              >
-                Перейти в каталог
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    setLocation("/my-orders");
+    return null;
   };
 
   // Payment redirect function (unified approach)

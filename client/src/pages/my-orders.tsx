@@ -167,68 +167,49 @@ export default function MyOrders() {
   }
 
   const OrderCard = ({ order }: { order: Order }) => (
-    <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100">
-      <div className="flex justify-between items-start mb-3">
+    <div className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
+      <div className="flex justify-between items-start mb-2">
         <div>
-          <h3 className="font-semibold">Заказ #{order.orderNumber}</h3>
-          <p className="text-sm text-gray-600">
+          <h3 className="font-bold text-lg">Заказ #{order.orderNumber}</h3>
+          <p className="text-sm text-gray-500">
             {new Date(order.createdAt || '').toLocaleDateString('ru-RU')}
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1">
           {getStatusIcon(order.status)}
           <span className="text-sm font-medium">{getStatusText(order.status)}</span>
         </div>
       </div>
 
       <div className="mb-3">
-        <p className="text-sm text-gray-600">Клиент: {order.customerName}</p>
-        <p className="text-sm text-gray-600">Доставка: {order.deliveryMethod}</p>
-        <div className="flex items-center gap-2 mt-2">
-          {order.status === "pending" && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => handlePayment(order)}
-              className="text-xs bg-green-600 hover:bg-green-700 font-semibold"
-              disabled={paymentMutation.isPending}
-              data-testid={`button-pay-order-${order.orderNumber}`}
-            >
-              <CreditCard className="w-3 h-3 mr-1" />
-              {paymentMutation.isPending ? (
-                <>
-                  <div className="animate-spin w-2 h-2 border border-white border-t-transparent rounded-full mr-1" />
-                  Загружается...
-                </>
-              ) : (
-                `Оплатить ${calculateOrderTotal(order).toLocaleString('ru-RU')}₽`
-              )}
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setLocation("/profile?tab=contacts")}
-            className="text-xs"
-            data-testid="button-contact-manager-order"
-          >
-            <MessageCircle className="w-3 h-3 mr-1" />
-            Связаться
-          </Button>
-        </div>
+        <p className="text-sm text-gray-700">Клиент: {order.customerName}</p>
+        <p className="text-sm text-gray-700">Доставка: {order.deliveryMethod}</p>
       </div>
 
-      <div className="flex justify-between items-center">
-        <span className="text-lg font-bold text-primary">
+      <div className="mb-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => window.open("https://t.me/kavarabrand", "_blank")}
+          className="text-sm w-full"
+          data-testid="button-contact-manager"
+        >
+          <MessageCircle className="w-4 h-4 mr-2" />
+          Связаться
+        </Button>
+      </div>
+
+      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+        <span className="text-xl font-bold">
           {calculateOrderTotal(order).toLocaleString('ru-RU')}₽
         </span>
         <Button 
-          variant="outline" 
+          variant="ghost" 
           size="sm"
           onClick={() => {
-            // Open order details page for all orders
             setLocation(`/order-details?order=${order.orderNumber}`);
           }}
+          className="text-sm font-medium"
           data-testid={`button-details-${order.orderNumber}`}
         >
           Детали
@@ -250,13 +231,11 @@ export default function MyOrders() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <div className="p-4 bg-black text-white">
+      <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="text-2xl">📦</div>
-            <div>
-              <h2 className="font-semibold">Мои заказы</h2>
-            </div>
+            <Package className="w-6 h-6 text-orange-500" />
+            <h2 className="font-semibold text-lg">Мои заказы</h2>
           </div>
           <Button
             variant="ghost"
@@ -265,7 +244,7 @@ export default function MyOrders() {
               queryClient.invalidateQueries({ queryKey: ["/api/orders/user", user?.id] });
               refetch();
             }}
-            className="text-white hover:bg-white/20"
+            className="text-gray-600 hover:bg-gray-100"
           >
             <RefreshCw className="w-4 h-4" />
           </Button>
