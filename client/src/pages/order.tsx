@@ -197,12 +197,12 @@ export default function Order() {
       return;
     }
 
-    // Validate phone format (at least 10 digits)
+    // Validate phone format (must be exactly 11 digits for Russian number: 7 + 10 digits)
     const phoneDigits = formData.customerPhone.replace(/\D/g, '');
-    if (phoneDigits.length < 10) {
+    if (phoneDigits.length !== 11 || !phoneDigits.startsWith('7')) {
       toast({
         title: "Ошибка",
-        description: "Введите корректный номер телефона (минимум 10 цифр)",
+        description: "Введите полный номер телефона в формате +7 (XXX) XXX-XX-XX",
         variant: "destructive",
       });
       return;
@@ -243,6 +243,7 @@ export default function Order() {
           customerName: formData.customerName,
           customerPhone: formData.customerPhone,
           customerEmail: formData.customerEmail,
+          telegramUsername: telegramUser?.username || dbUser?.username || "",
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
           totalPrice: Math.round(finalPrice), // Общая сумма всех товаров корзины
@@ -288,6 +289,7 @@ export default function Order() {
           customerName: formData.customerName,
           customerPhone: formData.customerPhone,
           customerEmail: formData.customerEmail,
+          telegramUsername: telegramUser?.username || dbUser?.username || "",
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
           totalPrice: calculateTotalPrice(),
@@ -408,11 +410,59 @@ export default function Order() {
                 value={formData.customerPhone}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Allow only numbers, +, spaces, and hyphens
-                  const cleaned = value.replace(/[^\d+\s()-]/g, '');
-                  setFormData(prev => ({ ...prev, customerPhone: cleaned }));
+                  
+                  // Remove all non-digits
+                  const digits = value.replace(/\D/g, '');
+                  
+                  // If empty or user tries to delete everything, show +7
+                  if (value === '' || digits.length === 0) {
+                    setFormData(prev => ({ ...prev, customerPhone: '+7' }));
+                    return;
+                  }
+                  
+                  // Extract local digits (after country code 7)
+                  let localDigits = '';
+                  if (digits.startsWith('7')) {
+                    localDigits = digits.slice(1);
+                  } else if (digits.startsWith('8')) {
+                    localDigits = digits.slice(1);
+                  } else {
+                    localDigits = digits;
+                  }
+                  
+                  // Limit to maximum 10 digits
+                  if (localDigits.length > 10) {
+                    return;
+                  }
+                  
+                  // Format: +7 (XXX) XXX-XX-XX
+                  let formatted = '+7';
+                  
+                  if (localDigits.length > 0) {
+                    formatted += ' (' + localDigits.slice(0, 3);
+                    if (localDigits.length >= 3) {
+                      formatted += ')';
+                    }
+                  }
+                  if (localDigits.length > 3) {
+                    formatted += ' ' + localDigits.slice(3, 6);
+                  }
+                  if (localDigits.length > 6) {
+                    formatted += '-' + localDigits.slice(6, 8);
+                  }
+                  if (localDigits.length > 8) {
+                    formatted += '-' + localDigits.slice(8, 10);
+                  }
+                  
+                  setFormData(prev => ({ ...prev, customerPhone: formatted }));
                 }}
-                pattern="^\+?[0-9\s()-]{10,20}$"
+                onFocus={(e) => {
+                  // Auto-fill +7 when user focuses on empty field
+                  if (!formData.customerPhone || formData.customerPhone === '') {
+                    setFormData(prev => ({ ...prev, customerPhone: '+7' }));
+                  }
+                }}
+                maxLength={18}
                 required
                 data-testid="input-phone"
               />

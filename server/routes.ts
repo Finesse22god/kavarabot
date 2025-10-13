@@ -501,26 +501,68 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
           // Also save the payment ID to the order
           await storage.updateOrderPaymentId(order.id, paymentId);
           
-          // Send admin notification about successful payment
-          const adminNotification = `💰 Новая оплата через ЮKassa!
+          // Get user data to include telegram username
+          let telegramUsername = '';
+          if (order.userId) {
+            const user = await storage.getUser(order.userId);
+            if (user?.username) {
+              telegramUsername = `@${user.username}`;
+            }
+          }
           
-Заказ: ${order.orderNumber}
-Сумма: ${order.totalPrice}₽
-Покупатель: ${order.customerName}
-Телефон: ${order.customerPhone}
-Email: ${order.customerEmail}
-Способ доставки: ${order.deliveryMethod}
-ID платежа: ${paymentId}`;
+          // Build comprehensive admin notification with all order details
+          const adminNotification = `💰 <b>Новая оплата через ЮKassa!</b>
 
-          // Send notification to admin Telegram
-          await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: process.env.ADMIN_CHAT_ID || '-1002812810825',
-              text: adminNotification
-            })
-          });
+📦 <b>Заказ №:</b> ${order.orderNumber}
+👤 <b>Клиент:</b> ${order.customerName}
+${telegramUsername ? `👨‍💻 <b>Telegram:</b> ${telegramUsername}\n` : ''}📱 <b>Телефон:</b> ${order.customerPhone}
+${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}
+🚚 <b>Доставка:</b> ${order.deliveryMethod}
+💳 <b>Оплата:</b> ${order.paymentMethod}
+💰 <b>Сумма:</b> ${order.totalPrice}₽
+
+💳 <b>ID платежа:</b> ${paymentId}
+
+📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString('ru-RU')}`;
+
+          const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
+          const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID;
+
+          // Send notification to admin chat with HTML formatting
+          if (ADMIN_CHAT_ID) {
+            try {
+              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: ADMIN_CHAT_ID,
+                  text: adminNotification,
+                  parse_mode: 'HTML'
+                })
+              });
+              console.log('Payment notification sent to admin chat');
+            } catch (error) {
+              console.error('Failed to send payment notification to admin:', error);
+            }
+          }
+
+          // Send notification to orders channel if configured
+          if (ORDERS_CHANNEL_ID) {
+            try {
+              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: ORDERS_CHANNEL_ID,
+                  text: adminNotification,
+                  parse_mode: 'HTML'
+                })
+              });
+              console.log('Payment notification sent to orders channel');
+            } catch (error) {
+              console.error('Failed to send payment notification to channel:', error);
+            }
+          }
         }
       }
     }
@@ -622,8 +664,7 @@ router.post("/api/orders", async (req, res) => {
       await storage.updateTrainerStats(trainer.id, orderData.totalPrice);
     }
 
-    // Send notification to admin
-    await notifyAdminAboutNewOrder(order);
+    // Don't send notification here - it will be sent when payment is confirmed
 
     res.status(201).json(order);
   } catch (error) {

@@ -103,6 +103,7 @@ export const orders = pgTable("orders", {
   customerName: varchar("customerName", { length: 255 }).notNull(),
   customerPhone: varchar("customerPhone", { length: 50 }).notNull(),
   customerEmail: varchar("customerEmail", { length: 255 }),
+  telegramUsername: varchar("telegramUsername", { length: 255 }),
   deliveryMethod: varchar("deliveryMethod", { length: 50 }).notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }).notNull(),
   totalPrice: integer("totalPrice").notNull(),

@@ -67,24 +67,31 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
   // Статистика
   const stats = useMemo(() => {
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0);
     const paidOrders = filteredOrders.filter(o => o.status === 'paid');
-    const avgOrderValue = filteredOrders.length > 0 ? totalRevenue / filteredOrders.length : 0;
+    const unpaidOrders = filteredOrders.filter(o => o.status !== 'paid');
+    
+    // Revenue only from paid orders
+    const totalRevenue = paidOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+    const avgOrderValue = paidOrders.length > 0 ? totalRevenue / paidOrders.length : 0;
 
     return {
       totalOrders: filteredOrders.length,
       totalRevenue,
       paidOrders: paidOrders.length,
+      unpaidOrders: unpaidOrders.length,
       avgOrderValue,
       conversionRate: filteredOrders.length > 0 ? (paidOrders.length / filteredOrders.length) * 100 : 0,
     };
   }, [filteredOrders]);
 
-  // Данные для графика продаж по дням
+  // Данные для графика продаж по дням (только оплаченные заказы)
   const salesByDay = useMemo(() => {
     const dayMap = new Map<string, { date: string; revenue: number; orders: number }>();
     
-    filteredOrders.forEach(order => {
+    // Only count paid orders for revenue
+    const paidOrders = filteredOrders.filter(o => o.status === 'paid');
+    
+    paidOrders.forEach(order => {
       const date = new Date(order.createdAt).toLocaleDateString('ru-RU');
       const existing = dayMap.get(date) || { date, revenue: 0, orders: 0 };
       dayMap.set(date, {
@@ -184,10 +191,10 @@ export default function Analytics({ onBack }: AnalyticsProps) {
         ) : (
           <>
             {/* Основная статистика */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Заказы</CardTitle>
+                  <CardTitle className="text-sm font-medium">Всего заказов</CardTitle>
                   <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -198,12 +205,34 @@ export default function Analytics({ onBack }: AnalyticsProps) {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Оплачено</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{stats.paidOrders}</div>
+                  <p className="text-xs text-muted-foreground">Успешных заказов</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Не оплачено</CardTitle>
+                  <ShoppingCart className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{stats.unpaidOrders}</div>
+                  <p className="text-xs text-muted-foreground">Ожидают оплаты</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Выручка</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString('ru-RU')}₽</div>
-                  <p className="text-xs text-muted-foreground">Всего продаж</p>
+                  <p className="text-xs text-muted-foreground">Только оплаченные</p>
                 </CardContent>
               </Card>
 
@@ -214,18 +243,7 @@ export default function Analytics({ onBack }: AnalyticsProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{Math.round(stats.avgOrderValue).toLocaleString('ru-RU')}₽</div>
-                  <p className="text-xs text-muted-foreground">На заказ</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Конверсия</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.conversionRate.toFixed(1)}%</div>
-                  <p className="text-xs text-muted-foreground">{stats.paidOrders} оплаченных</p>
+                  <p className="text-xs text-muted-foreground">По оплаченным</p>
                 </CardContent>
               </Card>
             </div>
