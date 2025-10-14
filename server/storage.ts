@@ -1,5 +1,6 @@
 import { Repository } from "typeorm";
 import { AppDataSource } from "./database";
+import crypto from "crypto";
 import { User } from "./entities/User";
 import { QuizResponse } from "./entities/QuizResponse";
 import { Box } from "./entities/Box";
@@ -396,6 +397,32 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  /**
+   * Генерирует уникальный номер заказа
+   */
+  private async generateUniqueOrderNumber(): Promise<string> {
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+      // Используем timestamp + случайные цифры для уникальности
+      const timestamp = Date.now().toString().slice(-6);
+      const random = crypto.randomInt(1000, 9999);
+      const orderNumber = `KB${timestamp}${random}`;
+      
+      // Проверяем уникальность
+      const existing = await this.orderRepository.findOneBy({ orderNumber });
+      if (!existing) {
+        return orderNumber;
+      }
+      
+      attempts++;
+    }
+    
+    // Если не удалось сгенерировать уникальный номер, используем UUID
+    return `KB${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
+  }
+
   async createOrder(orderData: CreateOrderDto): Promise<Order> {
     // If userId looks like telegramId (numeric string), find the actual user
     let actualUserId = orderData.userId;
@@ -406,7 +433,7 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    const orderNumber = `KB${Date.now().toString().slice(-6)}`;
+    const orderNumber = await this.generateUniqueOrderNumber();
     const order = this.orderRepository.create({
       orderNumber,
       userId: actualUserId,

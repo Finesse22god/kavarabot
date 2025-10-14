@@ -29,8 +29,9 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // Setup bot commands and menu (GET version for browser access)
   app.get('/setup-bot', async (req, res) => {
     try {
-      // Set webhook
-      const webhookUrl = `https://kavarabotapp.replit.app/webhook`;
+      // Set webhook - используем переменную окружения или автоматически определяем URL
+      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || 
+        `https://${process.env.REPL_SLUG || 'kavarabotapp'}.${process.env.REPL_OWNER || 'replit'}.repl.co/webhook`;
       const webhookResponse = await setWebhook(webhookUrl);
       
       // Set bot commands
@@ -54,8 +55,9 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // POST version for programmatic access
   app.post('/setup-bot', async (req, res) => {
     try {
-      // Set webhook
-      const webhookUrl = `https://kavarabotapp.replit.app/webhook`;
+      // Set webhook - используем переменную окружения или автоматически определяем URL
+      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || 
+        `https://${process.env.REPL_SLUG || 'kavarabotapp'}.${process.env.REPL_OWNER || 'replit'}.repl.co/webhook`;
       await setWebhook(webhookUrl);
       
       // Set bot commands
@@ -313,8 +315,8 @@ function getBotUsername(): string {
 
 // Admin notification function
 export async function notifyAdminAboutNewOrder(order: any) {
-  const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || "-1002812810825"; // Admin chat for order notifications
-  const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID; // Add this for channel notifications
+  const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID; // Admin chat for order notifications
+  const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID; // Channel for order notifications
   
   const message = `
 🆕 <b>НОВЫЙ ЗАКАЗ!</b>

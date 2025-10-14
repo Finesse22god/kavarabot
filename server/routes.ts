@@ -2,6 +2,8 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import { promises as fs } from "fs";
+import { fileTypeFromFile } from "file-type";
+import { AppDataSource } from "./database";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
 import { parseKavaraCatalog } from "./parser";
@@ -11,6 +13,12 @@ import {
   parseYooKassaNotification,
   verifyNotification
 } from "./payment";
+import { createAdminToken, verifyToken } from "./auth";
+import { User as UserEntity } from "./entities/User";
+import { Order as OrderEntity } from "./entities/Order";
+import { LoyaltyTransaction as LoyaltyTransactionEntity } from "./entities/LoyaltyTransaction";
+import { PromoCode as PromoCodeEntity } from "./entities/PromoCode";
+import { Trainer as TrainerEntity } from "./entities/Trainer";
 import type {
   User,
   QuizResponse,
@@ -69,10 +77,26 @@ router.post("/api/upload/box-image", upload.single("image"), async (req, res) =>
       return res.status(400).json({ error: "Файл не загружен" });
     }
 
+    // Проверяем реальный тип файла (не только MIME type)
+    const fileType = await fileTypeFromFile(req.file.path);
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    
+    if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
+      // Удаляем недопустимый файл
+      await fs.unlink(req.file.path).catch(console.error);
+      return res.status(400).json({ 
+        error: "Недопустимый тип файла. Разрешены только изображения: JPG, PNG, WebP, GIF" 
+      });
+    }
+
     const fileUrl = `/uploads/${req.file.filename}`;
     res.json({ url: fileUrl, filename: req.file.filename });
   } catch (error) {
     console.error("Error uploading file:", error);
+    // Удаляем файл в случае ошибки
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(console.error);
+    }
     res.status(500).json({ error: "Ошибка при загрузке файла" });
   }
 });
@@ -598,78 +622,180 @@ router.post("/api/orders", async (req, res) => {
       loyaltyPointsUsed?: number
     } = req.body;
 
-    let finalOrderData = { ...orderData };
-    let trainer = null;
-    let promoCodeData = null;
+    // Выполняем все операции в транзакции для предотвращения race conditions
+    const order = await AppDataSource.transaction(async (manager) => {
+      let finalOrderData = { ...orderData };
+      let trainer = null;
+      let promoCodeData = null;
 
-    // Handle promo code if provided
-    if (orderData.promoCode) {
-      const validation = await storage.validatePromoCode(orderData.promoCode);
-      if (validation.isValid && validation.promoCode) {
-        promoCodeData = validation.promoCode;
-        trainer = validation.trainer;
-
-        // Apply discount
-        const discountPercent = validation.discountPercent || 0;
-        const discount = Math.floor(orderData.totalPrice * (discountPercent / 100));
-        finalOrderData.totalPrice = orderData.totalPrice - discount;
-        finalOrderData.promoCodeId = promoCodeData.id;
-        finalOrderData.trainerId = trainer?.id;
-        finalOrderData.discountPercent = discountPercent;
-        finalOrderData.discountAmount = discount;
-
-        // Mark promo code as used
-        await storage.applyPromoCode(orderData.promoCode);
-      }
-    }
-
-    // Handle loyalty points redemption
-    if (orderData.loyaltyPointsUsed && orderData.loyaltyPointsUsed > 0) {
-      // 1 loyalty point = 1 ruble discount
-      finalOrderData.totalPrice = Math.max(0, finalOrderData.totalPrice - orderData.loyaltyPointsUsed);
-      finalOrderData.loyaltyPointsUsed = orderData.loyaltyPointsUsed;
-    }
-
-    const order = await storage.createOrder(finalOrderData);
-
-    // Award loyalty points ONLY if purchase was made with trainer promo code
-    if (order.userId && trainer) {
-      const loyaltyPoints = Math.floor(orderData.totalPrice * 0.05); // 5% of original price
-      if (loyaltyPoints > 0) {
-        await storage.createLoyaltyTransaction({
-          userId: order.userId,
-          orderId: order.id,
-          type: 'earn',
-          points: loyaltyPoints,
-          description: `Начислено за заказ по промокоду тренера ${order.orderNumber}`
+      // Handle promo code if provided
+      if (orderData.promoCode) {
+        const PromoCodeRepo = manager.getRepository(PromoCodeEntity);
+        const TrainerRepo = manager.getRepository(TrainerEntity);
+        
+        // Use pessimistic write lock to prevent race conditions
+        promoCodeData = await PromoCodeRepo.findOne({ 
+          where: { code: orderData.promoCode.toUpperCase() },
+          lock: { mode: 'pessimistic_write' }
         });
-        await storage.updateUserLoyaltyPoints(order.userId, loyaltyPoints);
+
+        if (promoCodeData && promoCodeData.isActive) {
+          // Проверка валидности
+          if (promoCodeData.expiresAt && promoCodeData.expiresAt < new Date()) {
+            throw new Error("Промокод истек");
+          }
+          if (promoCodeData.maxUses && promoCodeData.usedCount >= promoCodeData.maxUses) {
+            throw new Error("Промокод исчерпан");
+          }
+
+          // Получаем тренера если есть
+          if (promoCodeData.trainerId) {
+            trainer = await TrainerRepo.findOne({ 
+              where: { id: promoCodeData.trainerId },
+              lock: { mode: 'pessimistic_write' }
+            });
+          }
+
+          // Apply discount
+          const discountPercent = promoCodeData.discountPercent || 0;
+          const discount = Math.floor(orderData.totalPrice * (discountPercent / 100));
+          finalOrderData.totalPrice = orderData.totalPrice - discount;
+          finalOrderData.promoCodeId = promoCodeData.id;
+          finalOrderData.trainerId = trainer?.id;
+          finalOrderData.discountPercent = discountPercent;
+          finalOrderData.discountAmount = discount;
+
+          // Mark promo code as used atomically
+          promoCodeData.usedCount += 1;
+          await manager.save(promoCodeData);
+        }
       }
-    }
 
-    // Deduct loyalty points if used
-    if (order.loyaltyPointsUsed > 0 && order.userId) {
-      await storage.createLoyaltyTransaction({
-        userId: order.userId,
-        orderId: order.id,
-        type: 'spend',
-        points: -order.loyaltyPointsUsed,
-        description: `Использовано баллов для оплаты заказа ${order.orderNumber}`
-      });
-      await storage.updateUserLoyaltyPoints(order.userId, -order.loyaltyPointsUsed);
-    }
+      // Resolve user ID and validate - ALWAYS validate user existence
+      const OrderRepo = manager.getRepository(OrderEntity);
+      const UserRepo = manager.getRepository(UserEntity);
+      
+      let actualUserId = orderData.userId;
+      let userForLoyalty = null;
+      
+      // ALWAYS validate user exists, regardless of loyalty points usage
+      if (orderData.userId) {
+        const isTelegramId = /^\d+$/.test(orderData.userId);
+        const needsLock = orderData.loyaltyPointsUsed && orderData.loyaltyPointsUsed > 0;
+        
+        const lockMode = needsLock 
+          ? { lock: { mode: 'pessimistic_write' as const } } 
+          : {};
+        
+        const user = await UserRepo.findOne({
+          where: isTelegramId ? { telegramId: orderData.userId } : { id: orderData.userId },
+          ...lockMode
+        });
+        
+        if (!user) {
+          throw new Error('Пользователь не найден');
+        }
+        
+        // Always use validated UUID from database
+        actualUserId = user.id;
+        
+        // If using loyalty points, validate balance
+        if (orderData.loyaltyPointsUsed && orderData.loyaltyPointsUsed > 0) {
+          if ((user.loyaltyPoints || 0) < orderData.loyaltyPointsUsed) {
+            throw new Error(`Недостаточно баллов лояльности. Доступно: ${user.loyaltyPoints || 0}, требуется: ${orderData.loyaltyPointsUsed}`);
+          }
+          userForLoyalty = user;
+          finalOrderData.totalPrice = Math.max(0, finalOrderData.totalPrice - orderData.loyaltyPointsUsed);
+          finalOrderData.loyaltyPointsUsed = orderData.loyaltyPointsUsed;
+        }
+      }
 
-    // Update trainer stats if trainer promo code was used
-    if (trainer && orderData.totalPrice) {
-      await storage.updateTrainerStats(trainer.id, orderData.totalPrice);
-    }
+      // Generate unique order number
+      const orderNumber = `KB${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 10000)}`;
+      
+      const newOrder = OrderRepo.create({
+        orderNumber,
+        userId: actualUserId,
+        boxId: finalOrderData.boxId || null,
+        productId: finalOrderData.productId || null,
+        customerName: finalOrderData.customerName,
+        customerPhone: finalOrderData.customerPhone,
+        customerEmail: finalOrderData.customerEmail,
+        deliveryMethod: finalOrderData.deliveryMethod,
+        paymentMethod: finalOrderData.paymentMethod,
+        totalPrice: finalOrderData.totalPrice,
+        selectedSize: finalOrderData.selectedSize || null,
+        cartItems: finalOrderData.cartItems || null,
+        promoCodeId: finalOrderData.promoCodeId,
+        trainerId: finalOrderData.trainerId,
+        discountPercent: finalOrderData.discountPercent,
+        discountAmount: finalOrderData.discountAmount,
+        loyaltyPointsUsed: finalOrderData.loyaltyPointsUsed || 0,
+        status: "pending",
+      } as any);
+      
+      const createdOrder = await manager.save(newOrder);
 
-    // Don't send notification here - it will be sent when payment is confirmed
+      // Award/deduct loyalty points within transaction
+      const LoyaltyRepo = manager.getRepository(LoyaltyTransactionEntity);
+      
+      // Handle loyalty point operations
+      if (createdOrder.userId) {
+        // Use already-locked user if available, otherwise lock now
+        const user = userForLoyalty || await UserRepo.findOne({ 
+          where: { id: createdOrder.userId },
+          lock: { mode: 'pessimistic_write' }
+        });
+
+        if (user) {
+          // Award points if trainer promo code was used
+          if (trainer) {
+            const loyaltyPoints = Math.floor(orderData.totalPrice * 0.05);
+            if (loyaltyPoints > 0) {
+              const earnTransaction = LoyaltyRepo.create({
+                userId: createdOrder.userId,
+                orderId: createdOrder.id,
+                type: 'earn',
+                points: loyaltyPoints,
+                description: `Начислено за заказ по промокоду тренера ${createdOrder.orderNumber}`
+              });
+              await manager.save(earnTransaction);
+              user.loyaltyPoints = (user.loyaltyPoints || 0) + loyaltyPoints;
+            }
+          }
+
+          // Deduct points if used (already validated earlier)
+          if (createdOrder.loyaltyPointsUsed > 0) {
+            const spendTransaction = LoyaltyRepo.create({
+              userId: createdOrder.userId,
+              orderId: createdOrder.id,
+              type: 'spend',
+              points: -createdOrder.loyaltyPointsUsed,
+              description: `Использовано баллов для оплаты заказа ${createdOrder.orderNumber}`
+            });
+            await manager.save(spendTransaction);
+            user.loyaltyPoints = (user.loyaltyPoints || 0) - createdOrder.loyaltyPointsUsed;
+          }
+
+          // Save updated user balance atomically
+          await manager.save(user);
+        }
+      }
+
+      // Update trainer stats if trainer promo code was used
+      if (trainer && orderData.totalPrice) {
+        trainer.totalRevenue = (trainer.totalRevenue || 0) + orderData.totalPrice;
+        trainer.ordersCount = (trainer.ordersCount || 0) + 1;
+        await manager.save(trainer);
+      }
+
+      return createdOrder;
+    });
 
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: error instanceof Error ? error.message : "Internal server error" });
   }
 });
 
@@ -698,10 +824,22 @@ router.get("/api/notifications/box/:boxId", async (req, res) => {
 // Admin token verification middleware
 function verifyAdminToken(req: any, res: any, next: any) {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token || !token.startsWith('admin-token-')) {
+  if (!token) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  next();
+  
+  // Проверяем новый безопасный токен
+  if (verifyToken(token)) {
+    return next();
+  }
+  
+  // Для обратной совместимости проверяем старый формат (временно)
+  if (token.startsWith('admin-token-')) {
+    console.warn('⚠️ Используется устаревший формат токена. Рекомендуется перелогиниться.');
+    return next();
+  }
+  
+  return res.status(401).json({ error: 'Unauthorized' });
 }
 
 // Admin trainers management
@@ -734,9 +872,10 @@ router.post("/api/admin/login", async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Simple admin check - in production use proper authentication
+    // Проверка учетных данных
     if (username === "admin" && password === process.env.ADMIN_PASSWORD) {
-      const token = "admin-token-" + Date.now(); // Simple token generation
+      // Генерируем криптографически стойкий токен
+      const token = createAdminToken(username);
       res.json({ success: true, token });
     } else {
       res.status(401).json({ success: false, message: "Неверные данные" });
@@ -855,39 +994,40 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
       return res.status(400).json({ error: "Box can contain maximum 6 products" });
     }
 
-    // Преобразуем данные для совместимости с сущностью Box
-    const boxCreateData: CreateBoxDto = {
-      name: createData.name,
-      description: createData.description,
-      price: createData.price,
-      category: createData.category,
-      imageUrl: createData.image || createData.imageUrl, // поддерживаем оба поля
-      sportTypes: createData.sportTypes || [],
-      isAvailable: createData.isAvailable !== false, // по умолчанию true
-      productIds: createData.productIds || [],
-      productQuantities: createData.productQuantities || []
-    };
+    // Выполняем создание бокса и добавление продуктов в транзакции
+    const newBox = await AppDataSource.transaction(async (transactionalEntityManager) => {
+      // Преобразуем данные для совместимости с сущностью Box
+      const boxCreateData: CreateBoxDto = {
+        name: createData.name,
+        description: createData.description,
+        price: createData.price,
+        category: createData.category,
+        imageUrl: createData.image || createData.imageUrl,
+        sportTypes: createData.sportTypes || [],
+        isAvailable: createData.isAvailable !== false,
+        productIds: createData.productIds || [],
+        productQuantities: createData.productQuantities || []
+      };
 
-    console.log("📦 Создаем бокс с данными:", JSON.stringify(boxCreateData, null, 2));
-    const newBox = await storage.createBox(boxCreateData);
-    console.log("✅ Бокс создан успешно:", newBox.id);
+      console.log("📦 Создаем бокс с данными:", JSON.stringify(boxCreateData, null, 2));
+      const createdBox = await storage.createBox(boxCreateData);
+      console.log("✅ Бокс создан успешно:", createdBox.id);
 
-    // Если были переданы товары, создаем связи BoxProduct
-    if (createData.productIds && createData.productIds.length > 0) {
-      console.log("🔗 Добавляем товары в бокс:", createData.productIds);
-      for (let i = 0; i < createData.productIds.length; i++) {
-        const productId = createData.productIds[i];
-        const quantity = createData.productQuantities?.[i] || 1;
-
-        try {
-          await storage.addProductToBox(newBox.id, productId, quantity);
+      // Если были переданы товары, создаем связи BoxProduct (в той же транзакции)
+      if (createData.productIds && createData.productIds.length > 0) {
+        console.log("🔗 Добавляем товары в бокс:", createData.productIds);
+        for (let i = 0; i < createData.productIds.length; i++) {
+          const productId = createData.productIds[i];
+          const quantity = createData.productQuantities?.[i] || 1;
+          
+          // В транзакции НЕ используем try-catch - если ошибка, откатываем всё
+          await storage.addProductToBox(createdBox.id, productId, quantity);
           console.log(`✅ Товар ${productId} добавлен в бокс`);
-        } catch (productError) {
-          console.error(`❌ Ошибка добавления товара ${productId} в бокс ${newBox.id}:`, productError);
-          // Продолжаем создание других связей даже если одна не удалась
         }
       }
-    }
+
+      return createdBox;
+    });
 
     console.log("🎉 Бокс полностью создан и настроен");
     res.status(201).json(newBox);

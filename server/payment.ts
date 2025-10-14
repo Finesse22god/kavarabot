@@ -103,30 +103,52 @@ export async function createPaymentIntent(
   } catch (error: any) {
     console.error("Error creating YooKassa payment:", error);
     
-    // Extract meaningful error information from axios error
+    // Детальная обработка ошибок для лучшей диагностики
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error("YooKassa API Error Response:", {
+      // Ответ от сервера с ошибкой
+      const errorDetails = {
         status: error.response.status,
         statusText: error.response.statusText,
         data: error.response.data,
-        headers: error.response.headers
-      });
+        headers: error.response.headers,
+        orderId: paymentData.orderId,
+        amount: paymentData.amount
+      };
       
-      // Create a more informative error
-      const apiError = new Error(
-        `YooKassa API Error (${error.response.status}): ${JSON.stringify(error.response.data)}`
-      );
+      console.error("❌ YooKassa API Error Response:", errorDetails);
+      
+      // Создаем информативную ошибку с кодом
+      let errorMessage = `YooKassa API Error (${error.response.status})`;
+      
+      if (error.response.data) {
+        const data = error.response.data;
+        if (data.description) {
+          errorMessage += `: ${data.description}`;
+        } else if (data.error) {
+          errorMessage += `: ${data.error}`;
+        } else {
+          errorMessage += `: ${JSON.stringify(data)}`;
+        }
+      }
+      
+      const apiError: any = new Error(errorMessage);
+      apiError.code = error.response.status;
+      apiError.details = errorDetails;
       throw apiError;
+      
     } else if (error.request) {
-      // The request was made but no response was received
-      console.error("No response from YooKassa:", error.request);
-      throw new Error("No response from YooKassa API");
+      // Запрос был отправлен, но ответа не получено
+      console.error("❌ No response from YooKassa API - possible network issue");
+      const networkError: any = new Error("Сервис платежей временно недоступен. Попробуйте позже.");
+      networkError.code = 'NETWORK_ERROR';
+      throw networkError;
+      
     } else {
-      // Something happened in setting up the request
-      console.error("Error setting up request:", error.message);
-      throw error;
+      // Ошибка при настройке запроса
+      console.error("❌ Error setting up YooKassa request:", error.message);
+      const setupError: any = new Error(`Ошибка конфигурации платежа: ${error.message}`);
+      setupError.code = 'SETUP_ERROR';
+      throw setupError;
     }
   }
 }

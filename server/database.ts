@@ -42,8 +42,9 @@ export async function initializeDatabase() {
         await AppDataSource.query(migrationSql);
         console.log("✅ Products migration executed successfully");
       }
-    } catch (migrationError) {
-      console.log("Migration already applied or not needed:", migrationError.message);
+    } catch (migrationError: unknown) {
+      const errorMessage = migrationError instanceof Error ? migrationError.message : String(migrationError);
+      console.log("Migration already applied or not needed:", errorMessage);
     }
 
     // Seed initial data in background (non-blocking)

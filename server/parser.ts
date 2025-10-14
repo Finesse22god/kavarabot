@@ -16,9 +16,11 @@ export async function parseKavaraCatalog(): Promise<ParsedProduct[]> {
     console.log('Начинаем парсинг каталога kavarabrand.com...');
     
     const allProducts: ParsedProduct[] = [];
+    const maxPages = 8;
+    let consecutiveEmptyPages = 0;
     
-    // Парсим несколько страниц
-    for (let page = 1; page <= 8; page++) {
+    // Парсим несколько страниц с оптимизацией
+    for (let page = 1; page <= maxPages; page++) {
       console.log(`Парсим страницу ${page}...`);
       
       const url = page === 1 
@@ -33,6 +35,12 @@ export async function parseKavaraCatalog(): Promise<ParsedProduct[]> {
 
       if (!response.ok) {
         console.log(`Страница ${page} недоступна, пропускаем`);
+        consecutiveEmptyPages++;
+        // Прерываем парсинг, если 2 страницы подряд недоступны
+        if (consecutiveEmptyPages >= 2) {
+          console.log('Две страницы подряд недоступны, прерываем парсинг');
+          break;
+        }
         continue;
       }
 
