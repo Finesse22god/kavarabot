@@ -65,7 +65,27 @@ export async function createPaymentIntent(
       receipt.customer.email = paymentData.customerEmail;
     }
     if (paymentData.customerPhone) {
-      receipt.customer.phone = paymentData.customerPhone;
+      // Clean phone number to E.164 format (digits only, no spaces/dashes)
+      // YooKassa requires format: 79001234567 (no + sign, no formatting)
+      let cleanPhone = paymentData.customerPhone.replace(/[^\d+]/g, '');
+      
+      // Remove leading + if present
+      if (cleanPhone.startsWith('+')) {
+        cleanPhone = cleanPhone.substring(1);
+      }
+      
+      // Replace leading 8 with 7 (Russian domestic to international format)
+      if (cleanPhone.startsWith('8')) {
+        cleanPhone = '7' + cleanPhone.substring(1);
+      }
+      
+      // Ensure it starts with 7 for Russia
+      if (!cleanPhone.startsWith('7')) {
+        cleanPhone = '7' + cleanPhone;
+      }
+      
+      receipt.customer.phone = cleanPhone;
+      console.log(`📞 Phone formatted for YooKassa: ${paymentData.customerPhone} → ${cleanPhone}`);
     }
 
     const payment = await checkout.createPayment(

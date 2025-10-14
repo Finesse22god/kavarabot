@@ -734,7 +734,7 @@ router.post("/api/orders", async (req, res) => {
         status: "pending",
       } as any);
       
-      const createdOrder = await manager.save(newOrder);
+      const createdOrder: any = await manager.save(newOrder);
 
       // Award/deduct loyalty points within transaction
       const LoyaltyRepo = manager.getRepository(LoyaltyTransactionEntity);
@@ -784,9 +784,10 @@ router.post("/api/orders", async (req, res) => {
 
       // Update trainer stats if trainer promo code was used
       if (trainer && orderData.totalPrice) {
-        trainer.totalRevenue = (trainer.totalRevenue || 0) + orderData.totalPrice;
-        trainer.ordersCount = (trainer.ordersCount || 0) + 1;
-        await manager.save(trainer);
+        const trainerEntity: any = trainer;
+        trainerEntity.totalRevenue = (trainerEntity.totalRevenue || 0) + orderData.totalPrice;
+        trainerEntity.ordersCount = (trainerEntity.ordersCount || 0) + 1;
+        await manager.save(trainerEntity);
       }
 
       return createdOrder;
