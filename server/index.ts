@@ -5,7 +5,7 @@ import { promises as fs } from 'fs';
 import { registerRoutes } from './routes.js';
 import { initializeDatabase } from './database.js';
 import { setupTelegramBotWithApp } from './telegram.js';
-import { createServer } from 'http'; // Import createServer
+import { createServer as createHttpServer } from 'http'; // Import createServer
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -158,7 +158,7 @@ async function createServer() {
   }
 
   // Use http.createServer to allow WebSocket connections
-  const server = createServer(app);
+  const server = createHttpServer(app);
 
   server.listen(port, '0.0.0.0', () => {
     console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
