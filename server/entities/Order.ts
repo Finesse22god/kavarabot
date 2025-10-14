@@ -34,6 +34,9 @@ export class Order {
   @Column({ type: "varchar", nullable: true })
   customerEmail?: string;
 
+  @Column({ type: "varchar", nullable: true })
+  telegramUsername?: string;
+
   @Column({ type: "varchar" })
   deliveryMethod!: string;
 
