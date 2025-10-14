@@ -44,7 +44,4 @@ export class Product {
 
   @OneToMany(() => BoxProduct, (boxProduct) => boxProduct.product)
   boxProducts!: BoxProduct[];
-
-  @OneToMany("Order", (order: any) => order.product)
-  orders?: any[];
 }
