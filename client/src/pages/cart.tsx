@@ -48,7 +48,7 @@ export default function Cart() {
   });
 
   const { data: cartItems, isLoading } = useQuery<CartItem[]>({
-    queryKey: [`/api/cart/${dbUser?.id}`],
+    queryKey: ['/api/cart', dbUser?.id],
     enabled: !!dbUser?.id,
   });
 
@@ -61,7 +61,7 @@ export default function Cart() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
       toast({
         title: "Удалено",
         description: "Товар удален из корзины",
@@ -80,7 +80,7 @@ export default function Cart() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
     },
   });
 

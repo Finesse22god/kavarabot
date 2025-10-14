@@ -73,7 +73,7 @@ export default function ProductDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
       toast({
         title: "Добавлено в корзину",
         description: "Товар успешно добавлен в корзину",
@@ -351,7 +351,7 @@ export default function ProductDetail() {
           <div className="max-w-md mx-auto">
             <Button
               onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending || (hasSizes && !selectedSize)}
+              disabled={addToCartMutation.isPending || Boolean(hasSizes && !selectedSize)}
               className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-xl transition-all"
               data-testid="button-add-to-cart"
             >

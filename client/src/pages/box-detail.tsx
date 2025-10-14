@@ -51,8 +51,7 @@ export default function BoxDetail() {
         title: "Добавлено в корзину",
         description: `${box?.name} добавлен в корзину`,
       });
-      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
-      queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
     },
     onError: () => {
       toast({
