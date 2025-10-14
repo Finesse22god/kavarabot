@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
-import routes from './routes.js';
+import { registerRoutes } from './routes.js';
 import { initializeDatabase } from './database.js';
 import { setupTelegramBotWithApp } from './telegram.js';
 import { createServer } from 'http'; // Import createServer
@@ -92,7 +92,7 @@ async function createServer() {
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
   // Connect all routes
-  app.use(routes);
+  registerRoutes(app);
 
   if (isProduction) {
     // Production: serve static files with proper cache control
