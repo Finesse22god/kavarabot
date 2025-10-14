@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, CheckCircle, MessageCircle, User, Package, Home } from "lucide-react";
+import { ArrowLeft, CheckCircle, MessageCircle, User, Package, Home, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -287,6 +287,29 @@ export default function OrderDetails() {
 
         {/* Action Buttons */}
         <div className="space-y-3">
+          {/* Show payment button for unpaid orders */}
+          {order.status === 'pending' && (
+            <Button 
+              onClick={() => {
+                // Save order data to session storage
+                sessionStorage.setItem("currentOrder", JSON.stringify(order));
+                if (order.boxName) {
+                  sessionStorage.setItem("selectedBox", JSON.stringify({
+                    id: order.boxId,
+                    name: order.boxName,
+                    price: order.totalPrice
+                  }));
+                }
+                setLocation("/checkout");
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              size="lg"
+              data-testid="button-pay-order"
+            >
+              <CreditCard className="w-5 h-5 mr-2" />
+              Оплатить заказ
+            </Button>
+          )}
           <Button 
             onClick={() => setLocation("/my-orders")}
             className="w-full bg-black hover:bg-gray-800 text-white"

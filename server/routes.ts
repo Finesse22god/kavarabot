@@ -623,7 +623,7 @@ router.post("/api/orders", async (req, res) => {
     } = req.body;
 
     // Выполняем все операции в транзакции для предотвращения race conditions
-    const order = await AppDataSource.transaction(async (manager) => {
+    const order: any = await AppDataSource.transaction(async (manager) => {
       let finalOrderData = { ...orderData };
       let trainer = null;
       let promoCodeData = null;
