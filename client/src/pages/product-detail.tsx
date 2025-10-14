@@ -73,7 +73,7 @@ export default function ProductDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
       toast({
         title: "Добавлено в корзину",
         description: "Товар успешно добавлен в корзину",

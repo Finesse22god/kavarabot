@@ -155,7 +155,7 @@ export default function Catalog() {
       });
       
       // Инвалидируем кэш корзины для обновления счетчика
-      queryClient.invalidateQueries({ queryKey: ['/api/cart', dbUser?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
       
       // Автоматически открываем корзину
       setTimeout(() => {
