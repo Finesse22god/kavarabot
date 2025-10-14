@@ -51,6 +51,15 @@ Preferred communication style: Simple, everyday language.
     - **Telegram Notifications** (October 2025): Optimized to send single comprehensive notification only when payment is confirmed, including all order details, payment info, customer data, and Telegram username. Notifications include discount and loyalty points information when applicable.
     - **Order Data Enhancement** (October 2025): Added `telegramUsername` field to orders schema to capture customer's Telegram handle for better customer support and communication.
     - **Analytics Improvements** (October 2025): Fixed revenue calculation to only count paid orders. Added separate tracking for unpaid orders. Date filters now properly apply to all metrics and charts.
+    - **Security & Reliability Enhancements** (October 2025):
+      - **Admin Authentication**: Cryptographically secure token generation with automatic 24h expiration (server/auth.ts). Uses crypto.randomBytes for 64-char hex tokens with backward compatibility.
+      - **File Upload Security**: Server-side content validation using file-type library to prevent malicious file uploads disguised as images.
+      - **Race Condition Prevention**: Full transaction support with pessimistic write locking for order creation, preventing concurrent overwrites of promo codes and loyalty point balances.
+      - **Data Integrity**: Mandatory user validation for all orders - strict telegramId->UUID conversion with fail-fast on missing users.
+      - **Order Number Uniqueness**: Cryptographically secure order number generation using timestamp + crypto.randomInt with database uniqueness verification.
+      - **Payment Error Handling**: Enhanced YooKassa integration with detailed error diagnostics, typed error responses, and comprehensive logging.
+      - **Catalog Parser Optimization**: Early termination on consecutive empty pages to reduce unnecessary API calls.
+      - **Configuration Management**: Removed hardcoded Telegram values, now using environment variables for ADMIN_CHAT_ID and dynamic webhook URL detection.
 
 ## External Dependencies
 
