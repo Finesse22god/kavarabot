@@ -157,7 +157,7 @@ export default function OrderDetails() {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Сумма заказа</p>
                   <p className="font-semibold" data-testid="text-order-total">
-                    {order.totalPrice?.toLocaleString('ru-RU')}₽
+                    {(order.totalPrice || 0).toLocaleString('ru-RU')}₽
                   </p>
                 </div>
                 <div>
@@ -208,18 +208,25 @@ export default function OrderDetails() {
                 (() => {
                   try {
                     const items = JSON.parse(order.cartItems);
-                    return items.map((item: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name}</p>
-                          {item.selectedSize && (
-                            <p className="text-sm text-gray-600">Размер: {item.selectedSize}</p>
-                          )}
-                          <p className="text-sm text-gray-600">Количество: {item.quantity || 1}</p>
+                    return items.map((item: any, index: number) => {
+                      const itemData = item.itemType === "product" ? item.product : item.box;
+                      const itemName = itemData?.name || 'Товар';
+                      const itemPrice = itemData?.price || 0;
+                      const quantity = item.quantity || 1;
+                      
+                      return (
+                        <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-medium">{itemName}</p>
+                            {item.selectedSize && (
+                              <p className="text-sm text-gray-600">Размер: {item.selectedSize}</p>
+                            )}
+                            <p className="text-sm text-gray-600">Количество: {quantity}</p>
+                          </div>
+                          <p className="font-semibold">{(itemPrice * quantity).toLocaleString('ru-RU')}₽</p>
                         </div>
-                        <p className="font-semibold">{(item.price * (item.quantity || 1)).toLocaleString('ru-RU')}₽</p>
-                      </div>
-                    ));
+                      );
+                    });
                   } catch (error) {
                     return (
                       <div className="p-3 bg-gray-50 rounded-lg">
@@ -237,7 +244,7 @@ export default function OrderDetails() {
                       <p className="text-sm text-gray-600">Размер: {order.selectedSize}</p>
                     )}
                   </div>
-                  <p className="font-semibold">{order.totalPrice?.toLocaleString('ru-RU')}₽</p>
+                  <p className="font-semibold">{(order.totalPrice || 0).toLocaleString('ru-RU')}₽</p>
                 </div>
               )}
             </div>
@@ -246,7 +253,7 @@ export default function OrderDetails() {
             <div className="flex justify-between items-center pt-4 mt-4 border-t">
               <p className="text-lg font-semibold">Итого:</p>
               <p className="text-xl font-bold" data-testid="text-total-price">
-                {order.totalPrice?.toLocaleString('ru-RU')}₽
+                {(order.totalPrice || 0).toLocaleString('ru-RU')}₽
               </p>
             </div>
           </CardContent>
