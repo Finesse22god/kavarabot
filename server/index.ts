@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import routes from './routes.js';
 import { initializeDatabase } from './database.js';
 import { setupTelegramBotWithApp } from './telegram.js';
+import { createServer } from 'http'; // Import createServer
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,7 +17,7 @@ let dbInitPromise: Promise<void> | null = null;
 async function initializeDatabaseLazy() {
   if (dbInitialized) return;
   if (dbInitPromise) return dbInitPromise;
-  
+
   dbInitPromise = initializeDatabase().then(() => {
     dbInitialized = true;
     console.log('✅ Database initialization completed');
@@ -25,7 +26,7 @@ async function initializeDatabaseLazy() {
     dbInitPromise = null; // Allow retry
     throw error;
   });
-  
+
   return dbInitPromise;
 }
 
@@ -83,13 +84,13 @@ async function createServer() {
       });
     }
   });
-  
+
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
-  
+
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-  
+
   // Connect all routes
   app.use(routes);
 
@@ -108,7 +109,7 @@ async function createServer() {
         }
       }
     }));
-    
+
     app.get('*', (req, res) => {
       // Always send fresh HTML with no-cache headers
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -119,17 +120,29 @@ async function createServer() {
   } else {
     // Development: integrate with Vite
     const { createServer: createViteServer } = await import('vite');
-    
+
     const vite = await createViteServer({
       appType: 'custom',
       server: {
         middlewareMode: true,
-        allowedHosts: true,
+        // The following configuration is crucial for WebSocket support with Vite dev server
+        hmr: {
+          protocol: 'ws',
+          host: 'localhost',
+        },
+        proxy: {
+          // Proxying WebSocket requests to the Vite dev server
+          '/api': {
+            target: 'http://localhost:5000', // Your API server
+            changeOrigin: true,
+            ws: true, // Enable proxying of WebSocket requests
+          },
+        },
       },
     });
-    
+
     app.use(vite.middlewares);
-    
+
     // Serve HTML for all other routes
     const indexHtmlPath = path.resolve(__dirname, '../client/index.html');
     app.use('*', async (req, res, next) => {
@@ -144,7 +157,10 @@ async function createServer() {
     });
   }
 
-  app.listen(port, '0.0.0.0', () => {
+  // Use http.createServer to allow WebSocket connections
+  const server = createServer(app);
+
+  server.listen(port, '0.0.0.0', () => {
     console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
   });
 }
