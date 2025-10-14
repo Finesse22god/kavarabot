@@ -12,11 +12,17 @@ const menuItems = [
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
-  const { user } = useTelegram();
+  const { user: telegramUser } = useTelegram();
+
+  // Get database user by telegram ID
+  const { data: dbUser } = useQuery<{ id: string; telegramId: string }>({
+    queryKey: [`/api/users/telegram/${telegramUser?.id}`],
+    enabled: !!telegramUser?.id
+  });
 
   const { data: cartItems } = useQuery<any[]>({
-    queryKey: [`/api/cart/${user?.id}`],
-    enabled: !!user?.id,
+    queryKey: [`/api/cart/${dbUser?.id}`],
+    enabled: !!dbUser?.id,
   });
 
   const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
