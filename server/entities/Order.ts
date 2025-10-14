@@ -1,9 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from "typeorm";
-import { User } from "./User";
-import { Box } from "./Box";
-import { Product } from "./Product";
-import { Trainer } from "./Trainer";
-import { PromoCode } from "./PromoCode";
 
 @Entity("orders")
 export class Order {
@@ -73,23 +68,23 @@ export class Order {
   @Column({ type: "text", nullable: true })
   cartItems?: string; // JSON string of cart items for combined orders
 
-  @ManyToOne(() => User, (user) => user.orders, { onDelete: "SET NULL" })
+  @ManyToOne("User", (user: any) => user.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "userId" })
-  user!: User;
+  user?: any;
 
-  @ManyToOne(() => Box, (box) => box.orders, { onDelete: "SET NULL" })
+  @ManyToOne("Box", (box: any) => box.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "boxId" })
-  box!: Box;
+  box?: any;
 
-  @ManyToOne(() => Product, (product) => product.orders, { onDelete: "SET NULL" })
+  @ManyToOne("Product", (product: any) => product.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "productId" })
-  product?: Product;
+  product?: any;
 
-  @ManyToOne(() => Trainer, (trainer) => trainer.orders, { onDelete: "SET NULL" })
+  @ManyToOne("Trainer", (trainer: any) => trainer.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "trainerId" })
-  trainer?: Trainer;
+  trainer?: any;
 
-  @ManyToOne(() => PromoCode, (promoCode) => promoCode.orders, { onDelete: "SET NULL" })
+  @ManyToOne("PromoCode", (promoCode: any) => promoCode.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "promoCodeId" })
-  promoCode?: PromoCode;
+  promoCode?: any;
 }

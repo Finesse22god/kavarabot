@@ -1,6 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from "typeorm";
 import { BoxProduct } from "./BoxProduct";
-import { Order } from "./Order";
 
 @Entity("products")
 export class Product {
@@ -46,6 +45,6 @@ export class Product {
   @OneToMany(() => BoxProduct, (boxProduct) => boxProduct.product)
   boxProducts!: BoxProduct[];
 
-  @OneToMany(() => Order, (order) => order.product)
-  orders!: Order[];
+  @OneToMany("Order", (order: any) => order.product)
+  orders?: any[];
 }
