@@ -525,6 +525,12 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
           // Also save the payment ID to the order
           await storage.updateOrderPaymentId(order.id, paymentId);
           
+          // Load full order with relations to get product/box details
+          const fullOrder = await AppDataSource.getRepository(OrderEntity).findOne({
+            where: { id: order.id },
+            relations: ['box', 'product']
+          });
+          
           // Get user data to include telegram username
           let telegramUsername = '';
           if (order.userId) {
@@ -534,13 +540,49 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
             }
           }
           
+          // Build items list with sizes
+          let itemsList = '\n🛍️ <b>Товары:</b>\n';
+          
+          if (fullOrder?.boxId && fullOrder.box) {
+            // Single box order
+            itemsList += `• ${fullOrder.box.name}`;
+            if (fullOrder.selectedSize) {
+              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+            }
+            itemsList += '\n';
+          } else if (fullOrder?.productId && fullOrder.product) {
+            // Single product order
+            itemsList += `• ${fullOrder.product.name}`;
+            if (fullOrder.selectedSize) {
+              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+            }
+            itemsList += '\n';
+          } else if (fullOrder?.cartItems) {
+            // Cart order with multiple items
+            try {
+              const cartItems = JSON.parse(fullOrder.cartItems);
+              for (const item of cartItems) {
+                itemsList += `• ${item.name || 'Товар'}`;
+                if (item.selectedSize) {
+                  itemsList += ` (Размер: ${item.selectedSize})`;
+                }
+                if (item.quantity && item.quantity > 1) {
+                  itemsList += ` x${item.quantity}`;
+                }
+                itemsList += '\n';
+              }
+            } catch (e) {
+              itemsList += '• Детали товаров недоступны\n';
+            }
+          }
+          
           // Build comprehensive admin notification with all order details
           const adminNotification = `💰 <b>Новая оплата через ЮKassa!</b>
 
 📦 <b>Заказ №:</b> ${order.orderNumber}
 👤 <b>Клиент:</b> ${order.customerName}
 ${telegramUsername ? `👨‍💻 <b>Telegram:</b> ${telegramUsername}\n` : ''}📱 <b>Телефон:</b> ${order.customerPhone}
-${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}
+${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${itemsList}
 🚚 <b>Доставка:</b> ${order.deliveryMethod}
 💳 <b>Оплата:</b> ${order.paymentMethod}
 💰 <b>Сумма:</b> ${order.totalPrice}₽

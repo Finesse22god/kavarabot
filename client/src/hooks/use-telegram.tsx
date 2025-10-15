@@ -69,7 +69,7 @@ declare global {
         close(): void;
         ready(): void;
         sendData(data: string): void;
-        openLink(url: string): void;
+        openLink(url: string, options?: { try_instant_view?: boolean }): void;
         openTelegramLink(url: string): void;
         showPopup(params: {
           title?: string;
@@ -107,7 +107,7 @@ export interface TelegramUser {
 
 export interface UseTelegramReturn {
   user: TelegramUser | null;
-  webApp: Window['Telegram']['WebApp'] | null;
+  webApp: NonNullable<Window['Telegram']>['WebApp'] | null;
   isInTelegram: boolean;
   colorScheme: 'light' | 'dark';
   themeParams: any;
@@ -127,7 +127,7 @@ export interface UseTelegramReturn {
 }
 
 export function useTelegram(): UseTelegramReturn {
-  const [webApp, setWebApp] = useState<Window['Telegram']['WebApp'] | null>(null);
+  const [webApp, setWebApp] = useState<NonNullable<Window['Telegram']>['WebApp'] | null>(null);
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [isInTelegram, setIsInTelegram] = useState(false);
 
@@ -302,7 +302,7 @@ export function useTelegram(): UseTelegramReturn {
   const showConfirm = (message: string): Promise<boolean> => {
     return new Promise((resolve) => {
       if (webApp) {
-        webApp.showConfirm(message, (confirmed) => resolve(confirmed));
+        webApp.showConfirm(message, (confirmed: boolean) => resolve(confirmed));
       } else {
         resolve(confirm(message));
       }

@@ -108,7 +108,12 @@ export default function Checkout() {
       }
 
       if (intent.paymentUrl) {
-        window.open(intent.paymentUrl, '_blank');
+        // Open payment in Telegram's built-in browser for better UX
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.openLink(intent.paymentUrl, { try_instant_view: true });
+        } else {
+          window.open(intent.paymentUrl, '_blank');
+        }
       }
     } catch (error) {
       console.error("Payment creation error:", error);
@@ -333,7 +338,15 @@ export default function Checkout() {
                     </p>
                     <div className="flex flex-col space-y-2">
                       <Button 
-                        onClick={() => window.open(paymentIntent.paymentUrl, '_blank')}
+                        onClick={() => {
+                          if (paymentIntent.paymentUrl) {
+                            if (window.Telegram?.WebApp) {
+                              window.Telegram.WebApp.openLink(paymentIntent.paymentUrl, { try_instant_view: true });
+                            } else {
+                              window.open(paymentIntent.paymentUrl, '_blank');
+                            }
+                          }
+                        }}
                         variant="outline"
                         size="sm"
                         className="w-full"

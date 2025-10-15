@@ -43,12 +43,14 @@ export default function MyOrders() {
       return response.json();
     },
     onSuccess: (paymentIntent, order) => {
-      // Redirect to payment URL
-      // The original code had window.open, but the new changes imply navigation via setLocation.
-      // For payment, window.open is generally safer to avoid blocking by the parent window.
-      // If the intention is to handle payment within the Telegram Web App, this needs more specific handling.
-      // For now, I'll keep the original window.open for actual payment initiation.
-      window.open(paymentIntent.paymentUrl, '_blank');
+      // Open payment in Telegram's built-in browser for better UX
+      if (paymentIntent.paymentUrl) {
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.openLink(paymentIntent.paymentUrl, { try_instant_view: true });
+        } else {
+          window.open(paymentIntent.paymentUrl, '_blank');
+        }
+      }
       toast({
         title: "Переход к оплате",
         description: `Заказ ${order.orderNumber} ожидает оплаты`,
