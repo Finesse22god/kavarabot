@@ -271,13 +271,13 @@ export default function Catalog() {
                     alt={box.name}
                     className="w-full h-40 object-contain"
                   />
-                  <div className="absolute top-3 right-3 bg-black text-white px-2 py-1 rounded-full text-xs font-semibold">
-                    {(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()}₽
-                  </div>
                 </div>
                 <div className="p-4 flex flex-col flex-1">
                   <h4 className="font-bold text-lg mb-2 line-clamp-1">{box.name}</h4>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2 flex-1">{box.description}</p>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">{box.description}</p>
+                  <div className="text-2xl font-bold text-black mb-3 text-center">
+                    {(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()} ₽
+                  </div>
                   <Button 
                     className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-semibold"
                     onClick={(e) => {
