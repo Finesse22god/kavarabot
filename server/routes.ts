@@ -1287,7 +1287,8 @@ router.post("/api/create-payment-intent", async (req, res) => {
       amount: paymentAmount,
       description: String(description),
       orderId: String(orderId),
-      returnUrl: returnUrl || `${req.protocol}://${req.get('host')}/payment-success`,
+      // Return URL for "Back to Shop" button in YooKassa - opens Telegram Mini App
+      returnUrl: returnUrl || `https://t.me/kavaraappbot/app?startapp=payment_success`,
       customerEmail,
       customerPhone
     });
