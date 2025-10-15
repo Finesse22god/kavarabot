@@ -150,17 +150,12 @@ export default function Catalog() {
     onSuccess: (data, variables) => {
       // Показываем уведомление об успехе
       toast({
-        title: "Добавлено в корзину",
+        title: "✓ Добавлено в корзину",
         description: `Товар ${variables.selectedSize ? `(размер ${variables.selectedSize})` : ""} добавлен в корзину`,
       });
       
       // Инвалидируем кэш корзины для обновления счетчика
       queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
-      
-      // Автоматически открываем корзину
-      setTimeout(() => {
-        setLocation("/cart");
-      }, 500);
     },
     onError: (error: Error) => {
       toast({
