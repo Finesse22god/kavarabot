@@ -75,7 +75,7 @@ export default function Checkout() {
           amount: order.totalPrice,
           description,
           orderId: order.orderNumber,
-          returnUrl: `${window.location.origin}/payment/success`,
+          returnUrl: `https://t.me/kavaraappbot/app?startapp=payment_success`,
           customerEmail: order.customerEmail,
           customerPhone: order.customerPhone
         })

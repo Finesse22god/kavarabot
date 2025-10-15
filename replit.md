@@ -51,6 +51,7 @@ Preferred communication style: Simple, everyday language.
     - **Telegram Notifications** (October 2025): Optimized to send single comprehensive notification only when payment is confirmed, including all order details, payment info, customer data, and Telegram username. Notifications include discount and loyalty points information when applicable.
     - **Order Data Enhancement** (October 2025): Added `telegramUsername` field to orders schema to capture customer's Telegram handle for better customer support and communication.
     - **Analytics Improvements** (October 2025): Fixed revenue calculation to only count paid orders. Added separate tracking for unpaid orders. Date filters now properly apply to all metrics and charts.
+    - **Payment Redirect Fix** (October 2025): Fixed YooKassa return URL to properly redirect users to Telegram Mini App (`https://t.me/kavaraappbot/app?startapp=payment_success`) instead of web URL after payment completion. Updated in both checkout flow and order repayment flow.
     - **Security & Reliability Enhancements** (October 2025):
       - **Admin Authentication**: Cryptographically secure token generation with automatic 24h expiration (server/auth.ts). Uses crypto.randomBytes for 64-char hex tokens with backward compatibility.
       - **File Upload Security**: Server-side content validation using file-type library to prevent malicious file uploads disguised as images.
