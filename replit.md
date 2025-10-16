@@ -54,6 +54,7 @@ Preferred communication style: Simple, everyday language.
     - **Payment Redirect Fix** (October 2025): Fixed YooKassa return URL to properly redirect users to Telegram Mini App (`https://t.me/kavaraappbot/app?startapp=payment_success`) instead of web URL after payment completion. Updated in both checkout flow and order repayment flow.
     - **Telegram In-App Payment** (October 2025): Payment pages now open inside Telegram's built-in browser using `WebApp.openLink()` with `try_instant_view` option, keeping users within the app instead of redirecting to external browser. Includes proper fallbacks for non-Telegram environments.
     - **Enhanced Order Notifications** (October 2025): Admin Telegram notifications now include detailed product/box lists with sizes and quantities. Webhook handler loads full order relations and parses cart items to provide complete order details for administrators.
+    - **Manager Contact Update** (October 2025): All "Contact Manager" buttons and links now redirect to t.me/kavarabrand instead of previous team/channel links for unified customer communication.
     - **Security & Reliability Enhancements** (October 2025):
       - **Admin Authentication**: Cryptographically secure token generation with automatic 24h expiration (server/auth.ts). Uses crypto.randomBytes for 64-char hex tokens with backward compatibility.
       - **File Upload Security**: Server-side content validation using file-type library to prevent malicious file uploads disguised as images.

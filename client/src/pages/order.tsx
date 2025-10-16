@@ -602,9 +602,9 @@ export default function Order() {
             size="sm"
             onClick={() => {
               if (isInTelegram) {
-                window.open('https://t.me/kavaraapp', '_blank');
+                window.open('https://t.me/kavarabrand', '_blank');
               } else {
-                window.open('https://t.me/kavaraapp', '_blank');
+                window.open('https://t.me/kavarabrand', '_blank');
               }
             }}
             className="bg-primary text-white hover:bg-primary/90"

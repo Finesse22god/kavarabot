@@ -13,10 +13,10 @@ export default function PaymentSuccess() {
   const contactManager = () => {
     // Open Telegram chat with manager directly in Telegram
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
     } else {
       // Fallback for non-Telegram environment
-      window.open("https://t.me/kavarateam", "_blank");
+      window.open("https://t.me/kavarabrand", "_blank");
     }
   };
 

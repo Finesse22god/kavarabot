@@ -62,9 +62,9 @@ export default function Support() {
     }).catch(() => {
       // Fallback to Telegram manager
       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
       } else {
-        window.open("https://t.me/kavarateam", "_blank");
+        window.open("https://t.me/kavarabrand", "_blank");
       }
     });
   };
@@ -130,9 +130,9 @@ export default function Support() {
                     className="w-full bg-primary text-white"
                     onClick={() => {
                       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
                       } else {
-                        window.open("https://t.me/kavarateam", "_blank");
+                        window.open("https://t.me/kavarabrand", "_blank");
                       }
                     }}
                   >
@@ -157,9 +157,9 @@ export default function Support() {
                       <Button 
                         onClick={() => {
                           if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-                            window.Telegram.WebApp.openTelegramLink("https://t.me/kavarasportswear");
+                            window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
                           } else {
-                            window.open("https://t.me/kavarasportswear", "_blank");
+                            window.open("https://t.me/kavarabrand", "_blank");
                           }
                         }}
                         size="sm"
@@ -215,9 +215,9 @@ export default function Support() {
                     className="w-full"
                     onClick={() => {
                       if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                        window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
                       } else {
-                        window.open("https://t.me/kavarateam", "_blank");
+                        window.open("https://t.me/kavarabrand", "_blank");
                       }
                     }}
                   >
@@ -288,9 +288,9 @@ export default function Support() {
                   className="w-full"
                   onClick={() => {
                     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-                      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarateam");
+                      window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
                     } else {
-                      window.open("https://t.me/kavarateam", "_blank");
+                      window.open("https://t.me/kavarabrand", "_blank");
                     }
                   }}
                 >
