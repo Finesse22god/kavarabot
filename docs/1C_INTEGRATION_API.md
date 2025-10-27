@@ -27,7 +27,7 @@ X-API-Key: your-secret-1c-api-key-here
 {
   "products": [
     {
-      "externalId": "Футболка KAVARA Black",
+      "externalId": "KAVARA-LV5K2F-XY9A",
       "inventory": {
         "S": 10,
         "M": 15,
@@ -36,7 +36,7 @@ X-API-Key: your-secret-1c-api-key-here
       }
     },
     {
-      "externalId": "Бокс для новичков",
+      "externalId": "KAVARA-LV5K2F-XY9A",
       "inventory": {
         "Стандарт": 20
       }
