@@ -149,17 +149,17 @@ export default function InventoryManagement({ onBack }: { onBack: () => void }) 
     }));
   };
 
-  const getTotalStock = (inventory: Record<string, number> | null): number => {
+  const getTotalStock = (inventory: Record<string, number> | null | undefined): number => {
     if (!inventory) return 0;
     return Object.values(inventory).reduce((sum, qty) => sum + qty, 0);
   };
 
-  const hasLowStock = (inventory: Record<string, number> | null): boolean => {
+  const hasLowStock = (inventory: Record<string, number> | null | undefined): boolean => {
     if (!inventory) return false;
     return Object.values(inventory).some(qty => qty < 5 && qty > 0);
   };
 
-  const hasOutOfStock = (inventory: Record<string, number> | null): boolean => {
+  const hasOutOfStock = (inventory: Record<string, number> | null | undefined): boolean => {
     if (!inventory) return true;
     return Object.values(inventory).some(qty => qty === 0);
   };

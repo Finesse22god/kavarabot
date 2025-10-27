@@ -57,6 +57,7 @@ export interface Product {
   sizes?: string[];
   isAvailable: boolean;
   sportTypes?: string[];
+  inventory?: Record<string, number> | null;
 }
 
 export interface CreateProductDto {
@@ -71,6 +72,7 @@ export interface CreateProductDto {
   sizes?: string[];
   isAvailable?: boolean;
   sportTypes?: string[];
+  inventory?: Record<string, number> | null;
 }
 
 // BoxProduct types
@@ -98,6 +100,7 @@ export interface Box {
   isQuizOnly?: boolean;
   sportTypes?: string[];
   boxProducts?: BoxProduct[];
+  inventory?: Record<string, number> | null;
 }
 
 export interface CreateBoxDto {
@@ -113,6 +116,7 @@ export interface CreateBoxDto {
   sportTypes?: string[];
   productIds?: string[];
   productQuantities?: number[];
+  inventory?: Record<string, number> | null;
 }
 
 // Order types

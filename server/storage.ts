@@ -347,6 +347,7 @@ export class DatabaseStorage implements IStorage {
     if (data.emoji !== undefined) box.emoji = data.emoji;
     if (data.isAvailable !== undefined) box.isAvailable = data.isAvailable;
     if (data.sportTypes !== undefined) box.sportTypes = data.sportTypes;
+    if (data.inventory !== undefined) box.inventory = data.inventory;
 
     return await this.boxRepository.save(box);
   }

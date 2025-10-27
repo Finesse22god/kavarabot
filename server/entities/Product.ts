@@ -42,6 +42,9 @@ export class Product {
   @Column({ type: "json", nullable: true })
   sportTypes?: string[];
 
+  @Column({ type: "jsonb", nullable: true })
+  inventory?: Record<string, number> | null;
+
   @OneToMany(() => BoxProduct, (boxProduct) => boxProduct.product)
   boxProducts!: BoxProduct[];
 }

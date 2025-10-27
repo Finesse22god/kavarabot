@@ -41,6 +41,9 @@ export class Box {
   @Column({ type: "simple-array", nullable: true })
   sportTypes?: string[];
 
+  @Column({ type: "jsonb", nullable: true })
+  inventory?: Record<string, number> | null;
+
   @OneToMany(() => Order, (order) => order.box)
   orders!: Order[];
 
