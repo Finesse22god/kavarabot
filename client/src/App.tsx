@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useTelegram } from "./hooks/use-telegram";
 import Home from "./pages/home";
 import Quiz from "./pages/quiz";
 import PersonalBoxes from "./pages/personal-boxes";
@@ -21,6 +22,7 @@ import NotFound from "./pages/not-found";
 import AdminLogin from "./pages/admin/login";
 import AdminDashboard from "./pages/admin/dashboard";
 import AdminCreateBox from "./pages/admin/create-box";
+import TelegramRequired from "./pages/telegram-required";
 import BottomNav from "./components/bottom-nav";
 import Catalog from "./pages/catalog";
 import BoxDetail from "./pages/box-detail";
@@ -57,7 +59,19 @@ function Router() {
 
 function App() {
   const [location] = useLocation();
+  const { isInTelegram } = useTelegram();
   const isAdminPage = location.startsWith('/admin');
+
+  // In production, show TelegramRequired page if not in Telegram (except for admin pages)
+  if (!import.meta.env.DEV && !isInTelegram && !isAdminPage) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <TelegramRequired />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

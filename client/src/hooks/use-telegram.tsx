@@ -177,7 +177,55 @@ export function useTelegram(): UseTelegramReturn {
             console.error('Error creating/getting user:', error);
           }
         } else {
-          // No user in Telegram WebApp - use mock user for development
+          // No user in Telegram WebApp - only use mock user in development
+          if (import.meta.env.DEV) {
+            const mockUser: TelegramUser = {
+              id: 123456789,
+              first_name: "Dev",
+              last_name: "User",
+              username: "devuser"
+            };
+            setUser(mockUser);
+            
+            // Create mock user in database
+            try {
+              const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  telegramId: mockUser.id.toString(),
+                  username: mockUser.username,
+                  firstName: mockUser.first_name,
+                  lastName: mockUser.last_name,
+                }),
+              });
+              
+              if (!response.ok) {
+                console.error('Failed to create/get mock user:', response.statusText);
+              }
+            } catch (error) {
+              console.error('Error creating/getting mock user:', error);
+            }
+          }
+          // In production, user will remain null if no user data in Telegram
+        }
+
+        // Apply theme
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#2481cc');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#2481cc');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+
+      } else {
+        // Not in Telegram environment
+        setIsInTelegram(false);
+        
+        // Only use mock user in development mode
+        if (import.meta.env.DEV) {
+          // Set mock user for development
           const mockUser: TelegramUser = {
             id: 123456789,
             first_name: "Dev",
@@ -208,48 +256,7 @@ export function useTelegram(): UseTelegramReturn {
             console.error('Error creating/getting mock user:', error);
           }
         }
-
-        // Apply theme
-        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
-        document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-        document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#2481cc');
-        document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#2481cc');
-        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
-
-      } else {
-        // Not in Telegram environment - use mock user for development
-        setIsInTelegram(false);
-        
-        // Set mock user for development
-        const mockUser: TelegramUser = {
-          id: 123456789,
-          first_name: "Dev",
-          last_name: "User",
-          username: "devuser"
-        };
-        setUser(mockUser);
-        
-        // Create mock user in database
-        try {
-          const response = await fetch('/api/users', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              telegramId: mockUser.id.toString(),
-              username: mockUser.username,
-              firstName: mockUser.first_name,
-              lastName: mockUser.last_name,
-            }),
-          });
-          
-          if (!response.ok) {
-            console.error('Failed to create/get mock user:', response.statusText);
-          }
-        } catch (error) {
-          console.error('Error creating/getting mock user:', error);
-        }
+        // In production, user will remain null if not in Telegram
       }
     };
 
