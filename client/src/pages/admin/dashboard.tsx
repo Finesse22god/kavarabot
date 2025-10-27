@@ -17,6 +17,7 @@ import CreateBoxForm from "./create-box-form";
 import EditBoxForm from "./edit-box-form";
 import QuizSettings from "./quiz-settings";
 import Analytics from "./analytics";
+import InventoryManagement from "./inventory-management";
 import type { Box, Product } from "@shared/schema";
 
 interface Order {
@@ -81,6 +82,25 @@ function getOrderContentBrief(order: Order): string {
   return 'Состав не указан';
 }
 
+// Helper function to calculate total inventory
+function getTotalInventory(inventory: Record<string, number> | null | undefined): number {
+  if (!inventory) return 0;
+  return Object.values(inventory).reduce((sum, qty) => sum + qty, 0);
+}
+
+// Helper function to check if inventory is low
+function hasLowInventory(inventory: Record<string, number> | null | undefined): boolean {
+  if (!inventory) return false;
+  const total = getTotalInventory(inventory);
+  return total > 0 && total < 10;
+}
+
+// Helper function to check if out of stock
+function isOutOfStock(inventory: Record<string, number> | null | undefined): boolean {
+  const total = getTotalInventory(inventory);
+  return total === 0;
+}
+
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -91,6 +111,7 @@ export default function AdminDashboard() {
   const [showPromoCodes, setShowPromoCodes] = useState(false);
   const [showQuizSettings, setShowQuizSettings] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showInventory, setShowInventory] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedBoxes, setSelectedBoxes] = useState<string[]>([]);
@@ -436,6 +457,11 @@ export default function AdminDashboard() {
     return <Analytics onBack={() => setShowAnalytics(false)} />;
   }
 
+  // Show inventory management
+  if (showInventory) {
+    return <InventoryManagement onBack={() => setShowInventory(false)} />;
+  }
+
   const stats = {
     totalOrders: orders?.length || 0,
     totalUsers: users?.length || 0,
@@ -592,11 +618,12 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="orders">Заказы</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
               <TabsTrigger value="products">Товары</TabsTrigger>
               <TabsTrigger value="boxes">Боксы</TabsTrigger>
+              <TabsTrigger value="inventory">Остатки</TabsTrigger>
               <TabsTrigger value="management">Управление</TabsTrigger>
             </TabsList>
 
@@ -871,6 +898,23 @@ export default function AdminDashboard() {
                                   </p>
                                   <div className="flex items-center gap-2 mt-1">
                                     <Badge variant="outline">{product.category}</Badge>
+                                    {product.inventory && (
+                                      <>
+                                        {isOutOfStock(product.inventory) ? (
+                                          <Badge variant="destructive" className="text-xs">
+                                            Нет в наличии
+                                          </Badge>
+                                        ) : hasLowInventory(product.inventory) ? (
+                                          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                                            Остаток: {getTotalInventory(product.inventory)} шт.
+                                          </Badge>
+                                        ) : (
+                                          <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                                            В наличии: {getTotalInventory(product.inventory)} шт.
+                                          </Badge>
+                                        )}
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -983,7 +1027,24 @@ export default function AdminDashboard() {
                                 )}
                                 <h3 className="font-semibold text-lg mb-2">{box.name}</h3>
                                 <p className="text-gray-600 text-sm mb-2">{box.description || ''}</p>
-                                <p className="text-lg font-bold mb-3">{box.price}₽</p>
+                                <p className="text-lg font-bold mb-2">{box.price}₽</p>
+                                {box.inventory && (
+                                  <div className="mb-2">
+                                    {isOutOfStock(box.inventory) ? (
+                                      <Badge variant="destructive" className="text-xs">
+                                        Нет в наличии
+                                      </Badge>
+                                    ) : hasLowInventory(box.inventory) ? (
+                                      <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 text-xs">
+                                        Остаток: {getTotalInventory(box.inventory)} шт.
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="secondary" className="bg-green-100 text-green-800 text-xs">
+                                        В наличии: {getTotalInventory(box.inventory)} шт.
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
                                 <div className="flex gap-2">
                                   <Button
                                     variant="outline"
@@ -1011,6 +1072,74 @@ export default function AdminDashboard() {
                       )}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Inventory Tab */}
+            <TabsContent value="inventory">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Управление остатками</CardTitle>
+                  <CardDescription>
+                    Отслеживание остатков товаров и боксов по размерам. Подготовка к интеграции с 1С.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Package className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-semibold mb-2">Система управления остатками</h3>
+                    <p className="text-gray-600 mb-6">
+                      Управляйте остатками товаров и боксов по размерам. <br />
+                      В будущем здесь будет интеграция с 1С для автоматического обновления остатков и оплат.
+                    </p>
+                    <Button 
+                      onClick={() => setShowInventory(true)}
+                      size="lg"
+                      data-testid="button-manage-inventory"
+                    >
+                      <Package className="h-5 w-5 mr-2" />
+                      Открыть управление остатками
+                    </Button>
+                  </div>
+                  
+                  <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium">Всего товаров</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{stats.totalProducts}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          В каталоге
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium">Всего боксов</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{stats.activeBoxes}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Активных боксов
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium">Товары в боксах</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{stats.totalProductsInBoxes}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Всего единиц
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

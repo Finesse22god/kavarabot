@@ -1143,6 +1143,27 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
   }
 });
 
+router.patch("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { inventory } = req.body;
+
+    if (inventory !== undefined && typeof inventory !== 'object') {
+      return res.status(400).json({ error: "Inventory must be an object" });
+    }
+
+    const box = await storage.updateBox(id, { inventory });
+    if (!box) {
+      return res.status(404).json({ error: "Box not found" });
+    }
+
+    res.json(box);
+  } catch (error) {
+    console.error("Error updating box inventory:", error);
+    res.status(500).json({ error: "Failed to update box inventory" });
+  }
+});
+
 router.delete("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -1223,6 +1244,27 @@ router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
   } catch (error) {
     console.error("Error updating product:", error);
     res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
+router.patch("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { inventory } = req.body;
+
+    if (inventory !== undefined && typeof inventory !== 'object') {
+      return res.status(400).json({ error: "Inventory must be an object" });
+    }
+
+    const product = await storage.updateProduct(id, { inventory });
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.error("Error updating product inventory:", error);
+    res.status(500).json({ error: "Failed to update product inventory" });
   }
 });
 
