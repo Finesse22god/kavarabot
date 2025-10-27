@@ -33,6 +33,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
   
   const [formData, setFormData] = useState({
     name: product?.name || "",
+    externalId: product?.externalId || "",
     description: product?.description || "",
     price: product?.price || 0,
     category: product?.category || "",
@@ -216,6 +217,19 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
+          </div>
+
+          <div>
+            <Label htmlFor="externalId">Внешний ID (для 1С)</Label>
+            <Input
+              id="externalId"
+              value={formData.externalId}
+              onChange={(e) => setFormData({ ...formData, externalId: e.target.value })}
+              placeholder="Уникальный ID товара в 1С"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Используется для синхронизации с 1С. Должен быть уникальным.
+            </p>
           </div>
 
           <div>

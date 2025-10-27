@@ -12,6 +12,9 @@ export class Product {
   @Column({ type: "varchar" })
   name!: string;
 
+  @Column({ type: "varchar", nullable: true, unique: true })
+  externalId?: string;
+
   @Column({ type: "text", nullable: true })
   description?: string;
 

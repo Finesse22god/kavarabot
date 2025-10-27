@@ -60,9 +60,9 @@ router.post("/api/1c/products/update-inventory", verify1CApiKey, async (req, res
         continue;
       }
 
-      // Ищем товар по имени или ID (можно добавить поле externalId в Product)
+      // Ищем товар по externalId
       const product = await productRepo.findOne({
-        where: { name: externalId }
+        where: { externalId }
       });
 
       if (product) {
@@ -75,9 +75,9 @@ router.post("/api/1c/products/update-inventory", verify1CApiKey, async (req, res
           inventory
         });
       } else {
-        // Если не нашли товар, проверяем боксы
+        // Если не нашли товар, проверяем боксы по externalId
         const box = await boxRepo.findOne({
-          where: { name: externalId }
+          where: { externalId } as any
         });
 
         if (box) {
