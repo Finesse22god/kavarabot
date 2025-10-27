@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
 import routes from './routes.js';
+import { register1CRoutes } from "./routes-1c";
 import { initializeDatabase } from './database.js';
 import { setupTelegramBotWithApp } from './telegram.js';
 
@@ -16,7 +17,7 @@ let dbInitPromise: Promise<void> | null = null;
 async function initializeDatabaseLazy() {
   if (dbInitialized) return;
   if (dbInitPromise) return dbInitPromise;
-  
+
   dbInitPromise = initializeDatabase().then(() => {
     dbInitialized = true;
     console.log('✅ Database initialization completed');
@@ -25,7 +26,7 @@ async function initializeDatabaseLazy() {
     dbInitPromise = null; // Allow retry
     throw error;
   });
-  
+
   return dbInitPromise;
 }
 
@@ -83,15 +84,18 @@ async function createServer() {
       });
     }
   });
-  
+
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
-  
+
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
-  
+
   // Connect all routes
   app.use(routes);
+
+  // Подключение API endpoints для 1С
+  register1CRoutes(app);
 
   if (isProduction) {
     // Production: serve static files with proper cache control
@@ -108,7 +112,7 @@ async function createServer() {
         }
       }
     }));
-    
+
     app.get('*', (req, res) => {
       // Always send fresh HTML with no-cache headers
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -119,7 +123,7 @@ async function createServer() {
   } else {
     // Development: integrate with Vite
     const { createServer: createViteServer } = await import('vite');
-    
+
     const vite = await createViteServer({
       appType: 'custom',
       server: {
@@ -127,9 +131,9 @@ async function createServer() {
         allowedHosts: true,
       },
     });
-    
+
     app.use(vite.middlewares);
-    
+
     // Serve HTML for all other routes
     const indexHtmlPath = path.resolve(__dirname, '../client/index.html');
     app.use('*', async (req, res, next) => {
