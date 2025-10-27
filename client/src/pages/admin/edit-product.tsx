@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, RefreshCw } from "lucide-react";
 
 interface Product {
   id: string;
   name: string;
+  externalId?: string;
   description: string;
   price: number;
   category: string;
@@ -186,6 +187,23 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     });
   };
 
+  const generateExternalId = () => {
+    // Генерируем externalId в формате: KAVARA-{timestamp}-{random}
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const externalId = `KAVARA-${timestamp}-${random}`;
+    
+    setFormData({
+      ...formData,
+      externalId: externalId
+    });
+
+    toast({
+      title: "ID сгенерирован",
+      description: `Внешний ID: ${externalId}`,
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -221,12 +239,25 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
 
           <div>
             <Label htmlFor="externalId">Внешний ID (для 1С)</Label>
-            <Input
-              id="externalId"
-              value={formData.externalId}
-              onChange={(e) => setFormData({ ...formData, externalId: e.target.value })}
-              placeholder="Уникальный ID товара в 1С"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="externalId"
+                data-testid="input-external-id"
+                value={formData.externalId}
+                onChange={(e) => setFormData({ ...formData, externalId: e.target.value })}
+                placeholder="Уникальный ID товара в 1С"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                data-testid="button-generate-external-id"
+                onClick={generateExternalId}
+                className="flex items-center gap-2 whitespace-nowrap"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Сгенерировать
+              </Button>
+            </div>
             <p className="text-sm text-gray-500 mt-1">
               Используется для синхронизации с 1С. Должен быть уникальным.
             </p>

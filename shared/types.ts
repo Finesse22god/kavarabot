@@ -47,6 +47,7 @@ export interface Product {
   id: string;
   createdAt: Date;
   name: string;
+  externalId?: string;
   description?: string;
   price: number;
   imageUrl?: string;
@@ -62,6 +63,7 @@ export interface Product {
 
 export interface CreateProductDto {
   name: string;
+  externalId?: string;
   description?: string;
   price: number;
   imageUrl?: string;
