@@ -64,6 +64,7 @@ Preferred communication style: Simple, everyday language.
       - **Payment Error Handling**: Enhanced YooKassa integration with detailed error diagnostics, typed error responses, and comprehensive logging.
       - **Catalog Parser Optimization**: Early termination on consecutive empty pages to reduce unnecessary API calls.
       - **Configuration Management**: Removed hardcoded Telegram values, now using environment variables for ADMIN_CHAT_ID and dynamic webhook URL detection.
+    - **Inventory Management System** (October 2025): Comprehensive inventory tracking system for products and boxes with size-specific stock management. Added `inventory` JSON field to products and boxes tables to store stock quantities by size (e.g., {"S": 10, "M": 15, "L": 8}). New admin panel "Остатки" (Inventory) tab provides dedicated interface for managing stock levels with visual indicators for low stock (yellow badge < 10 units) and out-of-stock (red badge, 0 units) items. Product and box cards in admin panel now display real-time inventory status badges. PATCH API endpoints (`/api/admin/products/:id` and `/api/admin/boxes/:id`) enable partial inventory updates. System designed with future 1C integration in mind for automated stock synchronization and payment reconciliation.
 
 ## External Dependencies
 
