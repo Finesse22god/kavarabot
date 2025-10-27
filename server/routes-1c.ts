@@ -141,6 +141,7 @@ router.post("/api/1c/products/update-inventory", verify1CApiKey, async (req, res
  *         {
  *           "type": "product",
  *           "name": "Футболка KAVARA",
+ *           "externalId": "KAVARA-123-ABC",
  *           "quantity": 1,
  *           "size": "M",
  *           "price": 5000
@@ -219,6 +220,7 @@ router.get("/api/1c/orders", verify1CApiKey, async (req, res) => {
           items = cartItems.map((item: any) => ({
             type: item.type || "unknown",
             name: item.name,
+            externalId: item.externalId || null,
             quantity: item.quantity || 1,
             size: item.selectedSize || null,
             price: item.price
@@ -230,6 +232,7 @@ router.get("/api/1c/orders", verify1CApiKey, async (req, res) => {
         items = [{
           type: "box",
           name: order.box.name,
+          externalId: (order.box as any).externalId || null,
           quantity: 1,
           size: order.selectedSize || null,
           price: order.box.price
@@ -238,6 +241,7 @@ router.get("/api/1c/orders", verify1CApiKey, async (req, res) => {
         items = [{
           type: "product",
           name: order.product.name,
+          externalId: order.product.externalId || null,
           quantity: 1,
           size: order.selectedSize || null,
           price: order.product.price
@@ -313,6 +317,7 @@ router.get("/api/1c/orders/:orderNumber", verify1CApiKey, async (req, res) => {
         items = cartItems.map((item: any) => ({
           type: item.type || "unknown",
           name: item.name,
+          externalId: item.externalId || null,
           quantity: item.quantity || 1,
           size: item.selectedSize || null,
           price: item.price
@@ -324,6 +329,7 @@ router.get("/api/1c/orders/:orderNumber", verify1CApiKey, async (req, res) => {
       items = [{
         type: "box",
         name: order.box.name,
+        externalId: (order.box as any).externalId || null,
         quantity: 1,
         size: order.selectedSize || null,
         price: order.box.price
@@ -332,6 +338,7 @@ router.get("/api/1c/orders/:orderNumber", verify1CApiKey, async (req, res) => {
       items = [{
         type: "product",
         name: order.product.name,
+        externalId: order.product.externalId || null,
         quantity: 1,
         size: order.selectedSize || null,
         price: order.product.price
