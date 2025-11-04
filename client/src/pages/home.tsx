@@ -101,14 +101,21 @@ export default function Home() {
       {/* Main Actions */}
       <div className="relative z-10 p-6 pb-24">
         <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
-          {/* Animated White Background */}
+          {/* Animated White Background - Left (Catalog) */}
           <div 
-            className={`absolute top-0 left-0 h-full bg-white transition-all duration-300 ease-out rounded-full ${
+            className={`absolute top-0 right-1/2 h-full bg-white transition-all duration-300 ease-out rounded-l-full ${
               selectedSection === 'catalog' 
-                ? 'w-[60%]' 
-                : selectedSection === 'boxes' 
-                ? 'w-[60%] translate-x-[67%]' 
-                : 'w-0'
+                ? 'w-[60%] opacity-100' 
+                : 'w-0 opacity-0'
+            }`}
+          />
+
+          {/* Animated White Background - Right (Boxes) */}
+          <div 
+            className={`absolute top-0 left-1/2 h-full bg-white transition-all duration-300 ease-out rounded-r-full ${
+              selectedSection === 'boxes' 
+                ? 'w-[60%] opacity-100' 
+                : 'w-0 opacity-0'
             }`}
           />
 
@@ -126,9 +133,7 @@ export default function Home() {
 
             {/* Center Icon - Swipeable */}
             <div
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-16 h-16 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-all duration-300 ${
-                selectedSection ? 'bg-white' : 'bg-white'
-              }`}
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-16 h-16 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-all duration-300 bg-white`}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
