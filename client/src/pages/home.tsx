@@ -100,7 +100,7 @@ export default function Home() {
 
       {/* Main Actions */}
       <div className="relative z-10 p-6 pb-24">
-        <div className="relative w-full border-2 border-white rounded-full overflow-visible shadow-xl">
+        <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
           {/* Animated White Background - Left (Catalog) */}
           <div 
             className={`absolute top-1/2 -translate-y-1/2 right-1/2 h-16 bg-white transition-all duration-300 ease-out rounded-l-full ${
