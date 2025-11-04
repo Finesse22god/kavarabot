@@ -48,17 +48,15 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="relative z-10 flex-1 flex flex-col justify-center text-center px-6">
-        <h1 className="text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-lg">
-          KAVARA
+        <h1 className="text-5xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">
+          KAVARA BOX
         </h1>
-        <p className="text-xl text-white font-medium tracking-wide drop-shadow-md">
-          СПОРТИВНАЯ ОДЕЖДА
+        <p className="text-base text-white font-normal tracking-wide drop-shadow-md">
+          ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ
         </p>
-        {user && (
-          <p className="text-sm text-white/90 mt-2 drop-shadow-md">
-            Добро пожаловать, {user.first_name}!
-          </p>
-        )}
+        <p className="text-base text-white font-normal tracking-wide drop-shadow-md">
+          ТРЕНИРОВОК
+        </p>
         <div className="mt-8">
           <div className="w-20 h-0.5 bg-white mx-auto"></div>
         </div>
