@@ -1,13 +1,45 @@
 import { useLocation } from "wouter";
 import { useTelegram } from "../hooks/use-telegram";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 import heroVideo from "@assets/kavarademo.webm";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const { user, isInTelegram } = useTelegram();
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   const handleMenuOption = (path: string) => {
     setLocation(path);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      // Swipe left - go to boxes
+      setLocation("/boxes");
+    }
+    if (isRightSwipe) {
+      // Swipe right - go to catalog
+      setLocation("/catalog");
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
   };
 
   // Show message if not in Telegram
@@ -63,22 +95,39 @@ export default function Home() {
       </div>
 
       {/* Main Actions */}
-      <div className="relative z-10 p-6 space-y-4 pb-20">
-        <button 
-          className="w-full bg-white text-black py-6 text-lg font-semibold tracking-wide hover:bg-gray-100 transition-colors rounded-xl shadow-lg"
-          onClick={() => handleMenuOption("/boxes")}
-          data-testid="button-ready-boxes"
-        >
-          ГОТОВЫЕ БОКСЫ
-        </button>
+      <div className="relative z-10 p-6 pb-24">
+        <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
+          <div className="flex items-center justify-between h-20">
+            {/* Catalog Section - Left */}
+            <button
+              onClick={() => handleMenuOption("/catalog")}
+              className="flex-1 h-full flex items-center justify-center text-white font-semibold text-lg tracking-wide hover:bg-white/10 transition-colors"
+              data-testid="button-catalog"
+            >
+              КАТАЛОГ
+            </button>
 
-        <button 
-          className="w-full border-2 border-white text-white py-6 text-lg font-semibold tracking-wide hover:bg-white hover:text-black transition-colors rounded-xl shadow-lg"
-          onClick={() => handleMenuOption("/catalog")}
-          data-testid="button-catalog"
-        >
-          КАТАЛОГ ТОВАРОВ
-        </button>
+            {/* Center Icon - Swipeable */}
+            <div
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              data-testid="swipe-indicator"
+            >
+              <ChevronDown className="w-8 h-8 text-black" />
+            </div>
+
+            {/* Boxes Section - Right */}
+            <button
+              onClick={() => handleMenuOption("/boxes")}
+              className="flex-1 h-full flex items-center justify-center text-white font-semibold text-lg tracking-wide hover:bg-white/10 transition-colors"
+              data-testid="button-boxes"
+            >
+              БОКСЫ
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
