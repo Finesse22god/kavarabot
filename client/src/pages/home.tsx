@@ -9,9 +9,13 @@ export default function Home() {
   const { user, isInTelegram } = useTelegram();
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [selectedSection, setSelectedSection] = useState<'catalog' | 'boxes' | null>(null);
 
-  const handleMenuOption = (path: string) => {
-    setLocation(path);
+  const handleMenuOption = (path: string, section: 'catalog' | 'boxes') => {
+    setSelectedSection(section);
+    setTimeout(() => {
+      setLocation(path);
+    }, 300);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -31,11 +35,11 @@ export default function Home() {
 
     if (isLeftSwipe) {
       // Swipe left - go to boxes
-      setLocation("/boxes");
+      handleMenuOption("/boxes", 'boxes');
     }
     if (isRightSwipe) {
       // Swipe right - go to catalog
-      setLocation("/catalog");
+      handleMenuOption("/catalog", 'catalog');
     }
 
     setTouchStart(0);
@@ -97,11 +101,24 @@ export default function Home() {
       {/* Main Actions */}
       <div className="relative z-10 p-6 pb-24">
         <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
-          <div className="flex items-center justify-between h-20">
+          {/* Animated White Background */}
+          <div 
+            className={`absolute top-0 left-0 h-full bg-white transition-all duration-300 ease-out rounded-full ${
+              selectedSection === 'catalog' 
+                ? 'w-[60%]' 
+                : selectedSection === 'boxes' 
+                ? 'w-[60%] translate-x-[67%]' 
+                : 'w-0'
+            }`}
+          />
+
+          <div className="relative flex items-center justify-between h-20">
             {/* Catalog Section - Left */}
             <button
-              onClick={() => handleMenuOption("/catalog")}
-              className="flex-1 h-full flex items-center justify-center text-white font-semibold text-lg tracking-wide hover:bg-white/10 transition-colors"
+              onClick={() => handleMenuOption("/catalog", 'catalog')}
+              className={`flex-1 h-full flex items-center justify-center font-semibold text-lg tracking-wide transition-colors duration-300 ${
+                selectedSection === 'catalog' ? 'text-black' : 'text-white'
+              }`}
               data-testid="button-catalog"
             >
               КАТАЛОГ
@@ -109,7 +126,9 @@ export default function Home() {
 
             {/* Center Icon - Swipeable */}
             <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full w-16 h-16 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-transform"
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-16 h-16 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-all duration-300 ${
+                selectedSection ? 'bg-white' : 'bg-white'
+              }`}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -120,8 +139,10 @@ export default function Home() {
 
             {/* Boxes Section - Right */}
             <button
-              onClick={() => handleMenuOption("/boxes")}
-              className="flex-1 h-full flex items-center justify-center text-white font-semibold text-lg tracking-wide hover:bg-white/10 transition-colors"
+              onClick={() => handleMenuOption("/boxes", 'boxes')}
+              className={`flex-1 h-full flex items-center justify-center font-semibold text-lg tracking-wide transition-colors duration-300 ${
+                selectedSection === 'boxes' ? 'text-black' : 'text-white'
+              }`}
               data-testid="button-boxes"
             >
               БОКСЫ
