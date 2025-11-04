@@ -103,7 +103,7 @@ export default function Home() {
         <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
           {/* Animated White Background - Left (Catalog) */}
           <div 
-            className={`absolute top-2 bottom-2 left-2 right-1/2 bg-white transition-all duration-300 ease-out rounded-l-full ${
+            className={`absolute top-2 bottom-2 left-2 right-1/2 bg-white transition-all duration-300 ease-out rounded-full ${
               selectedSection === 'catalog' 
                 ? 'w-[60%] opacity-100' 
                 : 'w-0 opacity-0'
@@ -112,7 +112,7 @@ export default function Home() {
 
           {/* Animated White Background - Right (Boxes) */}
           <div 
-            className={`absolute top-2 bottom-2 right-2 left-1/2 bg-white transition-all duration-300 ease-out rounded-r-full ${
+            className={`absolute top-2 bottom-2 right-2 left-1/2 bg-white transition-all duration-300 ease-out rounded-full ${
               selectedSection === 'boxes' 
                 ? 'w-[60%] opacity-100' 
                 : 'w-0 opacity-0'
