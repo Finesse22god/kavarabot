@@ -67,7 +67,7 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen h-screen bg-black overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black overflow-hidden flex flex-col">
       {/* Video Background */}
       <video
         autoPlay
@@ -83,23 +83,23 @@ export default function Home() {
       <div className="fixed top-0 left-0 w-full h-full bg-black/40" />
 
       {/* Hero Section */}
-      <div className="relative z-10 flex-1 flex flex-col justify-center text-center px-6">
-        <h1 className="text-5xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">
+      <div className="relative z-10 flex-1 flex flex-col justify-center text-center px-4 sm:px-6 pb-4">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight drop-shadow-lg">
           KAVARA BOX
         </h1>
-        <p className="text-base text-white font-normal tracking-wide drop-shadow-md">
+        <p className="text-sm sm:text-base text-white font-normal tracking-wide drop-shadow-md">
           ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ
         </p>
-        <p className="text-base text-white font-normal tracking-wide drop-shadow-md">
+        <p className="text-sm sm:text-base text-white font-normal tracking-wide drop-shadow-md">
           ТРЕНИРОВОК
         </p>
-        <div className="mt-8">
-          <div className="w-20 h-0.5 bg-white mx-auto"></div>
+        <div className="mt-4 sm:mt-8">
+          <div className="w-16 sm:w-20 h-0.5 bg-white mx-auto"></div>
         </div>
       </div>
 
       {/* Main Actions */}
-      <div className="relative z-10 p-6 pb-24">
+      <div className="relative z-10 px-4 sm:px-6 pb-20 sm:pb-24">
         <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
           {/* Animated White Background - Left (Catalog) */}
           <div 
