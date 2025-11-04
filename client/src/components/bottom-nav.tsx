@@ -28,7 +28,7 @@ export default function BottomNav() {
   const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-black px-2 py-3 max-w-md mx-auto z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-transparent px-2 py-3 max-w-md mx-auto z-50">
       <div className="flex items-center justify-around">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
@@ -42,8 +42,8 @@ export default function BottomNav() {
               onClick={() => setLocation(item.path)}
               className={`flex flex-col items-center space-y-1 px-1 py-1 transition-colors relative ${
                 isActive 
-                  ? "text-black" 
-                  : "text-gray-500 hover:text-black"
+                  ? "text-white" 
+                  : "text-white/70 hover:text-white"
               }`}
             >
               <div className="relative">
@@ -57,7 +57,7 @@ export default function BottomNav() {
                 )}
               </div>
               <span className={`text-[10px] font-bold tracking-wide ${
-                isActive ? "text-black" : "text-gray-500"
+                isActive ? "text-white" : "text-white/70"
               }`}>
                 {item.label}
               </span>
