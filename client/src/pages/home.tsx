@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useTelegram } from "../hooks/use-telegram";
+import heroVideo from "@assets/kavarademo.webm";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -30,38 +31,53 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col">
+    <div className="relative h-screen bg-black overflow-hidden flex flex-col">
+      {/* Video Background */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute top-0 left-0 w-full h-full object-cover"
+      >
+        <source src={heroVideo} type="video/webm" />
+      </video>
+
+      {/* Dark Overlay for text readability */}
+      <div className="absolute top-0 left-0 w-full h-full bg-black/40" />
+
       {/* Hero Section */}
-      <div className="flex-1 flex flex-col justify-center text-center px-6">
-        <h1 className="text-6xl font-bold text-black mb-4 tracking-tight">
+      <div className="relative z-10 flex-1 flex flex-col justify-center text-center px-6">
+        <h1 className="text-6xl font-bold text-white mb-4 tracking-tight drop-shadow-lg">
           KAVARA
         </h1>
-        <p className="text-xl text-gray-700 font-medium tracking-wide">
+        <p className="text-xl text-white font-medium tracking-wide drop-shadow-md">
           СПОРТИВНАЯ ОДЕЖДА
         </p>
         {user && (
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-white/90 mt-2 drop-shadow-md">
             Добро пожаловать, {user.first_name}!
           </p>
         )}
         <div className="mt-8">
-          <div className="w-20 h-0.5 bg-black mx-auto"></div>
+          <div className="w-20 h-0.5 bg-white mx-auto"></div>
         </div>
       </div>
 
       {/* Main Actions */}
-      <div className="p-6 space-y-4 pb-20">
+      <div className="relative z-10 p-6 space-y-4 pb-20">
         <button 
-          className="w-full bg-black text-white py-6 text-lg font-semibold tracking-wide hover:bg-gray-900 transition-colors rounded-xl"
+          className="w-full bg-white text-black py-6 text-lg font-semibold tracking-wide hover:bg-gray-100 transition-colors rounded-xl shadow-lg"
           onClick={() => handleMenuOption("/boxes")}
+          data-testid="button-ready-boxes"
         >
           ГОТОВЫЕ БОКСЫ
         </button>
 
-
         <button 
-          className="w-full border-2 border-black text-black py-6 text-lg font-semibold tracking-wide hover:bg-black hover:text-white transition-colors rounded-xl"
+          className="w-full border-2 border-white text-white py-6 text-lg font-semibold tracking-wide hover:bg-white hover:text-black transition-colors rounded-xl shadow-lg"
           onClick={() => handleMenuOption("/catalog")}
+          data-testid="button-catalog"
         >
           КАТАЛОГ ТОВАРОВ
         </button>
