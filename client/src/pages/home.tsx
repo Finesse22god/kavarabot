@@ -67,20 +67,20 @@ export default function Home() {
   }
 
   return (
-    <div className="relative h-screen bg-black overflow-hidden flex flex-col">
+    <div className="relative min-h-screen h-screen bg-black overflow-hidden flex flex-col">
       {/* Video Background */}
       <video
         autoPlay
         loop
         muted
         playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover"
+        className="fixed top-0 left-0 w-full h-full object-cover"
       >
         <source src={heroVideo} type="video/webm" />
       </video>
 
       {/* Dark Overlay for text readability */}
-      <div className="absolute top-0 left-0 w-full h-full bg-black/40" />
+      <div className="fixed top-0 left-0 w-full h-full bg-black/40" />
 
       {/* Hero Section */}
       <div className="relative z-10 flex-1 flex flex-col justify-center text-center px-6">
