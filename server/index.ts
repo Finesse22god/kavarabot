@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { promises as fs } from 'fs';
@@ -124,11 +125,17 @@ async function createServer() {
     // Development: integrate with Vite
     const { createServer: createViteServer } = await import('vite');
 
+    // Create HTTP server first
+    const server = http.createServer(app);
+
     const vite = await createViteServer({
       appType: 'custom',
       server: {
         middlewareMode: true,
         allowedHosts: true,
+        hmr: {
+          server: server,
+        },
       },
     });
 
@@ -146,8 +153,15 @@ async function createServer() {
         next(e);
       }
     });
+
+    server.listen(port, '0.0.0.0', () => {
+      console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
+    });
+    
+    return;
   }
 
+  // Production: use standard Express listen
   app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
   });
