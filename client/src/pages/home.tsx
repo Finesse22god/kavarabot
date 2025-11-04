@@ -100,10 +100,10 @@ export default function Home() {
 
       {/* Main Actions */}
       <div className="relative z-10 p-6 pb-24">
-        <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
+        <div className="relative w-full border-2 border-white rounded-full overflow-visible shadow-xl">
           {/* Animated White Background - Left (Catalog) */}
           <div 
-            className={`absolute top-0 right-1/2 h-full bg-white transition-all duration-300 ease-out rounded-l-full ${
+            className={`absolute top-1/2 -translate-y-1/2 right-1/2 h-16 bg-white transition-all duration-300 ease-out rounded-l-full ${
               selectedSection === 'catalog' 
                 ? 'w-[60%] opacity-100' 
                 : 'w-0 opacity-0'
@@ -112,7 +112,7 @@ export default function Home() {
 
           {/* Animated White Background - Right (Boxes) */}
           <div 
-            className={`absolute top-0 left-1/2 h-full bg-white transition-all duration-300 ease-out rounded-r-full ${
+            className={`absolute top-1/2 -translate-y-1/2 left-1/2 h-16 bg-white transition-all duration-300 ease-out rounded-r-full ${
               selectedSection === 'boxes' 
                 ? 'w-[60%] opacity-100' 
                 : 'w-0 opacity-0'
