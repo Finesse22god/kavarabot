@@ -1,8 +1,8 @@
 import { useLocation } from "wouter";
 import { useTelegram } from "../hooks/use-telegram";
-import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import heroVideo from "@assets/kavarademo.webm";
+import logoSrc from "@assets/Vector_1762270099139.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -139,7 +139,7 @@ export default function Home() {
               onTouchEnd={handleTouchEnd}
               data-testid="swipe-indicator"
             >
-              <ChevronDown className="w-8 h-8 text-black" />
+              <img src={logoSrc} alt="KAVARA" className="w-8 h-8" />
             </div>
 
             {/* Boxes Section - Right */}
