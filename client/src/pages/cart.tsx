@@ -164,7 +164,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-black pb-20">
+    <div className="min-h-screen bg-black pb-32">
       {/* Header */}
       <div className="p-4 bg-black text-white">
         <div className="flex items-center space-x-3">
