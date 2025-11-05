@@ -11,7 +11,7 @@ const menuItems = [
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
 
-  // Черный фон для каталога, боксов, товаров и избранного
+  // Черный фон для каталога, боксов, товаров, избранного и профиля
   const shouldShowBlackBg = 
     location === "/catalog" || 
     location.startsWith("/catalog") ||
@@ -19,7 +19,9 @@ export default function BottomNav() {
     location.startsWith("/boxes") ||
     location.startsWith("/product/") ||
     location === "/favorites" ||
-    location.startsWith("/favorites");
+    location.startsWith("/favorites") ||
+    location === "/profile" ||
+    location.startsWith("/profile");
   const bgClass = shouldShowBlackBg ? "bg-black" : "";
 
   return (
