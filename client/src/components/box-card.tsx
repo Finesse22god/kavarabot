@@ -41,7 +41,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
   const handleProductClick = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
-    setLocation(`/catalog/${product.id}`);
+    setLocation(`/product/${product.id}`);
   };
 
   const availableSizes = ["S", "M", "L", "XL", "2XL", "3XL"];
