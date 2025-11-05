@@ -89,7 +89,7 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-black text-foreground;
   }
 
   .screen {
@@ -132,7 +132,7 @@
 
 @layer components {
   .telegram-app {
-    @apply max-w-md mx-auto bg-white min-h-screen relative;
+    @apply max-w-md mx-auto bg-black min-h-screen relative;
     padding-bottom: 80px; /* Space for bottom navigation */
     font-family: 'Inter', sans-serif;
   }
