@@ -91,14 +91,10 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
     );
   }
 
-  // Развернутый вид
+  // Развернутый вид (всегда белый фон, черный текст, черная кнопка)
   return (
     <div 
-      className={`relative rounded-[40px] p-6 transition-all ${
-        isWhiteVariant 
-          ? 'bg-white text-black border-2 border-black' 
-          : 'bg-black text-white border-2 border-white'
-      }`}
+      className="relative rounded-[40px] p-6 transition-all bg-white text-black border-2 border-black"
       data-testid={`box-card-expanded-${box.id}`}
     >
       {/* Заголовок */}
@@ -114,9 +110,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       {/* Содержимое */}
       {box.products && box.products.length > 0 && (
         <div className="mb-6">
-          <div className={`text-sm font-medium mb-3 pb-2 border-b ${
-            isWhiteVariant ? 'border-black' : 'border-white'
-          }`}>
+          <div className="text-sm font-medium mb-3 pb-2 border-b border-black">
             Внутри:
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
@@ -124,9 +118,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
               <div 
                 key={product.id || idx} 
                 onClick={(e) => handleProductClick(e, product)}
-                className={`text-sm cursor-pointer transition-opacity hover:opacity-70 ${
-                  isWhiteVariant ? 'hover:text-gray-700' : 'hover:text-gray-300'
-                }`}
+                className="text-sm cursor-pointer transition-opacity hover:opacity-70 hover:text-gray-700"
                 style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}
                 data-testid={`product-item-${product.id}`}
               >
@@ -139,9 +131,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
       {/* Выбор размера */}
       <div className="mb-6">
-        <div className={`text-sm font-medium mb-3 pb-2 border-b ${
-          isWhiteVariant ? 'border-black' : 'border-white'
-        }`}>
+        <div className="text-sm font-medium mb-3 pb-2 border-b border-black">
           Выберите размер:
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -151,10 +141,8 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
               onClick={(e) => handleSizeClick(e, size)}
               className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] transition-colors ${
                 selectedSize === size
-                  ? (isWhiteVariant ? 'bg-black text-white' : 'bg-white text-black')
-                  : (isWhiteVariant 
-                      ? 'bg-transparent border border-black text-black hover:bg-gray-100' 
-                      : 'bg-transparent border border-white text-white hover:bg-gray-800')
+                  ? 'bg-black text-white' 
+                  : 'bg-transparent border border-black text-black hover:bg-gray-100'
               }`}
               data-testid={`button-size-${size}`}
             >
@@ -163,11 +151,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           ))}
           <button
             onClick={(e) => e.stopPropagation()}
-            className={`px-3 py-2 rounded-lg font-semibold ${
-              isWhiteVariant 
-                ? 'bg-transparent border border-black text-black hover:bg-gray-100' 
-                : 'bg-transparent border border-white text-white hover:bg-gray-800'
-            }`}
+            className="px-3 py-2 rounded-lg font-semibold bg-transparent border border-black text-black hover:bg-gray-100"
           >
             ...
           </button>
@@ -181,9 +165,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             e.stopPropagation();
             handleToggleExpand();
           }}
-          className={`text-sm underline flex items-center gap-1 ${
-            isWhiteVariant ? 'text-black hover:text-gray-700' : 'text-white hover:text-gray-300'
-          }`}
+          className="text-sm underline flex items-center gap-1 text-black hover:text-gray-700"
           data-testid={`button-collapse-${box.id}`}
         >
           Свернуть
@@ -192,11 +174,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
         <button
           onClick={handleAddToCart}
-          className={`px-8 py-3 rounded-full font-semibold transition-colors ${
-            isWhiteVariant 
-              ? 'bg-black text-white hover:bg-gray-800' 
-              : 'bg-white text-black hover:bg-gray-100'
-          }`}
+          className="px-8 py-3 rounded-full font-semibold transition-colors bg-black text-white hover:bg-gray-800"
           data-testid={`button-add-to-cart-${box.id}`}
         >
           В КОРЗИНУ
