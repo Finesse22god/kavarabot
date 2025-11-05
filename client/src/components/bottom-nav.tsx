@@ -9,8 +9,16 @@ const menuItems = [
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
 
+  // Черный фон для каталога и боксов, прозрачный для остальных страниц
+  const isOnCatalogOrBoxes = 
+    location === "/catalog" || 
+    location.startsWith("/catalog") ||
+    location === "/boxes" ||
+    location.startsWith("/boxes");
+  const bgClass = isOnCatalogOrBoxes ? "bg-black" : "";
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe">
+    <div className={`fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe ${bgClass}`}>
       <div className="flex items-center justify-around">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
