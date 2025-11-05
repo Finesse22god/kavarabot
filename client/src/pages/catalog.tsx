@@ -234,7 +234,7 @@ export default function Catalog() {
 
 
   return (
-    <div className="min-h-screen bg-black pb-20">
+    <div className="min-h-screen bg-black pb-32">
       {/* Header */}
       <CatalogHeader activeTab="catalog" />
 

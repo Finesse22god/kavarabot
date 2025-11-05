@@ -273,7 +273,7 @@ export default function BoxDetail() {
         </div>
 
         {/* Add to Cart Button */}
-        <div className="pb-20">
+        <div className="pb-32">
           <Button
             onClick={handleAddToCart}
             disabled={!selectedSize || addToCartMutation.isPending}
