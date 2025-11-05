@@ -352,32 +352,30 @@ export default function ProductDetail() {
           </Collapsible>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white border-t-2 border-gray-200 shadow-lg z-[200]">
-          <div className="max-w-md mx-auto">
-            <Button
-              onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending || Boolean(hasSizes && !selectedSize)}
-              className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-xl transition-all"
-              data-testid="button-add-to-cart"
-            >
-              {addToCartMutation.isPending ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
-                  <span>ДОБАВЛЯЕМ...</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center space-x-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  <span>{hasSizes && !selectedSize ? 'ВЫБЕРИТЕ РАЗМЕР' : 'ДОБАВИТЬ В КОРЗИНУ'}</span>
-                </div>
-              )}
-            </Button>
-            {hasSizes && !selectedSize && (
-              <p className="text-xs text-center text-gray-500 mt-2">
-                Сначала выберите размер выше
-              </p>
+        <div className="mt-6 mb-24">
+          <Button
+            onClick={handleAddToCart}
+            disabled={addToCartMutation.isPending || Boolean(hasSizes && !selectedSize)}
+            className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-xl transition-all"
+            data-testid="button-add-to-cart"
+          >
+            {addToCartMutation.isPending ? (
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
+                <span>ДОБАВЛЯЕМ...</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center space-x-2">
+                <ShoppingCart className="w-5 h-5" />
+                <span>{hasSizes && !selectedSize ? 'ВЫБЕРИТЕ РАЗМЕР' : 'ДОБАВИТЬ В КОРЗИНУ'}</span>
+              </div>
             )}
-          </div>
+          </Button>
+          {hasSizes && !selectedSize && (
+            <p className="text-xs text-center text-gray-500 mt-2">
+              Сначала выберите размер выше
+            </p>
+          )}
         </div>
       </div>
     </div>
