@@ -17,6 +17,7 @@ import PaymentSuccess from "./pages/payment-success";
 import MyOrders from "./pages/my-orders";
 import OrderDetails from "./pages/order-details";
 import Profile from "./pages/profile";
+import Info from "./pages/info";
 import Cart from "./pages/cart";
 import NotFound from "./pages/not-found";
 import AdminLogin from "./pages/admin/login";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/order-details" component={OrderDetails} />
       <Route path="/cart" component={Cart} />
       <Route path="/profile" component={Profile} />
+      <Route path="/info" component={Info} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/create-box" component={AdminCreateBox} />
