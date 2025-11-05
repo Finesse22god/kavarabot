@@ -254,17 +254,17 @@ export default function Cart() {
             </div>
 
             {/* Total and Checkout */}
-            <Card className="bg-gray-900 border-gray-800">
+            <Card className="bg-white">
               <CardHeader>
-                <CardTitle className="text-white">Итого</CardTitle>
+                <CardTitle>Итого</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex justify-between items-center text-lg text-white">
+                <div className="flex justify-between items-center text-lg">
                   <span data-testid="text-items-count">Товары ({totalItems} шт.)</span>
                   <span className="font-bold" data-testid="text-total-price">{totalPrice.toLocaleString()}₽</span>
                 </div>
                 <Button
-                  className="w-full bg-white hover:bg-gray-200 text-black py-6 text-lg"
+                  className="w-full bg-black hover:bg-gray-800 text-white py-6 text-lg"
                   onClick={handleCheckout}
                   data-testid="button-checkout"
                 >

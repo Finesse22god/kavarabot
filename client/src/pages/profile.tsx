@@ -405,9 +405,9 @@ export default function Profile() {
           <TabsContent value="personal" className="mt-4">
             <div className="space-y-4">
               {/* Личные данные */}
-              <div className="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-800">
+              <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-semibold text-white">Личные данные</h3>
+                  <h3 className="font-semibold">Личные данные</h3>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -429,7 +429,7 @@ export default function Profile() {
                         placeholder="Введите ваше имя"
                       />
                     ) : (
-                      <div className="p-3 border border-gray-700 rounded-md bg-gray-800">
+                      <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
                         {formData.firstName || "Не указано"}
                       </div>
                     )}
@@ -444,7 +444,7 @@ export default function Profile() {
                         placeholder="Введите вашу фамилию"
                       />
                     ) : (
-                      <div className="p-3 border border-gray-700 rounded-md bg-gray-800">
+                      <div className="p-3 border border-gray-200 rounded-md bg-gray-50">
                         {formData.lastName || "Не указано"}
                       </div>
                     )}
@@ -455,7 +455,7 @@ export default function Profile() {
                       id="username"
                       value={user?.username || ""}
                       disabled={true}
-                      className="bg-gray-700"
+                      className="bg-gray-100"
                     />
                     <p className="text-xs text-gray-500 mt-1">Username из Telegram нельзя изменить</p>
                   </div>
@@ -463,35 +463,35 @@ export default function Profile() {
               </div>
 
               {/* Размеры */}
-              <div className="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-800">
-                <h3 className="font-semibold mb-4 text-white">Размеры и параметры</h3>
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold mb-4">Размеры и параметры</h3>
                 
                 {userMeasurements || quizResponse ? (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Предпочитаемый размер</Label>
-                        <div className="p-3 bg-gray-800 rounded-lg">
+                        <div className="p-3 bg-gray-50 rounded-lg">
                           {userMeasurements?.preferredSize || quizResponse?.size || "Не указан"}
                         </div>
                       </div>
                       <div>
                         <Label>Рост</Label>
-                        <div className="p-3 bg-gray-800 rounded-lg">
+                        <div className="p-3 bg-gray-50 rounded-lg">
                           {userMeasurements?.height ? `${userMeasurements.height} см` : 
                            quizResponse?.height ? `${quizResponse.height} см` : "Не указан"}
                         </div>
                       </div>
                       <div>
                         <Label>Вес</Label>
-                        <div className="p-3 bg-gray-800 rounded-lg">
+                        <div className="p-3 bg-gray-50 rounded-lg">
                           {userMeasurements?.weight ? `${userMeasurements.weight} кг` : 
                            quizResponse?.weight ? `${quizResponse.weight} кг` : "Не указан"}
                         </div>
                       </div>
                       <div>
                         <Label>Длина рукава</Label>
-                        <div className="p-3 bg-gray-800 rounded-lg">
+                        <div className="p-3 bg-gray-50 rounded-lg">
                           {userMeasurements?.sleeveLength ? `${userMeasurements.sleeveLength} см` : "Не указана"}
                         </div>
                       </div>
@@ -503,19 +503,19 @@ export default function Profile() {
                         <div className="grid grid-cols-3 gap-4">
                           <div>
                             <Label className="text-xs text-gray-600">Грудь</Label>
-                            <div className="p-2 bg-gray-800 rounded text-sm">
+                            <div className="p-2 bg-gray-50 rounded text-sm">
                               {userMeasurements.chestSize ? `${userMeasurements.chestSize} см` : "—"}
                             </div>
                           </div>
                           <div>
                             <Label className="text-xs text-gray-600">Талия</Label>
-                            <div className="p-2 bg-gray-800 rounded text-sm">
+                            <div className="p-2 bg-gray-50 rounded text-sm">
                               {userMeasurements.waistSize ? `${userMeasurements.waistSize} см` : "—"}
                             </div>
                           </div>
                           <div>
                             <Label className="text-xs text-gray-600">Бедра</Label>
-                            <div className="p-2 bg-gray-800 rounded text-sm">
+                            <div className="p-2 bg-gray-50 rounded text-sm">
                               {userMeasurements.hipSize ? `${userMeasurements.hipSize} см` : "—"}
                             </div>
                           </div>
@@ -571,8 +571,8 @@ export default function Profile() {
 
           <TabsContent value="favorites" className="mt-4">
             <div className="space-y-4">
-              <div className="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-800">
-                <h3 className="font-semibold mb-4 flex items-center text-white">
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold mb-4 flex items-center">
                   <Heart className="w-5 h-5 mr-2 text-red-500" />
                   Избранное
                 </h3>
@@ -643,10 +643,10 @@ export default function Profile() {
 
           <TabsContent value="contacts" className="mt-4">
             <div className="space-y-4">
-              <div className="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-800">
+              <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <HelpCircle className="w-6 h-6 text-primary" />
-                  <h3 className="font-semibold text-white">Частые вопросы</h3>
+                  <h3 className="font-semibold">Частые вопросы</h3>
                 </div>
                 
                 <Accordion type="single" collapsible className="space-y-2">
@@ -663,10 +663,10 @@ export default function Profile() {
                 </Accordion>
               </div>
 
-              <div className="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-800">
+              <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center space-x-3 mb-4">
                   <MessageCircle className="w-6 h-6 text-primary" />
-                  <h3 className="font-semibold text-white">Связь с оператором</h3>
+                  <h3 className="font-semibold">Связь с оператором</h3>
                 </div>
                 
                 <div className="space-y-4">
@@ -690,8 +690,8 @@ export default function Profile() {
                 </div>
               </div>
               
-              <div className="bg-gray-900 rounded-xl shadow-lg p-6 border border-gray-800">
-                <h4 className="font-semibold mb-3 text-white">Telegram канал KAVARA</h4>
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h4 className="font-semibold mb-3">Telegram канал KAVARA</h4>
                 <div className="space-y-3">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div className="flex items-center justify-between">
