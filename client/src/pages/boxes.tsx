@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, ShoppingCart, Eye } from "lucide-react";
 import BoxCard from "@/components/box-card";
+import CatalogHeader from "@/components/catalog-header";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useToast } from "@/hooks/use-toast";
 
@@ -127,15 +128,7 @@ export default function Boxes() {
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* Header */}
-      <div className="p-4 bg-black text-white">
-        <div className="flex items-center space-x-3">
-          <div className="text-2xl">📦</div>
-          <div>
-            <h2 className="font-semibold">Готовые боксы</h2>
-            <p className="text-sm text-gray-300">Выберите готовый комплект</p>
-          </div>
-        </div>
-      </div>
+      <CatalogHeader activeTab="boxes" />
 
       {/* Boxes Grid */}
       <div className="p-4">

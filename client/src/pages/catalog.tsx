@@ -5,6 +5,7 @@ import { ArrowLeft, Filter, ShoppingCart } from "lucide-react";
 import { useTelegram } from "@/hooks/use-telegram";
 import BoxCard from "@/components/box-card";
 import ProductCard from "@/components/product-card";
+import CatalogHeader from "@/components/catalog-header";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -235,22 +236,7 @@ export default function Catalog() {
   return (
     <div className="min-h-screen bg-black pb-20">
       {/* Header */}
-      <div className="p-6 border-b border-gray-800">
-        <div className="flex items-center space-x-4">
-          <button 
-            className="p-2 -ml-2" 
-            onClick={() => setLocation("/")}
-          >
-            <ArrowLeft className="w-6 h-6 text-white" />
-          </button>
-          <div>
-            <h2 className="text-2xl font-bold text-white tracking-wide">КАТАЛОГ KAVARA</h2>
-            <p className="text-gray-400 font-medium">
-              {catalogItems?.length || 0} товаров
-            </p>
-          </div>
-        </div>
-      </div>
+      <CatalogHeader activeTab="catalog" />
 
 
       {/* Boxes Section */}
