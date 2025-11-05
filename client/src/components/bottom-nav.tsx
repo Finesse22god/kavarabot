@@ -1,9 +1,10 @@
 import { useLocation } from "wouter";
-import { Home, User } from "lucide-react";
+import { User } from "lucide-react";
+import kavaraLogo from "@assets/Vector (2)_1762347061448.png";
 
 const menuItems = [
-  { path: "/", icon: Home, label: "ГЛАВНАЯ" },
-  { path: "/profile", icon: User, label: "ПРОФИЛЬ" },
+  { path: "/", icon: null, label: "ГЛАВНАЯ", isLogo: true },
+  { path: "/profile", icon: User, label: "ПРОФИЛЬ", isLogo: false },
 ];
 
 export default function BottomNav() {
@@ -38,11 +39,20 @@ export default function BottomNav() {
                   ? "text-white" 
                   : "text-white/70 hover:text-white"
               }`}
+              data-testid={`button-nav-${item.path === "/" ? "home" : "profile"}`}
             >
               <div className="relative">
-                <IconComponent 
-                  className={`w-6 h-6 ${isActive ? "stroke-2" : "stroke-1"}`} 
-                />
+                {item.isLogo ? (
+                  <img 
+                    src={kavaraLogo} 
+                    alt="KAVARA Logo" 
+                    className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
+                  />
+                ) : IconComponent ? (
+                  <IconComponent 
+                    className={`w-6 h-6 ${isActive ? "stroke-2" : "stroke-1"}`} 
+                  />
+                ) : null}
               </div>
               <span className={`text-[10px] font-bold tracking-wide ${
                 isActive ? "text-white" : "text-white/70"
