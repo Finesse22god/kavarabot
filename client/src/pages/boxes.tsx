@@ -167,10 +167,10 @@ export default function Boxes() {
       </div>
 
       {/* Bottom Action Buttons */}
-      <div className="bg-white border-t border-gray-200 p-4 space-y-3">
+      <div className="bg-black border-t border-gray-800 p-4 space-y-3">
         <Button
           onClick={() => setLocation("/quiz")}
-          className="w-full bg-black text-white py-4 text-lg font-semibold hover:bg-gray-900"
+          className="w-full bg-white text-black py-4 text-lg font-semibold hover:bg-gray-200"
           data-testid="button-custom-quiz"
         >
           <ShoppingCart className="w-5 h-5 mr-2" />
@@ -180,7 +180,7 @@ export default function Boxes() {
         <Button
           onClick={() => setLocation("/catalog")}
           variant="outline"
-          className="w-full border-2 border-black text-black py-4 text-lg font-semibold hover:bg-black hover:text-white"
+          className="w-full border-2 border-white text-white py-4 text-lg font-semibold hover:bg-white hover:text-black"
           data-testid="button-open-catalog"
         >
           <Eye className="w-5 h-5 mr-2" />
