@@ -473,7 +473,7 @@ export default function Profile() {
             <TabsTrigger value="favorites">Избранное</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="personal" className="mt-4">
+          <TabsContent value="personal" className="mt-4 pb-24">
             <div className="space-y-4">
               {/* Личные данные */}
               <div className="bg-white rounded-xl shadow-lg p-6">
@@ -636,7 +636,7 @@ export default function Profile() {
             </div>
           </TabsContent>
           
-          <TabsContent value="orders" className="mt-4">
+          <TabsContent value="orders" className="mt-4 pb-24">
             <div className="space-y-4">
               <div className="bg-white rounded-xl shadow-lg p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -681,7 +681,7 @@ export default function Profile() {
             </div>
           </TabsContent>
 
-          <TabsContent value="favorites" className="mt-4">
+          <TabsContent value="favorites" className="mt-4 pb-24">
             <div className="space-y-4">
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="font-semibold mb-4 flex items-center">
