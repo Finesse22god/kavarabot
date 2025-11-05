@@ -23,8 +23,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   // Чередование цветов: каждый второй бокс белый
   const isWhiteVariant = index % 2 === 1;
 
-  const handleToggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
@@ -34,6 +33,11 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       onAddToCart(box, selectedSize);
     }
   };
+  
+  const handleSizeClick = (e: React.MouseEvent, size: string) => {
+    e.stopPropagation();
+    setSelectedSize(size);
+  };
 
   const availableSizes = ["S", "M", "L", "XL", "2XL", "3XL"];
 
@@ -41,10 +45,11 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   if (!isExpanded) {
     return (
       <div 
-        className={`relative rounded-[40px] p-6 transition-all ${
+        onClick={handleToggleExpand}
+        className={`relative rounded-[40px] p-6 transition-all cursor-pointer ${
           isWhiteVariant 
-            ? 'bg-white text-black border-2 border-black' 
-            : 'bg-black text-white border-2 border-white'
+            ? 'bg-white text-black border-2 border-black hover:shadow-lg' 
+            : 'bg-black text-white border-2 border-white hover:shadow-lg'
         }`}
         data-testid={`box-card-${box.id}`}
       >
@@ -66,16 +71,15 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             <div className="text-xl font-bold mb-1">
               {typeof box.price === 'string' ? parseFloat(box.price).toLocaleString('ru-RU') : box.price.toLocaleString('ru-RU')} ₽
             </div>
-            <button
-              onClick={handleToggleExpand}
+            <div
               className={`text-sm underline flex items-center gap-1 ml-auto ${
-                isWhiteVariant ? 'text-black hover:text-gray-700' : 'text-white hover:text-gray-300'
+                isWhiteVariant ? 'text-black' : 'text-white'
               }`}
               data-testid={`button-expand-${box.id}`}
             >
               Подробнее
               <ChevronDown className="w-4 h-4" />
-            </button>
+            </div>
           </div>
         </div>
       </div>
@@ -131,7 +135,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           {availableSizes.map((size) => (
             <button
               key={size}
-              onClick={() => setSelectedSize(size)}
+              onClick={(e) => handleSizeClick(e, size)}
               className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] transition-colors ${
                 selectedSize === size
                   ? (isWhiteVariant ? 'bg-black text-white' : 'bg-white text-black')
@@ -145,6 +149,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             </button>
           ))}
           <button
+            onClick={(e) => e.stopPropagation()}
             className={`px-3 py-2 rounded-lg font-semibold ${
               isWhiteVariant 
                 ? 'bg-transparent border border-black text-black hover:bg-gray-100' 
@@ -159,7 +164,10 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       {/* Кнопки действий */}
       <div className="flex items-center justify-between gap-4">
         <button
-          onClick={handleToggleExpand}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleExpand();
+          }}
           className={`text-sm underline flex items-center gap-1 ${
             isWhiteVariant ? 'text-black hover:text-gray-700' : 'text-white hover:text-gray-300'
           }`}
