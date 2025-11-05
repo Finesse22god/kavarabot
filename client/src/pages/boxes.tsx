@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Package, ShoppingCart, Eye } from "lucide-react";
 import BoxCard from "@/components/box-card";
 import { useTelegram } from "@/hooks/use-telegram";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Boxes() {
   const [, setLocation] = useLocation();
   const { user: telegramUser } = useTelegram();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Get database user by telegram ID
   const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
@@ -25,6 +28,78 @@ export default function Boxes() {
   const handleSelectBox = (box: any) => {
     sessionStorage.setItem("selectedBox", JSON.stringify(box));
     setLocation("/order");
+  };
+
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async ({ userId, boxId, quantity, selectedSize, itemType }: {
+      userId: string;
+      boxId: string;
+      quantity: number;
+      selectedSize?: string;
+      itemType: string;
+    }) => {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          productId: boxId,
+          quantity,
+          selectedSize,
+          itemType,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add to cart");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data, variables) => {
+      toast({
+        title: "✓ Добавлено в корзину",
+        description: `Бокс ${variables.selectedSize ? `(размер ${variables.selectedSize})` : ""} добавлен в корзину`,
+      });
+      queryClient.invalidateQueries({ queryKey: [`/api/cart/${dbUser?.id}`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось добавить бокс в корзину",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddToCart = (box: any, selectedSize?: string) => {
+    if (!dbUser?.id) {
+      toast({
+        title: "Ошибка авторизации",
+        description: "Необходимо войти в систему для добавления товаров в корзину",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedSize) {
+      toast({
+        title: "Выберите размер",
+        description: "Пожалуйста, выберите размер перед добавлением в корзину",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addToCartMutation.mutate({
+      userId: dbUser.id,
+      boxId: box.id,
+      quantity: 1,
+      selectedSize: selectedSize,
+      itemType: "box"
+    });
   };
 
   if (isLoading) {
@@ -55,12 +130,14 @@ export default function Boxes() {
       <div className="p-4">
         {boxes && (boxes as any[]).length > 0 ? (
           <div className="grid grid-cols-1 gap-4 mb-4">
-            {(boxes as any[]).map((box: any) => (
+            {(boxes as any[]).map((box: any, index: number) => (
               <BoxCard 
                 key={box.id}
                 box={box}
                 userId={dbUser?.id}
                 onSelect={handleSelectBox}
+                onAddToCart={handleAddToCart}
+                index={index}
                 data-testid={`box-card-${box.id}`}
               />
             ))}
