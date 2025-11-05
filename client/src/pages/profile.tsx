@@ -203,14 +203,6 @@ export default function Profile() {
     return order.totalPrice || 0;
   };
 
-  const currentOrders = orders?.filter((order: any) => 
-    order.status === "pending" || order.status === "processing" || order.status === "shipped"
-  ) || [];
-
-  const historyOrders = orders?.filter((order: any) => 
-    order.status === "paid" || order.status === "delivered" || order.status === "cancelled"
-  ) || [];
-
   const getStatusIcon = (status: string | null) => {
     switch (status) {
       case "pending": return <Clock className="w-4 h-4 text-orange-500" />;
@@ -670,42 +662,20 @@ export default function Profile() {
                     <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
                     <p className="text-gray-600">Загружаем заказы...</p>
                   </div>
+                ) : orders && orders.length > 0 ? (
+                  <div className="mt-4 space-y-4">
+                    {orders.map((order: any) => (
+                      <OrderCard key={order.id} order={order} />
+                    ))}
+                  </div>
                 ) : (
-                  <Tabs defaultValue="current" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="current">Текущие заказы</TabsTrigger>
-                      <TabsTrigger value="history">История</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="current" className="mt-4 space-y-4">
-                      {currentOrders.length > 0 ? (
-                        currentOrders.map((order: any) => (
-                          <OrderCard key={order.id} order={order} />
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-600">Нет текущих заказов</p>
-                          <p className="text-sm text-gray-500 mt-1">
-                            Оформите свой первый заказ!
-                          </p>
-                        </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="history" className="mt-4 space-y-4">
-                      {historyOrders.length > 0 ? (
-                        historyOrders.map((order: any) => (
-                          <OrderCard key={order.id} order={order} />
-                        ))
-                      ) : (
-                        <div className="text-center py-8">
-                          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-600">История заказов пуста</p>
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
+                  <div className="text-center py-8">
+                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">Нет заказов</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Оформите свой первый заказ!
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
