@@ -110,15 +110,6 @@ export default function Catalog() {
     },
   });
 
-  // Fetch boxes for horizontal scroll section
-  const { data: boxes, isLoading: boxesLoading } = useQuery<Box[]>({
-    queryKey: ["/api/boxes"],
-    queryFn: async () => {
-      const response = await fetch("/api/boxes");
-      if (!response.ok) throw new Error("Failed to fetch boxes");
-      return response.json();
-    },
-  });
 
   // Add to cart mutation
   const addToCartMutation = useMutation({
@@ -237,50 +228,6 @@ export default function Catalog() {
     <div className="min-h-screen bg-black pb-32">
       {/* Header */}
       <CatalogHeader activeTab="catalog" />
-
-
-      {/* Boxes Section */}
-      {!boxesLoading && boxes && boxes.length > 0 && (
-        <div className="p-6 pb-4">
-          <h3 className="text-xl font-bold text-white tracking-wide mb-4">ГОТОВЫЕ БОКСЫ</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {boxes.map((box) => (
-              <div
-                key={box.id}
-                className="flex-shrink-0 w-64 h-96 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer flex flex-col"
-                onClick={() => setLocation(`/box/${box.id}`)}
-                data-testid={`box-card-${box.id}`}
-              >
-                <div className="relative bg-gray-50">
-                  <img
-                    src={box.imageUrl || ''}
-                    alt={box.name}
-                    className="w-full h-40 object-contain"
-                  />
-                </div>
-                <div className="p-4 flex flex-col flex-1">
-                  <h4 className="font-bold text-lg mb-2 line-clamp-1">{box.name}</h4>
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">{box.description}</p>
-                  <div className="text-2xl font-bold text-black mb-3 text-center">
-                    {(typeof box.price === 'string' ? parseFloat(box.price) : box.price).toLocaleString()} ₽
-                  </div>
-                  <Button 
-                    className="w-full bg-black hover:bg-gray-800 text-white rounded-xl font-semibold"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLocation(`/box/${box.id}`);
-                    }}
-                    data-testid={`button-add-to-cart-${box.id}`}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    В корзину
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Catalog Products Header */}
       <div className="p-6 pb-4">
