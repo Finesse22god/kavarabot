@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, ShoppingCart, Eye } from "lucide-react";
+import { Package } from "lucide-react";
 import BoxCard from "@/components/box-card";
 import CatalogHeader from "@/components/catalog-header";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -157,28 +157,6 @@ export default function Boxes() {
             </p>
           </div>
         )}
-      </div>
-
-      {/* Bottom Action Buttons */}
-      <div className="bg-black border-t border-gray-800 p-4 space-y-3">
-        <Button
-          onClick={() => setLocation("/quiz")}
-          className="w-full bg-white text-black py-4 text-lg font-semibold hover:bg-gray-200"
-          data-testid="button-custom-quiz"
-        >
-          <ShoppingCart className="w-5 h-5 mr-2" />
-          Собрать бокс
-        </Button>
-        
-        <Button
-          onClick={() => setLocation("/catalog")}
-          variant="outline"
-          className="w-full border-2 border-white text-white py-4 text-lg font-semibold hover:bg-white hover:text-black"
-          data-testid="button-open-catalog"
-        >
-          <Eye className="w-5 h-5 mr-2" />
-          Открыть каталог
-        </Button>
       </div>
     </div>
   );
