@@ -1,38 +1,16 @@
 import { useLocation } from "wouter";
-import { Home, ShoppingCart, User, ShoppingBag } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { useTelegram } from "@/hooks/use-telegram";
+import { Home, User } from "lucide-react";
 
 const menuItems = [
   { path: "/", icon: Home, label: "ГЛАВНАЯ" },
-  { path: "/catalog", icon: ShoppingBag, label: "КАТАЛОГ" },
-  { path: "/cart", icon: ShoppingCart, label: "КОРЗИНА" },
   { path: "/profile", icon: User, label: "ПРОФИЛЬ" },
 ];
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
-  const { user: telegramUser } = useTelegram();
-
-  // Get database user by telegram ID
-  const { data: dbUser } = useQuery<{ id: string; telegramId: string }>({
-    queryKey: [`/api/users/telegram/${telegramUser?.id}`],
-    enabled: !!telegramUser?.id
-  });
-
-  const { data: cartItems } = useQuery<any[]>({
-    queryKey: [`/api/cart/${dbUser?.id}`],
-    enabled: !!dbUser?.id,
-  });
-
-  const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
-
-  // Черный фон для каталога, прозрачный для остальных страниц
-  const isOnCatalog = location === "/catalog" || location.startsWith("/catalog");
-  const bgClass = isOnCatalog ? "bg-black" : "";
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe ${bgClass}`}>
+    <div className="fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe">
       <div className="flex items-center justify-around">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
@@ -54,11 +32,6 @@ export default function BottomNav() {
                 <IconComponent 
                   className={`w-6 h-6 ${isActive ? "stroke-2" : "stroke-1"}`} 
                 />
-                {item.path === "/cart" && cartItemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                    {cartItemCount > 99 ? "99+" : cartItemCount}
-                  </span>
-                )}
               </div>
               <span className={`text-[10px] font-bold tracking-wide ${
                 isActive ? "text-white" : "text-white/70"
