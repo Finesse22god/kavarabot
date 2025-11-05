@@ -18,6 +18,11 @@ export default function ProductDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Определяем откуда пришел пользователь
+  const searchParams = new URLSearchParams(window.location.search);
+  const fromPage = searchParams.get('from');
+  const backUrl = fromPage === 'boxes' ? '/boxes' : '/catalog';
+
   const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
     queryKey: [`/api/users/telegram/${telegramUser?.id}`],
     enabled: !!telegramUser?.id
@@ -118,8 +123,8 @@ export default function ProductDetail() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-black mb-4">Товар не найден</h2>
           <p className="text-gray-600 mb-6">Произошла ошибка при загрузке товара</p>
-          <Button onClick={() => setLocation("/catalog")} className="bg-black text-white">
-            Вернуться к каталогу
+          <Button onClick={() => setLocation(backUrl)} className="bg-black text-white">
+            Вернуться назад
           </Button>
         </div>
       </div>
@@ -144,7 +149,7 @@ export default function ProductDetail() {
       <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
         <button 
           className="p-2 -ml-2" 
-          onClick={() => setLocation("/catalog")}
+          onClick={() => setLocation(backUrl)}
           data-testid="button-back"
         >
           <ArrowLeft className="w-6 h-6 text-black" />
