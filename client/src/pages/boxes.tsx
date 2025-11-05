@@ -14,6 +14,7 @@ export default function Boxes() {
   const { user: telegramUser } = useTelegram();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [expandedBoxId, setExpandedBoxId] = useState<string | null>(null);
 
   // Get database user by telegram ID
   const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
@@ -74,6 +75,10 @@ export default function Boxes() {
       });
     },
   });
+
+  const handleToggleExpand = (boxId: string) => {
+    setExpandedBoxId(expandedBoxId === boxId ? null : boxId);
+  };
 
   const handleAddToCart = (box: any, selectedSize?: string) => {
     if (!dbUser?.id) {
@@ -142,6 +147,8 @@ export default function Boxes() {
                 onSelect={handleSelectBox}
                 onAddToCart={handleAddToCart}
                 index={index}
+                isExpanded={expandedBoxId === box.id}
+                onToggleExpand={() => handleToggleExpand(box.id)}
                 data-testid={`box-card-${box.id}`}
               />
             ))}

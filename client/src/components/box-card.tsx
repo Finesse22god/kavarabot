@@ -12,19 +12,22 @@ interface BoxCardProps {
   variant?: "default" | "coming-soon";
   userId?: string;
   index?: number; // для чередования цветов
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
-export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant = "default", userId, index = 0 }: BoxCardProps) {
+export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant = "default", userId, index = 0, isExpanded = false, onToggleExpand }: BoxCardProps) {
   const isComingSoon = variant === "coming-soon" || !box.isAvailable;
   const [, setLocation] = useLocation();
-  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
 
   // Все боксы черные
   const isWhiteVariant = false;
 
   const handleToggleExpand = () => {
-    setIsExpanded(!isExpanded);
+    if (onToggleExpand) {
+      onToggleExpand();
+    }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
