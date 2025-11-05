@@ -357,6 +357,7 @@ router.get("/api/boxes", async (req, res) => {
               console.log(`   - ${box.name}: ${box.price}₽, спорт: ${JSON.stringify(box.sportTypes)}`);
             });
 
+            // Добавляем продукты к персональным боксам
             boxes = filteredBoxes;
           } else {
             console.log(`\n❌ КВИЗ НЕ НАЙДЕН для пользователя: ${userId}`);
@@ -379,7 +380,21 @@ router.get("/api/boxes", async (req, res) => {
       boxes = allBoxes.filter(box => !box.isQuizOnly);
     }
 
-    res.json(boxes);
+    // Добавляем продукты к каждому боксу
+    const boxesWithProducts = await Promise.all(
+      boxes.map(async (box) => {
+        const boxProducts = await storage.getBoxProducts(box.id);
+        return {
+          ...box,
+          products: boxProducts.map(bp => ({
+            ...bp.product,
+            quantity: bp.quantity
+          }))
+        };
+      })
+    );
+
+    res.json(boxesWithProducts);
   } catch (error) {
     console.error("Error fetching boxes:", error);
     res.status(500).json({ error: "Internal server error" });

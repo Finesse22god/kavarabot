@@ -102,6 +102,7 @@ export interface Box {
   isQuizOnly?: boolean;
   sportTypes?: string[];
   boxProducts?: BoxProduct[];
+  products?: (Product & { quantity: number })[];
   inventory?: Record<string, number> | null;
 }
 

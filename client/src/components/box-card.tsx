@@ -39,6 +39,11 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
     setSelectedSize(size);
   };
 
+  const handleProductClick = (e: React.MouseEvent, product: any) => {
+    e.stopPropagation();
+    setLocation(`/catalog/${product.id}`);
+  };
+
   const availableSizes = ["S", "M", "L", "XL", "2XL", "3XL"];
 
   // Компактный вид
@@ -107,7 +112,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       </div>
 
       {/* Содержимое */}
-      {box.contents && box.contents.length > 0 && (
+      {box.products && box.products.length > 0 && (
         <div className="mb-6">
           <div className={`text-sm font-medium mb-3 pb-2 border-b ${
             isWhiteVariant ? 'border-black' : 'border-white'
@@ -115,9 +120,17 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             Внутри:
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-            {box.contents.map((item: string, idx: number) => (
-              <div key={idx} className="text-sm" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>
-                {item}
+            {box.products.map((product: any, idx: number) => (
+              <div 
+                key={product.id || idx} 
+                onClick={(e) => handleProductClick(e, product)}
+                className={`text-sm cursor-pointer transition-opacity hover:opacity-70 ${
+                  isWhiteVariant ? 'hover:text-gray-700' : 'hover:text-gray-300'
+                }`}
+                style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}
+                data-testid={`product-item-${product.id}`}
+              >
+                {product.name}
               </div>
             ))}
           </div>
