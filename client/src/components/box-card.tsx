@@ -116,7 +116,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-2">
             {box.contents.map((item: string, idx: number) => (
-              <div key={idx} className="text-sm">
+              <div key={idx} className="text-sm" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>
                 {item}
               </div>
             ))}
