@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Edit, Settings, Heart, Bell, Gift, Copy, Star, Trophy, Clock, Phone, RotateCcw, FileText, Users, Package, Eye } from "lucide-react";
+import { User, Edit, Heart, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,13 +27,6 @@ export default function Profile() {
   // Get tab from URL parameters
   const urlParams = new URLSearchParams(window.location.search);
   const tabFromUrl = urlParams.get('tab') || 'personal';
-  
-  // Redirect to /my-orders when orders tab is accessed
-  useEffect(() => {
-    if (tabFromUrl === 'orders') {
-      setLocation('/my-orders');
-    }
-  }, [tabFromUrl, setLocation]);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
@@ -99,7 +92,16 @@ export default function Profile() {
   // Fetch user favorites
   const { data: userFavorites, isLoading: favoritesLoading } = useUserFavorites(userData?.id);
 
-
+  // Fetch user's orders
+  const { data: orders, isLoading: ordersLoading, refetch: refetchOrders } = useQuery({
+    queryKey: ["/api/orders/user", user?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/orders/user/${user?.id}`);
+      if (!response.ok) throw new Error("Failed to fetch orders");
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
 
   // Handle feedback submission
   const handleFeedbackSubmit = () => {
@@ -183,10 +185,112 @@ export default function Profile() {
     setLocation("/order");
   };
 
-  const OrdersSection = () => {
-    setLocation("/my-orders");
-    return null;
+  const calculateOrderTotal = (order: any) => {
+    if (order.totalPrice && order.totalPrice > 0) {
+      return order.totalPrice;
+    }
+    if (order.cartItems) {
+      try {
+        const items = JSON.parse(order.cartItems);
+        const total = items.reduce((sum: number, item: any) => {
+          return sum + ((item.price || 0) * (item.quantity || 1));
+        }, 0);
+        if (total > 0) return total;
+      } catch (error) {
+        console.error('Error parsing cart items:', error);
+      }
+    }
+    return order.totalPrice || 0;
   };
+
+  const currentOrders = orders?.filter((order: any) => 
+    order.status === "pending" || order.status === "paid" || order.status === "processing" || order.status === "shipped"
+  ) || [];
+
+  const historyOrders = orders?.filter((order: any) => 
+    order.status === "delivered" || order.status === "cancelled"
+  ) || [];
+
+  const getStatusIcon = (status: string | null) => {
+    switch (status) {
+      case "pending": return <Clock className="w-4 h-4 text-orange-500" />;
+      case "paid": return <CheckCircle className="w-4 h-4 text-green-600" />;
+      case "processing": return <Package className="w-4 h-4 text-blue-500" />;
+      case "shipped": return <Truck className="w-4 h-4 text-purple-500" />;
+      case "delivered": return <CheckCircle className="w-4 h-4 text-green-500" />;
+      default: return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getStatusText = (status: string | null) => {
+    switch (status) {
+      case "pending": return "Ожидает оплаты";
+      case "paid": return "Оплачен";
+      case "processing": return "В работе";
+      case "shipped": return "В пути";
+      case "delivered": return "Доставлен";
+      case "cancelled": return "Отменен";
+      default: return "Неизвестно";
+    }
+  };
+
+  const OrderCard = ({ order }: { order: any }) => (
+    <div className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
+      <div className="flex justify-between items-start mb-2">
+        <div>
+          <h3 className="font-bold text-lg">Заказ #{order.orderNumber}</h3>
+          <p className="text-sm text-gray-500">
+            {new Date(order.createdAt || '').toLocaleDateString('ru-RU')}
+          </p>
+        </div>
+        <div className="flex items-center space-x-1">
+          {getStatusIcon(order.status)}
+          <span className="text-sm font-medium">{getStatusText(order.status)}</span>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <p className="text-sm text-gray-700">Клиент: {order.customerName}</p>
+        <p className="text-sm text-gray-700">Доставка: {order.deliveryMethod}</p>
+      </div>
+
+      <div className="mb-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+              window.Telegram.WebApp.openTelegramLink("https://t.me/kavarabrand");
+            } else {
+              window.open("https://t.me/kavarabrand", "_blank");
+            }
+          }}
+          className="text-sm w-full"
+          data-testid="button-contact-manager"
+        >
+          <MessageCircle className="w-4 h-4 mr-2" />
+          Связаться
+        </Button>
+      </div>
+
+      <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+        <span className="text-xl font-bold">
+          {calculateOrderTotal(order).toLocaleString('ru-RU')}₽
+        </span>
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => {
+            setLocation(`/order-details?order=${order.orderNumber}`);
+          }}
+          className="text-sm font-medium"
+          data-testid={`button-details-${order.orderNumber}`}
+        >
+          Детали
+        </Button>
+      </div>
+    </div>
+  );
 
   // Payment redirect function (unified approach)
   const handlePayment = async (order: any) => {
@@ -541,7 +645,70 @@ export default function Profile() {
           </TabsContent>
           
           <TabsContent value="orders" className="mt-4">
-            <OrdersSection />
+            <div className="space-y-4">
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <Package className="w-6 h-6 text-orange-500" />
+                    <h3 className="font-semibold">Мои заказы</h3>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/orders/user", user?.id] });
+                      refetchOrders();
+                    }}
+                    className="text-gray-600 hover:bg-gray-100"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                </div>
+
+                {ordersLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-600">Загружаем заказы...</p>
+                  </div>
+                ) : (
+                  <Tabs defaultValue="current" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="current">Текущие заказы</TabsTrigger>
+                      <TabsTrigger value="history">История</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="current" className="mt-4 space-y-4">
+                      {currentOrders.length > 0 ? (
+                        currentOrders.map((order: any) => (
+                          <OrderCard key={order.id} order={order} />
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">Нет текущих заказов</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Оформите свой первый заказ!
+                          </p>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="history" className="mt-4 space-y-4">
+                      {historyOrders.length > 0 ? (
+                        historyOrders.map((order: any) => (
+                          <OrderCard key={order.id} order={order} />
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">История заказов пуста</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="favorites" className="mt-4">
