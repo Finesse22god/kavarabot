@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, Filter, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Search, ArrowUpDown } from "lucide-react";
 import { useTelegram } from "@/hooks/use-telegram";
 import BoxCard from "@/components/box-card";
 import ProductCard from "@/components/product-card";
@@ -9,6 +9,7 @@ import CatalogHeader from "@/components/catalog-header";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import type { Box, Product } from "@shared/schema";
 
@@ -74,7 +75,6 @@ export default function Catalog() {
   const [selectedCategory, setSelectedCategory] = useState("Все категории");
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("default");
 
 
@@ -286,56 +286,12 @@ export default function Catalog() {
       <div className="p-6 pb-4">
         <h3 className="text-xl font-bold text-white tracking-wide mb-4">КАТАЛОГ ТОВАРОВ</h3>
         
-        {/* Filters and Sort in one row - mobile optimized */}
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 rounded-xl flex-shrink-0"
-            data-testid="button-toggle-filters"
-          >
-            <Filter className="w-4 h-4" />
-            Фильтры
-          </Button>
-          
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="flex-1 border-2 border-gray-200 rounded-xl" data-testid="select-sort">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Filters */}
-      {showFilters && (
-        <div className="px-6 pb-6 bg-gray-900 border-b border-gray-800 space-y-4">
-          {/* Search */}
-          <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">
-              Поиск товаров
-            </label>
-            <Input
-              placeholder="Введите название товара..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {/* Category Filter */}
-          <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">
-              Категория товара
-            </label>
+        {/* Category, Sort and Search in one row */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
+              <SelectTrigger className="flex-1 border-2 border-gray-200 rounded-xl" data-testid="select-category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -346,23 +302,82 @@ export default function Catalog() {
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Sort Icon */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-gray-200 rounded-xl flex-shrink-0"
+                  data-testid="button-sort"
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm mb-3">Сортировка</h4>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SORT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Search Icon */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-gray-200 rounded-xl flex-shrink-0"
+                  data-testid="button-search"
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm mb-3">Поиск товаров</h4>
+                  <Input
+                    placeholder="Введите название товара..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full"
+                    data-testid="input-search"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
-
-          {/* Reset Filters */}
-          <Button
-            variant="outline"
-            onClick={() => {
-              setSelectedCategory("Все категории");
-              setSearchQuery("");
-              setSortBy("default");
-            }}
-            className="w-full rounded-xl"
-          >
-            Сбросить фильтры
-          </Button>
+          {/* Reset Filters Button */}
+          {(selectedCategory !== "Все категории" || searchQuery || sortBy !== "default") && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedCategory("Все категории");
+                setSearchQuery("");
+                setSortBy("default");
+              }}
+              className="self-start rounded-xl text-xs"
+            >
+              Сбросить фильтры
+            </Button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Products Grid */}
       <div className="p-6">
