@@ -535,34 +535,34 @@ export default function Profile() {
 
               {/* Размеры */}
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="font-semibold mb-4">Размеры и параметры</h3>
+                <h3 className="font-semibold mb-6">Размеры и параметры</h3>
                 
                 {userMeasurements || quizResponse ? (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Предпочитаемый размер</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Предпочитаемый размер</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                           {userMeasurements?.preferredSize || quizResponse?.size || "Не указан"}
                         </div>
                       </div>
                       <div>
-                        <Label>Рост</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Рост</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                           {userMeasurements?.height ? `${userMeasurements.height} см` : 
                            quizResponse?.height ? `${quizResponse.height} см` : "Не указан"}
                         </div>
                       </div>
                       <div>
-                        <Label>Вес</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Вес</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                           {userMeasurements?.weight ? `${userMeasurements.weight} кг` : 
                            quizResponse?.weight ? `${quizResponse.weight} кг` : "Не указан"}
                         </div>
                       </div>
                       <div>
-                        <Label>Длина рукава</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Длина рукава</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                           {userMeasurements?.sleeveLength ? `${userMeasurements.sleeveLength} см` : "Не указана"}
                         </div>
                       </div>
@@ -570,23 +570,23 @@ export default function Profile() {
                     
                     {userMeasurements && (userMeasurements.chestSize || userMeasurements.waistSize || userMeasurements.hipSize) && (
                       <div>
-                        <Label className="mb-2 block">Обхваты</Label>
+                        <Label className="text-sm font-medium text-gray-700 mb-3 block">Обхваты</Label>
                         <div className="grid grid-cols-3 gap-4">
                           <div>
-                            <Label className="text-xs text-gray-600">Грудь</Label>
-                            <div className="p-2 bg-gray-50 rounded text-sm">
+                            <Label className="text-xs text-gray-600 mb-2 block">Грудь</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                               {userMeasurements.chestSize ? `${userMeasurements.chestSize} см` : "—"}
                             </div>
                           </div>
                           <div>
-                            <Label className="text-xs text-gray-600">Талия</Label>
-                            <div className="p-2 bg-gray-50 rounded text-sm">
+                            <Label className="text-xs text-gray-600 mb-2 block">Талия</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                               {userMeasurements.waistSize ? `${userMeasurements.waistSize} см` : "—"}
                             </div>
                           </div>
                           <div>
-                            <Label className="text-xs text-gray-600">Бедра</Label>
-                            <div className="p-2 bg-gray-50 rounded text-sm">
+                            <Label className="text-xs text-gray-600 mb-2 block">Бедра</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
                               {userMeasurements.hipSize ? `${userMeasurements.hipSize} см` : "—"}
                             </div>
                           </div>
@@ -594,7 +594,7 @@ export default function Profile() {
                       </div>
                     )}
                     
-                    <div className="flex gap-2">
+                    <div className="flex gap-3 pt-2">
                       <Button 
                         variant="outline" 
                         className="flex-1"
@@ -615,7 +615,7 @@ export default function Profile() {
                   <div className="text-center py-8">
                     <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">Размеры и параметры не указаны</p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3">
                       <Button 
                         variant="outline"
                         className="flex-1"
