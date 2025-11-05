@@ -27,8 +27,12 @@ export default function BottomNav() {
 
   const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
+  // Черный фон для каталога, прозрачный для остальных страниц
+  const isOnCatalog = location === "/catalog" || location.startsWith("/catalog");
+  const bgClass = isOnCatalog ? "bg-black" : "";
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe">
+    <div className={`fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe ${bgClass}`}>
       <div className="flex items-center justify-around">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
