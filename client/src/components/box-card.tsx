@@ -20,8 +20,8 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedSize, setSelectedSize] = useState<string>("");
 
-  // Чередование цветов: каждый второй бокс белый
-  const isWhiteVariant = index % 2 === 1;
+  // Все боксы черные
+  const isWhiteVariant = false;
 
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
