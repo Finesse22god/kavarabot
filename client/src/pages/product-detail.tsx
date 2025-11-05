@@ -145,7 +145,7 @@ export default function ProductDetail() {
   const hasSizes = parsedSizes && Array.isArray(parsedSizes) && parsedSizes.length > 0;
 
   return (
-    <div className="min-h-screen bg-white pb-32">
+    <div className="min-h-screen bg-white pb-40">
       <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
         <button 
           className="p-2 -ml-2" 
