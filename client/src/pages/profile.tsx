@@ -204,11 +204,11 @@ export default function Profile() {
   };
 
   const currentOrders = orders?.filter((order: any) => 
-    order.status === "pending" || order.status === "paid" || order.status === "processing" || order.status === "shipped"
+    order.status === "pending" || order.status === "processing" || order.status === "shipped"
   ) || [];
 
   const historyOrders = orders?.filter((order: any) => 
-    order.status === "delivered" || order.status === "cancelled"
+    order.status === "paid" || order.status === "delivered" || order.status === "cancelled"
   ) || [];
 
   const getStatusIcon = (status: string | null) => {
