@@ -206,10 +206,10 @@ export default function Catalog() {
   // Show loading while data is being fetched
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Загружаем каталог...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-white">Загружаем каталог...</p>
         </div>
       </div>
     );
@@ -218,10 +218,10 @@ export default function Catalog() {
   // Show error if fetch failed
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600">Ошибка загрузки каталога</p>
-          <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 bg-blue-500 text-white rounded">
+          <p className="text-red-400">Ошибка загрузки каталога</p>
+          <button onClick={() => window.location.reload()} className="mt-2 px-4 py-2 bg-white text-black rounded">
             Попробовать снова
           </button>
         </div>
@@ -233,19 +233,19 @@ export default function Catalog() {
 
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-black pb-20">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-800">
         <div className="flex items-center space-x-4">
           <button 
             className="p-2 -ml-2" 
             onClick={() => setLocation("/")}
           >
-            <ArrowLeft className="w-6 h-6 text-black" />
+            <ArrowLeft className="w-6 h-6 text-white" />
           </button>
           <div>
-            <h2 className="text-2xl font-bold text-black tracking-wide">КАТАЛОГ KAVARA</h2>
-            <p className="text-gray-600 font-medium">
+            <h2 className="text-2xl font-bold text-white tracking-wide">КАТАЛОГ KAVARA</h2>
+            <p className="text-gray-400 font-medium">
               {catalogItems?.length || 0} товаров
             </p>
           </div>
@@ -256,7 +256,7 @@ export default function Catalog() {
       {/* Boxes Section */}
       {!boxesLoading && boxes && boxes.length > 0 && (
         <div className="p-6 pb-4">
-          <h3 className="text-xl font-bold text-black tracking-wide mb-4">ГОТОВЫЕ БОКСЫ</h3>
+          <h3 className="text-xl font-bold text-white tracking-wide mb-4">ГОТОВЫЕ БОКСЫ</h3>
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {boxes.map((box) => (
               <div
@@ -298,7 +298,7 @@ export default function Catalog() {
 
       {/* Catalog Products Header */}
       <div className="p-6 pb-4">
-        <h3 className="text-xl font-bold text-black tracking-wide mb-4">КАТАЛОГ ТОВАРОВ</h3>
+        <h3 className="text-xl font-bold text-white tracking-wide mb-4">КАТАЛОГ ТОВАРОВ</h3>
         
         {/* Filters and Sort in one row - mobile optimized */}
         <div className="flex items-center gap-3">
@@ -330,10 +330,10 @@ export default function Catalog() {
 
       {/* Filters */}
       {showFilters && (
-        <div className="px-6 pb-6 bg-gray-50 border-b border-gray-200 space-y-4">
+        <div className="px-6 pb-6 bg-gray-900 border-b border-gray-800 space-y-4">
           {/* Search */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-300 mb-2 block">
               Поиск товаров
             </label>
             <Input
@@ -345,7 +345,7 @@ export default function Catalog() {
 
           {/* Category Filter */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-gray-300 mb-2 block">
               Категория товара
             </label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>

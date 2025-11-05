@@ -128,10 +128,10 @@ export default function Cart() {
   // Check if user is authenticated via Telegram
   if (!telegramUser) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-black flex items-center justify-center p-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-black mb-4">Вход требуется</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-white mb-4">Вход требуется</h1>
+          <p className="text-gray-400 mb-6">
             Корзина доступна только авторизованным пользователям
           </p>
           <Button onClick={() => setLocation("/")}>На главную</Button>
@@ -143,10 +143,10 @@ export default function Cart() {
   // Wait for database user to load
   if (!dbUser && telegramUser) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Загрузка данных пользователя...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-white">Загрузка данных пользователя...</p>
         </div>
       </div>
     );
@@ -154,17 +154,17 @@ export default function Cart() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Загружаем корзину...</p>
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-white">Загружаем корзину...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-black pb-20">
       {/* Header */}
       <div className="p-4 bg-black text-white">
         <div className="flex items-center space-x-3">
