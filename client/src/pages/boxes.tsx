@@ -25,9 +25,6 @@ export default function Boxes() {
     queryKey: ["/api/boxes"],
   });
 
-  // Debug logging
-  console.log("Boxes query state:", { boxes, isLoading, error });
-
   const handleSelectBox = (box: any) => {
     sessionStorage.setItem("selectedBox", JSON.stringify(box));
     setLocation("/order");
@@ -111,7 +108,6 @@ export default function Boxes() {
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-white">Загружаем боксы...</p>
-          <p className="text-gray-400 text-xs mt-2">Debug: isLoading = {String(isLoading)}</p>
         </div>
       </div>
     );
