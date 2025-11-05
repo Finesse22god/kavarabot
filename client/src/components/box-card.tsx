@@ -139,7 +139,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             <button
               key={size}
               onClick={(e) => handleSizeClick(e, size)}
-              className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] transition-colors ${
+              className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] flex items-center justify-center transition-colors ${
                 selectedSize === size
                   ? 'bg-black text-white' 
                   : 'bg-transparent border border-black text-black hover:bg-gray-100'
@@ -149,12 +149,6 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
               {size}
             </button>
           ))}
-          <button
-            onClick={(e) => e.stopPropagation()}
-            className="px-3 py-2 rounded-lg font-semibold bg-transparent border border-black text-black hover:bg-gray-100"
-          >
-            ...
-          </button>
         </div>
       </div>
 
