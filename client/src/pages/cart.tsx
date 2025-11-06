@@ -241,22 +241,21 @@ export default function Cart() {
                 return (
                 <Card key={item.id} data-testid={`card-item-${item.id}`}>
                   <CardContent className="p-4">
-                    <div className="flex gap-4">
-                      {item.itemType === "product" && (
-                        <img
-                          src={currentItem.imageUrl}
-                          alt={currentItem.name}
-                          loading="lazy"
-                          className="w-20 h-20 object-cover rounded-lg"
-                          data-testid={`img-product-${item.id}`}
-                        />
-                      )}
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{currentItem.name}</h3>
-                        {item.selectedSize && (
-                          <p className="text-sm text-blue-600 font-medium mb-2">Размер: {item.selectedSize}</p>
-                        )}
-                        <div className="text-xl font-bold mb-2" data-testid={`text-price-${item.id}`}>{(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽</div>
+                    {item.itemType === "box" ? (
+                      // Box layout: horizontal with name/price in one line
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="font-semibold text-lg">{currentItem.name}</h3>
+                            {item.selectedSize && (
+                              <p className="text-sm text-gray-600">Размер: {item.selectedSize}</p>
+                            )}
+                          </div>
+                          <div className="text-xl font-bold" data-testid={`text-price-${item.id}`}>
+                            {(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽
+                          </div>
+                        </div>
+                        <div className="h-px bg-gray-200"></div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Button
@@ -298,7 +297,65 @@ export default function Cart() {
                           </Button>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      // Product layout: with image on left
+                      <div className="flex gap-4">
+                        <img
+                          src={currentItem.imageUrl}
+                          alt={currentItem.name}
+                          loading="lazy"
+                          className="w-20 h-20 object-cover rounded-lg"
+                          data-testid={`img-product-${item.id}`}
+                        />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{currentItem.name}</h3>
+                          {item.selectedSize && (
+                            <p className="text-sm text-blue-600 font-medium mb-2">Размер: {item.selectedSize}</p>
+                          )}
+                          <div className="text-xl font-bold mb-2" data-testid={`text-price-${item.id}`}>{(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽</div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  updateQuantityMutation.mutate({
+                                    itemId: item.id,
+                                    quantity: Math.max(1, item.quantity - 1),
+                                  })
+                                }
+                                disabled={item.quantity <= 1}
+                                data-testid={`button-decrease-${item.id}`}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-8 text-center font-semibold" data-testid={`text-quantity-${item.id}`}>{item.quantity}</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  updateQuantityMutation.mutate({
+                                    itemId: item.id,
+                                    quantity: item.quantity + 1,
+                                  })
+                                }
+                                data-testid={`button-increase-${item.id}`}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeFromCartMutation.mutate(item.id)}
+                              data-testid={`button-delete-${item.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
                 );
