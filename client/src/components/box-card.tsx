@@ -200,20 +200,24 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
       {/* Dialog для показа фото */}
       <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
-        <DialogContent className="max-w-4xl bg-black border-2 border-white p-0 overflow-hidden">
+        <DialogContent className="max-w-md w-[90vw] max-h-[80vh] bg-black border-2 border-white p-0 overflow-auto">
           <DialogTitle className="sr-only">Фото бокса</DialogTitle>
-          <button
-            onClick={() => setIsPhotoDialogOpen(false)}
-            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            data-testid="button-close-photo-dialog"
-          >
-            <X className="w-6 h-6 text-white" />
-          </button>
-          <img 
-            src={boxPhotoImage} 
-            alt="Фото бокса"
-            className="w-full h-auto object-contain"
-          />
+          <div className="sticky top-0 right-0 flex justify-end p-2 bg-gradient-to-b from-black/80 to-transparent z-10">
+            <button
+              onClick={() => setIsPhotoDialogOpen(false)}
+              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              data-testid="button-close-photo-dialog"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+          </div>
+          <div className="px-4 pb-4 -mt-12">
+            <img 
+              src={boxPhotoImage} 
+              alt="Фото бокса"
+              className="w-full h-auto object-contain rounded-lg"
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>
