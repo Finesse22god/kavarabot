@@ -33,9 +33,9 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
       </div>
 
       {/* Tab Switcher with Cart Button */}
-      <div className="flex items-center justify-between gap-3 h-[31px]">
+      <div className="flex items-center justify-between gap-3 h-[30px]">
         {/* Tabs Container */}
-        <div className="flex-1 flex items-center border-2 border-white rounded-full overflow-hidden h-[21px]">
+        <div className="flex-1 flex items-center border-2 border-white rounded-full overflow-hidden h-[30px]">
           <button
             onClick={() => setLocation("/catalog")}
             className={`flex-1 px-6 text-sm font-bold tracking-wide transition-colors ${
@@ -63,10 +63,10 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
         {/* Cart Button */}
         <button
           onClick={() => setLocation("/cart")}
-          className="border-2 border-white rounded-full p-3 hover:bg-white/10 transition-colors relative"
+          className="border-2 border-white rounded-full hover:bg-white/10 transition-colors relative h-[30px] w-[30px] flex items-center justify-center"
           data-testid="button-cart"
         >
-          <ShoppingCart className="w-6 h-6 text-white" />
+          <ShoppingCart className="w-4 h-4 text-white" />
           {cartItemCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
               {cartItemCount > 99 ? "99+" : cartItemCount}
