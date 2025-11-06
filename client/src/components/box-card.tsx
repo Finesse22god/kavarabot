@@ -81,19 +81,10 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             <span className="text-3xl font-light">+</span>
           </div>
 
-          {/* Цена и кнопка "Подробнее" */}
+          {/* Цена */}
           <div className="flex-1 text-right">
-            <div className="text-xl font-bold mb-1">
+            <div className="text-xl font-bold">
               {typeof box.price === 'string' ? parseFloat(box.price).toLocaleString('ru-RU') : box.price.toLocaleString('ru-RU')} ₽
-            </div>
-            <div
-              className={`text-sm underline flex items-center gap-1 ml-auto ${
-                isWhiteVariant ? 'text-black' : 'text-white'
-              }`}
-              data-testid={`button-expand-${box.id}`}
-            >
-              Подробнее
-              <ChevronDown className="w-4 h-4" />
             </div>
           </div>
         </div>
