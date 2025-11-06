@@ -305,10 +305,10 @@ export default function Order() {
   // Check authentication
   if (!isInTelegram || !telegramUser) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-black flex items-center justify-center p-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-black mb-4">Доступ запрещен</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-2xl font-bold text-white mb-4">Доступ запрещен</h1>
+          <p className="text-gray-400 mb-6">
             Заказы доступны только пользователям Telegram
           </p>
           <Button onClick={() => setLocation("/")}>На главную</Button>
@@ -320,10 +320,10 @@ export default function Order() {
   // Wait for database user to load
   if (!dbUser && telegramUser) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-gray-600">Загрузка данных пользователя...</p>
+          <p className="text-gray-400">Загрузка данных пользователя...</p>
         </div>
       </div>
     );
@@ -331,16 +331,16 @@ export default function Order() {
 
   if (!selectedBox) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Загрузка...</p>
+          <p className="text-gray-400">Загрузка...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-black">
       <LoadingOverlay isVisible={isLoading} />
       
       <div className="p-4 bg-black text-white">
@@ -358,7 +358,7 @@ export default function Order() {
       </div>
 
       {/* Order Confirmation */}
-      <div className="p-4 bg-gradient-to-br from-orange-50 to-blue-50">
+      <div className="p-4">
         <div className="bg-white rounded-xl p-4 shadow-lg">
           <h3 className="font-semibold mb-3">Подтверждение выбора</h3>
           <div className="flex items-center space-x-4">
