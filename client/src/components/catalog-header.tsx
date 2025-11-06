@@ -1,4 +1,3 @@
-import { ShoppingCart } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -63,10 +62,10 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
         {/* Cart Button */}
         <button
           onClick={() => setLocation("/cart")}
-          className="border-2 border-white rounded-full hover:bg-white/10 transition-colors relative h-[30px] w-[30px] flex items-center justify-center"
+          className="border-2 border-white rounded-full hover:bg-white/10 transition-colors relative h-[30px] px-6 flex items-center justify-center text-white text-xs font-bold tracking-wide"
           data-testid="button-cart"
         >
-          <ShoppingCart className="w-4 h-4 text-white" />
+          КОРЗИНА
           {cartItemCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
               {cartItemCount > 99 ? "99+" : cartItemCount}
