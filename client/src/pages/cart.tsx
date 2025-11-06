@@ -287,18 +287,17 @@ export default function Cart() {
                               <Plus className="w-4 h-4" />
                             </Button>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="destructive"
+                          <button
                             onClick={() => removeFromCartMutation.mutate(item.id)}
+                            className="text-sm underline text-gray-700 hover:text-black"
                             data-testid={`button-delete-${item.id}`}
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            Удалить
+                          </button>
                         </div>
                       </div>
                     ) : (
-                      // Product layout: with image on left
+                      // Product layout: with image on left, name/price in one line
                       <div className="flex gap-4">
                         <img
                           src={currentItem.imageUrl}
@@ -307,12 +306,19 @@ export default function Cart() {
                           className="w-20 h-20 object-cover rounded-lg"
                           data-testid={`img-product-${item.id}`}
                         />
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg">{currentItem.name}</h3>
-                          {item.selectedSize && (
-                            <p className="text-sm text-blue-600 font-medium mb-2">Размер: {item.selectedSize}</p>
-                          )}
-                          <div className="text-xl font-bold mb-2" data-testid={`text-price-${item.id}`}>{(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽</div>
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="font-semibold text-lg">{currentItem.name}</h3>
+                              {item.selectedSize && (
+                                <p className="text-sm text-gray-600">Размер: {item.selectedSize}</p>
+                              )}
+                            </div>
+                            <div className="text-xl font-bold" data-testid={`text-price-${item.id}`}>
+                              {(typeof currentItem.price === 'string' ? parseFloat(currentItem.price) : currentItem.price).toLocaleString()}₽
+                            </div>
+                          </div>
+                          <div className="h-px bg-gray-200"></div>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Button
@@ -344,14 +350,13 @@ export default function Cart() {
                                 <Plus className="w-4 h-4" />
                               </Button>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="destructive"
+                            <button
                               onClick={() => removeFromCartMutation.mutate(item.id)}
+                              className="text-sm underline text-gray-700 hover:text-black"
                               data-testid={`button-delete-${item.id}`}
                             >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                              Удалить
+                            </button>
                           </div>
                         </div>
                       </div>
