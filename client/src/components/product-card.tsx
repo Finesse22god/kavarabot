@@ -67,7 +67,7 @@ export default function ProductCard({
       className={`bg-white rounded-2xl overflow-hidden border-2 border-black transition-all hover:shadow-xl ${isComingSoon ? "opacity-60" : "cursor-pointer"}`}
       onClick={handleCardClick}
     >
-      <div className="aspect-[4/3] relative overflow-hidden bg-gray-100 p-3">
+      <div className="aspect-[4/3] relative overflow-hidden bg-white p-3">
         <img 
           src={product.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={product.name}
