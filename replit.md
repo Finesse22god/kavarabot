@@ -66,6 +66,12 @@ Preferred communication style: Simple, everyday language.
       - **Catalog Parser Optimization**: Early termination on consecutive empty pages to reduce unnecessary API calls.
       - **Configuration Management**: Removed hardcoded Telegram values, now using environment variables for ADMIN_CHAT_ID and dynamic webhook URL detection.
     - **Inventory Management System** (October 2025): Comprehensive inventory tracking system for products and boxes with size-specific stock management. Added `inventory` JSON field to products and boxes tables to store stock quantities by size (e.g., {"S": 10, "M": 15, "L": 8}). New admin panel "Остатки" (Inventory) tab provides dedicated interface for managing stock levels with visual indicators for low stock (yellow badge < 10 units) and out-of-stock (red badge, 0 units) items. Product and box cards in admin panel now display real-time inventory status badges. PATCH API endpoints (`/api/admin/products/:id` and `/api/admin/boxes/:id`) enable partial inventory updates. System designed with future 1C integration in mind for automated stock synchronization and payment reconciliation.
+    - **Performance Optimizations** (November 2025): Implemented comprehensive loading speed improvements across the application:
+      - **Image Lazy Loading**: Added `loading="lazy"` attribute to all product, box, and cart images for on-demand loading
+      - **React Query Caching**: Configured `staleTime: 5 minutes` and `gcTime: 10 minutes` for boxes, catalog, and product detail queries to reduce redundant API calls
+      - **Smart Image Loading**: First carousel image loads eagerly, subsequent images load lazily for better perceived performance
+      - **Background Placeholders**: Added gray backgrounds to image containers for smoother visual transitions during loading
+      - **Box Photo Dialog**: Optimized photo popup with responsive sizing (max 70vh height, 90vw width, rounded corners) and lazy loading
 
 ## External Dependencies
 

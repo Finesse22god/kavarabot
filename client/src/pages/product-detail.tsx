@@ -59,6 +59,8 @@ export default function ProductDetail() {
   const { data: product, isLoading, error } = useQuery<Product>({
     queryKey: [`/api/products/${params?.id}`],
     enabled: !!params?.id,
+    staleTime: 5 * 60 * 1000, // Кэш на 5 минут
+    gcTime: 10 * 60 * 1000, // Хранить в памяти 10 минут
   });
 
   const addToCartMutation = useMutation({
@@ -173,6 +175,7 @@ export default function ProductDetail() {
               <img
                 src={productImages[0]}
                 alt={product.name}
+                loading="lazy"
                 className="w-full h-full object-cover"
               />
             );
@@ -187,6 +190,7 @@ export default function ProductDetail() {
                       <img
                         src={image}
                         alt={`${product.name} - фото ${index + 1}`}
+                        loading={index === 0 ? "eager" : "lazy"}
                         className="w-full h-full object-cover aspect-square"
                       />
                     </div>

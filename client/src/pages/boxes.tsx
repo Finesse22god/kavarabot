@@ -25,6 +25,8 @@ export default function Boxes() {
   // Fetch all boxes
   const { data: boxes, isLoading, error } = useQuery({
     queryKey: ["/api/boxes"],
+    staleTime: 5 * 60 * 1000, // Кэш на 5 минут
+    gcTime: 10 * 60 * 1000, // Хранить в памяти 10 минут
   });
 
   const handleSelectBox = (box: any) => {

@@ -108,6 +108,8 @@ export default function Catalog() {
       if (!response.ok) throw new Error("Failed to fetch catalog");
       return response.json() as Promise<Product[]>;
     },
+    staleTime: 5 * 60 * 1000, // Кэш на 5 минут
+    gcTime: 10 * 60 * 1000, // Хранить в памяти 10 минут
   });
 
 

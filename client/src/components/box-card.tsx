@@ -213,6 +213,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
             <img 
               src={boxPhotoImage} 
               alt="Фото бокса"
+              loading="lazy"
               className="w-full max-h-[70vh] object-contain rounded-2xl"
             />
           </div>

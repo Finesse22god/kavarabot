@@ -67,10 +67,11 @@ export default function ProductCard({
       className={`bg-white rounded-2xl overflow-hidden border-2 border-black transition-all hover:shadow-xl ${isComingSoon ? "opacity-60" : "cursor-pointer"}`}
       onClick={handleCardClick}
     >
-      <div className="aspect-[4/3] relative overflow-hidden">
+      <div className="aspect-[4/3] relative overflow-hidden bg-gray-100">
         <img 
           src={product.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
           alt={product.name}
+          loading="lazy"
           className={`w-full h-full object-cover transition-transform hover:scale-105 ${isComingSoon ? "grayscale" : ""}`}
         />
         <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
