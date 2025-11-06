@@ -242,13 +242,15 @@ export default function Cart() {
                 <Card key={item.id} data-testid={`card-item-${item.id}`}>
                   <CardContent className="p-4">
                     <div className="flex gap-4">
-                      <img
-                        src={currentItem.imageUrl}
-                        alt={currentItem.name}
-                        loading="lazy"
-                        className="w-20 h-20 object-cover rounded-lg"
-                        data-testid={`img-product-${item.id}`}
-                      />
+                      {item.itemType === "product" && (
+                        <img
+                          src={currentItem.imageUrl}
+                          alt={currentItem.name}
+                          loading="lazy"
+                          className="w-20 h-20 object-cover rounded-lg"
+                          data-testid={`img-product-${item.id}`}
+                        />
+                      )}
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{currentItem.name}</h3>
                         {item.selectedSize && (
