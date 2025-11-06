@@ -163,7 +163,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       </div>
 
       {/* Кнопки действий */}
-      <div className="flex items-center justify-between gap-4 mb-24">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <button
           onClick={(e) => {
             e.stopPropagation();
