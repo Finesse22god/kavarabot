@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, Camera } from "lucide-react";
 import type { Box } from "@shared/schema";
 import { useLocation } from "wouter";
 
@@ -169,13 +169,26 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <ChevronUp className="w-4 h-4" />
         </button>
 
-        <button
-          onClick={handleAddToCart}
-          className="px-8 py-3 rounded-full font-semibold transition-colors bg-black text-white hover:bg-gray-800"
-          data-testid={`button-add-to-cart-${box.id}`}
-        >
-          В КОРЗИНУ
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              // Логика для показа фото
+            }}
+            className="p-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
+            data-testid={`button-photo-${box.id}`}
+          >
+            <Camera className="w-5 h-5" />
+          </button>
+
+          <button
+            onClick={handleAddToCart}
+            className="px-8 py-3 rounded-full font-semibold transition-colors bg-black text-white hover:bg-gray-800"
+            data-testid={`button-add-to-cart-${box.id}`}
+          >
+            В КОРЗИНУ
+          </button>
+        </div>
       </div>
     </div>
   );
