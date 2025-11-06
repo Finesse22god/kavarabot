@@ -669,12 +669,31 @@ export default function Profile() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">Нет заказов</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Оформите свой первый заказ!
+                  <div className="text-center py-12 px-4">
+                    <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-800 mb-2">
+                      У вас еще нет заказов
+                    </h4>
+                    <p className="text-sm text-gray-500 mb-6">
+                      Перейдите в каталог или посмотрите готовые боксы
                     </p>
+                    <div className="flex gap-3 justify-center">
+                      <Button 
+                        onClick={() => setLocation("/?view=catalog")}
+                        className="bg-black hover:bg-gray-800 text-white"
+                        data-testid="button-goto-catalog"
+                      >
+                        Каталог
+                      </Button>
+                      <Button 
+                        onClick={() => setLocation("/?view=boxes")}
+                        variant="outline"
+                        className="border-black text-black hover:bg-gray-100"
+                        data-testid="button-goto-boxes"
+                      >
+                        Боксы
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
