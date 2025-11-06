@@ -224,14 +224,16 @@ export default function Cart() {
         </div>
       </div>
 
-      <div className="p-4 pb-4">
+      <div className="pb-4">
         {cartItems && cartItems.length > 0 ? (
           <>
-            {/* Cart Title */}
-            <h2 className="text-white text-lg font-semibold mb-4">Корзина:</h2>
-            
-            {/* Cart Items */}
-            <div className="space-y-3">
+            {/* Content Wrapper */}
+            <div className="mx-4 max-w-2xl lg:mx-auto">
+              {/* Cart Title */}
+              <h2 className="text-white text-lg font-semibold mb-4">Корзина:</h2>
+              
+              {/* Cart Items */}
+              <div className="space-y-3">
               {cartItems.map((item) => {
                 const currentItem = item.itemType === "product" ? item.product : item.box;
                 if (!currentItem) return null;
@@ -300,6 +302,7 @@ export default function Cart() {
                 </Card>
                 );
               })}
+            </div>
             </div>
 
             {/* Fixed Bottom Summary */}
