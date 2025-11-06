@@ -307,8 +307,8 @@ export default function Cart() {
             </div>
 
             {/* Fixed Bottom Summary */}
-            <div className="fixed bottom-20 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-lg z-40">
-              <div className="max-w-2xl mx-auto p-4 space-y-4">
+            <div className="fixed bottom-20 left-4 right-4 bg-white border-t-2 border-gray-200 shadow-lg z-40 rounded-t-xl">
+              <div className="p-4 space-y-4">
                 {/* Promo Code Input */}
                 <div className="flex gap-2">
                   <div className="relative flex-1">
