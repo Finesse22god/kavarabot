@@ -307,7 +307,8 @@ export default function Cart() {
 
             {/* Fixed Bottom Summary */}
             <div className="fixed bottom-20 left-0 right-0 z-40">
-              <div className="mx-4 max-w-2xl lg:mx-auto bg-white border-2 border-gray-200 shadow-lg rounded-xl p-4 space-y-4">
+              <Card className="mx-4 max-w-2xl lg:mx-auto">
+                <CardContent className="p-4 space-y-4">
                 {/* Promo Code Input */}
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -373,7 +374,8 @@ export default function Cart() {
                 >
                   Оформить заказ
                 </Button>
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </>
         ) : (
