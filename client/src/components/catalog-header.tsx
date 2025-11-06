@@ -38,7 +38,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
         <div className="flex-1 flex items-center border-2 border-white rounded-full overflow-hidden h-[30px]">
           <button
             onClick={() => setLocation("/catalog")}
-            className={`flex-1 px-6 text-sm font-bold tracking-wide transition-colors ${
+            className={`flex-1 px-6 text-xs font-bold tracking-wide transition-colors h-full flex items-center justify-center ${
               activeTab === "catalog"
                 ? "bg-white text-black"
                 : "bg-transparent text-white hover:bg-white/10"
@@ -49,7 +49,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
           </button>
           <button
             onClick={() => setLocation("/boxes")}
-            className={`flex-1 px-6 text-sm font-bold tracking-wide transition-colors ${
+            className={`flex-1 px-6 text-xs font-bold tracking-wide transition-colors h-full flex items-center justify-center ${
               activeTab === "boxes"
                 ? "bg-white text-black"
                 : "bg-transparent text-white hover:bg-white/10"
