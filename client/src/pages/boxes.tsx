@@ -140,7 +140,11 @@ export default function Boxes() {
       {/* Boxes Grid */}
       <div className="p-4">
         {boxes && (boxes as any[]).length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 mb-4">
+          <>
+            {/* Section Title */}
+            <h2 className="text-white text-lg font-semibold mb-4">ВЫБЕРИ ГОТОВЫЙ КОМПЛЕКТ</h2>
+            
+            <div className="grid grid-cols-1 gap-4 mb-4">
             {(boxes as any[]).map((box: any, index: number) => (
               <BoxCard 
                 key={box.id}
@@ -155,6 +159,7 @@ export default function Boxes() {
               />
             ))}
           </div>
+          </>
         ) : (
           <div className="text-center py-16">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
