@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, ChevronDown, ChevronUp, Camera } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, Camera, X } from "lucide-react";
 import type { Box } from "@shared/schema";
 import { useLocation } from "wouter";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import boxPhotoImage from "@assets/image 855_1762420246746.png";
 
 interface BoxCardProps {
   box: Box | any;
@@ -20,6 +26,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   const isComingSoon = variant === "coming-soon" || !box.isAvailable;
   const [, setLocation] = useLocation();
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
 
   // Все боксы черные
   const isWhiteVariant = false;
@@ -173,7 +180,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // Логика для показа фото
+              setIsPhotoDialogOpen(true);
             }}
             className="p-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
             data-testid={`button-photo-${box.id}`}
@@ -190,6 +197,25 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           </button>
         </div>
       </div>
+
+      {/* Dialog для показа фото */}
+      <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
+        <DialogContent className="max-w-4xl bg-black border-2 border-white p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Фото бокса</DialogTitle>
+          <button
+            onClick={() => setIsPhotoDialogOpen(false)}
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            data-testid="button-close-photo-dialog"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <img 
+            src={boxPhotoImage} 
+            alt="Фото бокса"
+            className="w-full h-auto object-contain"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
