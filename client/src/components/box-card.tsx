@@ -119,7 +119,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
               <div 
                 key={product.id || idx} 
                 onClick={(e) => handleProductClick(e, product)}
-                className="text-sm cursor-pointer transition-opacity hover:opacity-70 hover:text-gray-700"
+                className="text-sm cursor-pointer transition-opacity hover:opacity-70 hover:text-gray-700 underline"
                 style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}
                 data-testid={`product-item-${product.id}`}
               >
