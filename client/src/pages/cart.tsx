@@ -227,6 +227,9 @@ export default function Cart() {
       <div className="p-4 pb-4">
         {cartItems && cartItems.length > 0 ? (
           <>
+            {/* Cart Title */}
+            <h2 className="text-white text-lg font-semibold mb-4">Корзина:</h2>
+            
             {/* Cart Items */}
             <div className="space-y-3">
               {cartItems.map((item) => {
