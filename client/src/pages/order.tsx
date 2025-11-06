@@ -576,23 +576,24 @@ export default function Order() {
               </div>
             )}
             <hr className="my-2" />
-            <div className="flex justify-between items-center text-lg font-bold">
+            <div className="flex justify-between items-center text-lg font-bold mb-4">
               <span>Итого:</span>
               <span className="text-primary">
                 {calculateTotalPrice().toLocaleString('ru-RU')}₽
               </span>
             </div>
+
+            {/* Final Order Button */}
+            <Button 
+              type="submit"
+              className="w-full bg-black hover:bg-gray-800 text-white text-lg py-4"
+              disabled={createOrder.isPending}
+              data-testid="button-submit-order"
+            >
+              {createOrder.isPending ? "Оформляем заказ..." : "Оформить заказ"}
+            </Button>
           </div>
         </div>
-
-        {/* Final Order Button */}
-        <Button 
-          type="submit"
-          className="w-full bg-primary text-white text-lg py-4"
-          disabled={createOrder.isPending}
-        >
-          {createOrder.isPending ? "Оформляем заказ..." : "Оформить заказ"}
-        </Button>
 
         {/* Contact Manager Button */}
         <div className="flex justify-center pt-4">
