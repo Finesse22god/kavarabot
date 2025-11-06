@@ -205,7 +205,7 @@ export default function PaymentSuccess() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <Button 
-            onClick={() => setLocation("/my-orders")}
+            onClick={() => setLocation("/profile")}
             className="w-full bg-black hover:bg-gray-800 text-white"
             size="lg"
             data-testid="button-my-orders"

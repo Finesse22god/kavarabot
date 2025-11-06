@@ -117,7 +117,7 @@ export default function OrderDetails() {
       <div className="p-4 bg-black text-white">
         <div className="flex items-center space-x-3">
           <button 
-            onClick={() => setLocation("/my-orders")}
+            onClick={() => setLocation("/profile")}
             data-testid="button-back"
           >
             <ArrowLeft className="w-6 h-6" />
@@ -311,7 +311,7 @@ export default function OrderDetails() {
             </Button>
           )}
           <Button 
-            onClick={() => setLocation("/my-orders")}
+            onClick={() => setLocation("/profile")}
             className="w-full bg-black hover:bg-gray-800 text-white"
             size="lg"
             data-testid="button-my-orders"
