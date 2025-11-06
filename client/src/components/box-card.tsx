@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, ChevronDown, ChevronUp, Camera, X } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, X } from "lucide-react";
 import type { Box } from "@shared/schema";
 import { useLocation } from "wouter";
 import {
@@ -173,10 +173,10 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
               e.stopPropagation();
               setIsPhotoDialogOpen(true);
             }}
-            className="p-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors"
+            className="px-6 py-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors font-semibold text-sm"
             data-testid={`button-photo-${box.id}`}
           >
-            <Camera className="w-5 h-5" />
+            ФОТО
           </button>
 
           <button
