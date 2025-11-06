@@ -11,8 +11,25 @@ const menuItems = [
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
 
+  // Черный фон для каталога, боксов, товаров, корзины, избранного, профиля и инфо
+  const shouldShowBlackBg = 
+    location === "/catalog" || 
+    location.startsWith("/catalog") ||
+    location === "/boxes" ||
+    location.startsWith("/boxes") ||
+    location.startsWith("/product/") ||
+    location === "/cart" ||
+    location.startsWith("/cart") ||
+    location === "/favorites" ||
+    location.startsWith("/favorites") ||
+    location === "/profile" ||
+    location.startsWith("/profile") ||
+    location === "/info" ||
+    location.startsWith("/info");
+  const bgClass = shouldShowBlackBg ? "bg-black" : "";
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe bg-black">
+    <div className={`fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe ${bgClass}`}>
       <div className="flex items-center justify-around">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
