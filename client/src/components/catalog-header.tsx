@@ -14,7 +14,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
   // Get database user by telegram ID
   const { data: dbUser } = useQuery<{ id: string; telegramId: string }>({
     queryKey: [`/api/users/telegram/${telegramUser?.id}`],
-    enabled: !!telegramUser?.id
+    enabled: !!telegramUser?.id,
   });
 
   const { data: cartItems } = useQuery<any[]>({
@@ -22,7 +22,8 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
     enabled: !!dbUser?.id,
   });
 
-  const cartItemCount = cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const cartItemCount =
+    cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
   return (
     <div className="bg-black text-white py-4 px-4 sticky top-0 z-50">
@@ -32,7 +33,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
       </div>
 
       {/* Tab Switcher with Cart Button */}
-      <div className="flex items-center justify-between gap-3 h-[21px]">
+      <div className="flex items-center justify-between gap-3 h-[31px]">
         {/* Tabs Container */}
         <div className="flex-1 flex items-center border-2 border-white rounded-full overflow-hidden h-[21px]">
           <button
