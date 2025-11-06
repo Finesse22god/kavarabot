@@ -251,7 +251,6 @@ export default function Cart() {
                       />
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg">{currentItem.name}</h3>
-                        <p className="text-gray-600 text-sm mb-1">{currentItem.description}</p>
                         {item.selectedSize && (
                           <p className="text-sm text-blue-600 font-medium mb-2">Размер: {item.selectedSize}</p>
                         )}
