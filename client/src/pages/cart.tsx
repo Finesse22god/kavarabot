@@ -217,17 +217,10 @@ export default function Cart() {
 
   return (
     <div className="min-h-screen bg-black pb-96">
-      {/* Header */}
-      <div className="p-4 bg-black text-white">
-        <div className="flex items-center space-x-3">
-          <button onClick={() => setLocation("/catalog")}>
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div className="text-2xl">🛒</div>
-          <div>
-            <h2 className="font-semibold">Корзина</h2>
-            <p className="text-sm text-gray-300">{totalItems} товаров</p>
-          </div>
+      {/* Header with KAVARA Logo */}
+      <div className="bg-black text-white py-4 px-4 sticky top-0 z-50">
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold tracking-widest">KAVARA</h1>
         </div>
       </div>
 
