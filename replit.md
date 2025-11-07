@@ -74,8 +74,8 @@ Preferred communication style: Simple, everyday language.
       - **Box Photo Dialog**: Optimized photo popup with responsive sizing (max 70vh height, 90vw width, rounded corners) and lazy loading
     - **Referral Promo Code System** (November 2025): Enhanced promo code system with owner tracking and automatic loyalty point rewards:
       - **PromoCode Entity**: Added `ownerId` (relation to User), `pointsPerUse`, `partnerName`, and `partnerContact` fields to track promo code ownership, reward amounts, and partner metadata
-      - **PromoCodeUsage Entity**: New entity tracks detailed usage history (who used which promo code, when, and for which order)
-      - **Automatic Point Distribution**: When a promo code is used in an order, the system automatically awards loyalty points to the code owner
+      - **PromoCodeUsage Entity**: New entity tracks detailed usage history with @Unique constraint on orderId to prevent duplicate awards
+      - **Automatic Point Distribution**: Loyalty points are awarded to promo code owners ONLY after successful payment confirmation via YooKassa webhook (payment.succeeded event), ensuring points are never given for unpaid orders. Idempotency guaranteed through database unique constraint and existingUsage checks with graceful handling of duplicate webhook deliveries
       - **Admin Panel Enhancements**: Added fields to assign promo codes to specific users by Telegram ID or username, set points-per-use rewards, partner information, and view detailed usage statistics
       - **Validation**: Comprehensive frontend and backend validation for all promo code fields, including non-negative point values and descriptive error messages
       - **Usage Analytics**: Admin panel displays complete usage history showing which users used each promo code, associated order details, and points awarded to owners
