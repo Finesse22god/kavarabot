@@ -9,7 +9,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import LoadingOverlay from "@/components/loading-overlay";
-import PromoCodeInput from "@/components/PromoCodeInput";
 import LoyaltyPointsInput from "@/components/LoyaltyPointsInput";
 import type { Box, Order } from "@shared/schema";
 import { useTelegram } from "@/hooks/use-telegram";
@@ -22,20 +21,12 @@ interface OrderFormData {
   paymentMethod: string;
 }
 
-interface PromoCodeDiscount {
-  code: string;
-  discountPercent: number;
-  discountAmount: number;
-  trainer?: any;
-}
-
 export default function Order() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user: telegramUser, isInTelegram } = useTelegram();
   const [selectedBox, setSelectedBox] = useState<Box | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [appliedPromoCode, setAppliedPromoCode] = useState<PromoCodeDiscount | null>(null);
   const [loyaltyPointsUsed, setLoyaltyPointsUsed] = useState(0);
   const [formData, setFormData] = useState<OrderFormData>({
     customerName: "",
@@ -135,12 +126,6 @@ export default function Order() {
     const price = typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price;
     let total = price + calculateDeliveryPrice() + calculatePaymentFee();
     
-    // Apply promo code discount
-    if (appliedPromoCode) {
-      const discount = typeof appliedPromoCode.discountAmount === 'string' ? parseFloat(appliedPromoCode.discountAmount) : appliedPromoCode.discountAmount;
-      total = total - discount;
-    }
-    
     // Apply loyalty points discount
     total = total - loyaltyPointsUsed;
     
@@ -151,14 +136,6 @@ export default function Order() {
     if (!selectedBox) return 0;
     const price = typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price;
     return price + calculateDeliveryPrice() + calculatePaymentFee();
-  };
-
-  const handlePromoCodeApplied = (discount: PromoCodeDiscount) => {
-    setAppliedPromoCode(discount);
-  };
-
-  const handlePromoCodeRemoved = () => {
-    setAppliedPromoCode(null);
   };
 
   const handleLoyaltyPointsUsed = (points: number) => {
@@ -228,9 +205,6 @@ export default function Order() {
         
         // Применяем скидки к общей сумме
         let finalPrice = totalCartPrice;
-        if (appliedPromoCode) {
-          finalPrice = finalPrice * (1 - appliedPromoCode.discountPercent / 100);
-        }
         finalPrice = Math.max(0, finalPrice - loyaltyPointsUsed);
         
         // Используем первый товар как основу заказа, но с общей суммой корзины
@@ -247,7 +221,6 @@ export default function Order() {
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
           totalPrice: Math.round(finalPrice), // Общая сумма всех товаров корзины
-          promoCode: appliedPromoCode?.code,
           loyaltyPointsUsed: loyaltyPointsUsed,
           cartItems: JSON.stringify(cartOrderData.cartItems), // Сохраняем полный состав корзины
         };
@@ -293,7 +266,6 @@ export default function Order() {
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
           totalPrice: calculateTotalPrice(),
-          promoCode: appliedPromoCode?.code,
           loyaltyPointsUsed: loyaltyPointsUsed,
         };
 
@@ -531,18 +503,6 @@ export default function Order() {
           </RadioGroup>
         </div>
 
-        {/* Promo Code Section */}
-        {dbUser && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <PromoCodeInput
-              onPromoCodeApplied={handlePromoCodeApplied}
-              onPromoCodeRemoved={handlePromoCodeRemoved}
-              orderAmount={getOriginalPrice()}
-              appliedPromoCode={appliedPromoCode?.code}
-            />
-          </div>
-        )}
-
         {/* Loyalty Points Section */}
         {dbUser && loyaltyStats && loyaltyStats.totalPoints > 0 && (
           <div className="bg-white rounded-xl shadow-lg p-6">
@@ -563,12 +523,6 @@ export default function Order() {
               <span>Товар:</span>
               <span>{selectedBox ? (typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString('ru-RU') : 0}₽</span>
             </div>
-            {appliedPromoCode && (
-              <div className="flex justify-between text-green-600">
-                <span>Скидка по промокоду:</span>
-                <span>-{appliedPromoCode.discountAmount.toLocaleString('ru-RU')}₽</span>
-              </div>
-            )}
             {loyaltyPointsUsed > 0 && (
               <div className="flex justify-between text-green-600">
                 <span>Скидка баллами:</span>
