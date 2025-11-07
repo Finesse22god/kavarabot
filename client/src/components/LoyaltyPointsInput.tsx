@@ -81,17 +81,6 @@ export default function LoyaltyPointsInput({
           Все
         </Button>
       </div>
-
-      {pointsToUse > 0 && (
-        <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-          <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
-            <Coins className="h-4 w-4" />
-            <span className="font-medium">
-              Скидка: {pointsToUse} ₽ ({pointsToUse} баллов)
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
