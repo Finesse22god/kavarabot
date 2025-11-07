@@ -388,8 +388,8 @@ export default function Cart() {
 
       {/* Fixed Bottom Summary */}
       {cartItems && cartItems.length > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-center px-4">
-          <div className="w-full max-w-2xl">
+        <div className="fixed bottom-20 left-0 right-0 z-40">
+          <div className="mx-4 max-w-2xl lg:mx-auto">
             <Card className="max-h-[40vh] overflow-y-auto">
               <CardContent className="p-4 space-y-4">
                 {/* Promo Code Input */}
