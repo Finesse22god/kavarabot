@@ -64,6 +64,12 @@ export default function Order() {
     if (isCartCheckout && currentOrder) {
       // Оформление из корзины - используем данные заказа
       const orderData = JSON.parse(currentOrder);
+      
+      // Загружаем баллы, которые были использованы в корзине
+      if (orderData.loyaltyPointsUsed) {
+        setLoyaltyPointsUsed(orderData.loyaltyPointsUsed);
+      }
+      
       // Создаем фиктивный box для отображения
       const cartBox = {
         id: "cart-order",
@@ -127,6 +133,8 @@ export default function Order() {
     let total = price + calculateDeliveryPrice() + calculatePaymentFee();
     
     // Apply loyalty points discount
+    // Note: selectedBox.price already contains priceAfterPromo (after promo code but before loyalty points)
+    // so we subtract loyalty points here
     total = total - loyaltyPointsUsed;
     
     return Math.max(0, total);
@@ -197,15 +205,12 @@ export default function Order() {
         // Оформление из корзины - создаем один общий заказ на всю сумму
         const cartOrderData = JSON.parse(currentOrder);
         
-        // Рассчитываем общую сумму всех товаров в корзине
-        const totalCartPrice = cartOrderData.cartItems.reduce((sum: number, cartItem: any) => {
-          const item = cartItem.itemType === "product" ? cartItem.product : cartItem.box;
-          return sum + ((item?.price || 0) * cartItem.quantity);
-        }, 0);
+        // Используем цену из корзины (уже включает промокод, но не включает баллы)
+        // cartOrderData.totalPrice уже содержит цену после промокода (priceAfterPromo)
+        const priceAfterPromo = cartOrderData.totalPrice;
         
-        // Применяем скидки к общей сумме
-        let finalPrice = totalCartPrice;
-        finalPrice = Math.max(0, finalPrice - loyaltyPointsUsed);
+        // Применяем скидку от баллов
+        const finalPrice = Math.max(0, priceAfterPromo - loyaltyPointsUsed);
         
         // Используем первый товар как основу заказа, но с общей суммой корзины
         const firstItem = cartOrderData.cartItems[0];
@@ -510,7 +515,7 @@ export default function Order() {
               availablePoints={loyaltyStats.totalPoints}
               onPointsUsed={handleLoyaltyPointsUsed}
               currentUsage={loyaltyPointsUsed}
-              maxUsablePoints={Math.min(loyaltyStats.totalPoints, Math.floor(getOriginalPrice() * 0.5))} // Max 50% of order
+              maxUsablePoints={Math.min(loyaltyStats.totalPoints, Math.floor(getOriginalPrice() * 0.4))} // Max 40% of order
             />
           </div>
         )}

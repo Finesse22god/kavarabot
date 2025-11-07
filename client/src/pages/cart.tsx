@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useTelegram } from "@/hooks/use-telegram";
+import LoyaltyPointsInput from "@/components/LoyaltyPointsInput";
 import logoImage from "@assets/Group 1 (4)_1762503053535.png";
 
 interface CartItem {
@@ -45,11 +46,25 @@ export default function Cart() {
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discountPercent: number } | null>(null);
   const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [loyaltyPointsUsed, setLoyaltyPointsUsed] = useState(0);
 
   // Get database user by telegram ID
   const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
     queryKey: [`/api/users/telegram/${telegramUser?.id}`],
     enabled: !!telegramUser?.id
+  });
+
+  // Get user loyalty stats
+  const { data: loyaltyStats } = useQuery<{
+    totalPoints: number;
+    totalEarned: number;
+    totalSpent: number;
+    totalReferrals: number;
+    level: string;
+    nextLevelPoints: number;
+  }>({
+    queryKey: [`/api/loyalty/${dbUser?.id}/stats`],
+    enabled: !!dbUser?.id
   });
 
   const { data: cartItems, isLoading } = useQuery<CartItem[]>({
@@ -97,7 +112,20 @@ export default function Cart() {
 
   // Calculate discount
   const discount = appliedPromo ? Math.floor(totalPrice * (appliedPromo.discountPercent / 100)) : 0;
-  const finalPrice = totalPrice - discount;
+  const priceAfterPromo = totalPrice - discount;
+  
+  // Calculate max loyalty points that can be used (40% of order total AFTER promo code)
+  const maxUsablePoints = Math.min(
+    loyaltyStats?.totalPoints || 0,
+    Math.floor(priceAfterPromo * 0.4) // Max 40% of order after promo
+  );
+  
+  // Final price after all discounts
+  const finalPrice = Math.max(0, priceAfterPromo - loyaltyPointsUsed);
+  
+  const handleLoyaltyPointsUsed = (points: number) => {
+    setLoyaltyPointsUsed(points);
+  };
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) {
@@ -166,10 +194,12 @@ export default function Cart() {
       customerEmail: "",
       deliveryMethod: "",
       paymentMethod: "",
-      totalPrice: finalPrice,
+      totalPrice: priceAfterPromo, // Сохраняем цену после промокода, но ДО вычета баллов
+      finalPrice: finalPrice, // Финальная цена с учетом всех скидок
       status: "pending",
       cartItems: cartItems,
       promoCode: appliedPromo?.code || undefined,
+      loyaltyPointsUsed: loyaltyPointsUsed,
     };
     
     sessionStorage.setItem("currentOrder", JSON.stringify(cartOrder));
@@ -411,6 +441,16 @@ export default function Cart() {
                     )}
                   </div>
 
+                  {/* Loyalty Points */}
+                  {loyaltyStats && loyaltyStats.totalPoints > 0 && (
+                    <LoyaltyPointsInput
+                      availablePoints={loyaltyStats.totalPoints}
+                      onPointsUsed={handleLoyaltyPointsUsed}
+                      currentUsage={loyaltyPointsUsed}
+                      maxUsablePoints={maxUsablePoints}
+                    />
+                  )}
+
                   {/* Price Summary */}
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-base">
@@ -420,8 +460,15 @@ export default function Cart() {
                     
                     {appliedPromo && (
                       <div className="flex justify-between items-center text-base text-green-600">
-                        <span data-testid="text-discount-label">Скидка ({appliedPromo.discountPercent}%)</span>
+                        <span data-testid="text-discount-label">Промокод ({appliedPromo.discountPercent}%)</span>
                         <span className="font-semibold" data-testid="text-discount-amount">-{discount.toLocaleString()}₽</span>
+                      </div>
+                    )}
+                    
+                    {loyaltyPointsUsed > 0 && (
+                      <div className="flex justify-between items-center text-base text-green-600">
+                        <span data-testid="text-loyalty-label">Бонусные баллы</span>
+                        <span className="font-semibold" data-testid="text-loyalty-amount">-{loyaltyPointsUsed.toLocaleString()}₽</span>
                       </div>
                     )}
                     
