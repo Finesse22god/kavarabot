@@ -72,6 +72,13 @@ Preferred communication style: Simple, everyday language.
       - **Smart Image Loading**: First carousel image loads eagerly, subsequent images load lazily for better perceived performance
       - **Background Placeholders**: Added gray backgrounds to image containers for smoother visual transitions during loading
       - **Box Photo Dialog**: Optimized photo popup with responsive sizing (max 70vh height, 90vw width, rounded corners) and lazy loading
+    - **Referral Promo Code System** (November 2025): Enhanced promo code system with owner tracking and automatic loyalty point rewards:
+      - **PromoCode Entity**: Added `ownerId` (relation to User) and `pointsPerUse` fields to track promo code ownership and reward amounts
+      - **PromoCodeUsage Entity**: New entity tracks detailed usage history (who used which promo code, when, and for which order)
+      - **Automatic Point Distribution**: When a promo code is used in an order, the system automatically awards loyalty points to the code owner
+      - **Admin Panel Enhancements**: Added fields to assign promo codes to specific users by Telegram ID or username, set points-per-use rewards, and view detailed usage statistics
+      - **Validation**: Comprehensive frontend and backend validation for all promo code fields, including non-negative point values and descriptive error messages
+      - **Usage Analytics**: Admin panel displays complete usage history showing which users used each promo code, associated order details, and points awarded to owners
 
 ## External Dependencies
 
