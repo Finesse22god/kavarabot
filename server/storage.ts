@@ -813,6 +813,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPromoCodes(): Promise<PromoCode[]> {
     return await this.promoCodeRepository.find({
+      relations: ['trainer', 'owner'],
       order: { createdAt: 'DESC' }
     });
   }
