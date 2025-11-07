@@ -33,7 +33,7 @@ export default function Order() {
     customerPhone: "",
     customerEmail: "",
     deliveryMethod: "",
-    paymentMethod: "",
+    paymentMethod: "card",
   });
 
   // Get database user by telegram ID
@@ -470,23 +470,6 @@ export default function Order() {
               <Label htmlFor="pickup" className="flex items-center space-x-2 cursor-pointer">
                 <span className="text-xl">🏪</span>
                 <span className="font-medium">Самовывоз</span>
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
-
-        {/* Payment Options */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="font-semibold mb-4">Оплата</h3>
-          <RadioGroup 
-            value={formData.paymentMethod}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}
-          >
-            <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
-              <RadioGroupItem value="card" id="card" />
-              <Label htmlFor="card" className="flex items-center space-x-2 cursor-pointer">
-                <span className="text-xl">💳</span>
-                <span className="font-medium">Банковская карта</span>
               </Label>
             </div>
           </RadioGroup>
