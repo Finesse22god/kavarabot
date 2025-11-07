@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Gift, BarChart3, Calendar, Percent } from "lucide-react";
+import { ArrowLeft, Plus, Gift, BarChart3, Calendar, Percent, ExternalLink } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface PromoCode {
@@ -61,6 +61,8 @@ interface PromoCodeUsage {
     orderNumber: string;
     totalPrice: number;
     discountAmount?: number;
+    status: string;
+    createdAt: string;
   };
 }
 
@@ -236,23 +238,66 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
             </Card>
           </div>
 
+          {/* Promo Code Details */}
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Информация о партнере</CardTitle>
+              <CardTitle>Информация о промокоде</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-4">
+                {selectedPromoCode.owner && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Владелец</Label>
+                    <p className="text-lg font-medium">
+                      {selectedPromoCode.owner.firstName || selectedPromoCode.owner.username || `User #${selectedPromoCode.owner.telegramId}`}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      @{selectedPromoCode.owner.username || selectedPromoCode.owner.telegramId}
+                    </p>
+                  </div>
+                )}
+                {selectedPromoCode.pointsPerUse > 0 && (
+                  <div>
+                    <Label className="text-sm font-medium text-gray-600">Баллы за использование</Label>
+                    <p className="text-lg font-medium text-blue-600">
+                      +{selectedPromoCode.pointsPerUse} баллов владельцу
+                    </p>
+                  </div>
+                )}
                 <div>
-                  <Label className="text-sm font-medium">Название партнера</Label>
-                  <p className="text-lg">{selectedPromoCode.partnerName}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Контакты</Label>
-                  <p className="text-lg">{selectedPromoCode.partnerContact}</p>
+                  <Label className="text-sm font-medium text-gray-600">Тип промокода</Label>
+                  <p className="text-lg">
+                    {selectedPromoCode.owner ? 'Реферальный' : 'Стандартный'}
+                  </p>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Partner Info - only show if data exists */}
+          {(selectedPromoCode.partnerName || selectedPromoCode.partnerContact) && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Информация о партнере</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {selectedPromoCode.partnerName && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Название партнера</Label>
+                      <p className="text-lg">{selectedPromoCode.partnerName}</p>
+                    </div>
+                  )}
+                  {selectedPromoCode.partnerContact && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Контакты</Label>
+                      <p className="text-lg">{selectedPromoCode.partnerContact}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -266,32 +311,78 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
                 </div>
               ) : usageStats && usageStats.length > 0 ? (
                 <div className="space-y-4">
-                  {usageStats.map((usage) => (
-                    <div key={usage.id} className="flex justify-between items-center p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          {usage.user?.firstName || usage.user?.username || (usage.user ? `User #${usage.user.telegramId}` : 'Неизвестный пользователь')}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {usage.order ? `Заказ #${usage.order.orderNumber}` : 'Заказ удален'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(usage.createdAt).toLocaleString('ru-RU')}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{usage.orderAmount}₽</p>
-                        <p className="text-sm text-green-600">
-                          Скидка: {usage.discountAmount}₽
-                        </p>
-                        {usage.pointsAwarded > 0 && (
-                          <p className="text-xs text-blue-600 mt-1">
-                            +{usage.pointsAwarded} баллов владельцу
-                          </p>
+                  {usageStats.map((usage) => {
+                    const getStatusBadge = (status: string) => {
+                      const statusConfig = {
+                        'pending': { label: 'Ожидает оплаты', variant: 'secondary' as const },
+                        'paid': { label: 'Оплачен', variant: 'default' as const },
+                        'processing': { label: 'В обработке', variant: 'default' as const },
+                        'shipped': { label: 'Отправлен', variant: 'default' as const },
+                        'delivered': { label: 'Доставлен', variant: 'default' as const },
+                        'cancelled': { label: 'Отменен', variant: 'destructive' as const }
+                      };
+                      const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: 'secondary' as const };
+                      return <Badge variant={config.variant}>{config.label}</Badge>;
+                    };
+
+                    return (
+                      <div key={usage.id} className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium">
+                                {usage.user?.firstName || usage.user?.username || (usage.user ? `User #${usage.user.telegramId}` : 'Неизвестный пользователь')}
+                              </p>
+                              {usage.user?.username && (
+                                <span className="text-xs text-gray-500">@{usage.user.username}</span>
+                              )}
+                            </div>
+                            {usage.order ? (
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-sm text-gray-600">Заказ #{usage.order.orderNumber}</p>
+                                {getStatusBadge(usage.order.status)}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500">Заказ удален</p>
+                            )}
+                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
+                              <span>Использован: {new Date(usage.createdAt).toLocaleString('ru-RU')}</span>
+                              {usage.order?.createdAt && (
+                                <span>Создан: {new Date(usage.order.createdAt).toLocaleString('ru-RU')}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className="font-bold text-lg">{usage.orderAmount}₽</p>
+                            <p className="text-sm text-green-600">
+                              Скидка: {usage.discountAmount}₽
+                            </p>
+                            {usage.pointsAwarded > 0 && (
+                              <p className="text-xs text-blue-600 mt-1">
+                                +{usage.pointsAwarded} баллов владельцу
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        {usage.order && (
+                          <div className="flex justify-end pt-2 border-t">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              onClick={() => {
+                                // Navigate to order details
+                                window.location.href = `/admin/orders/${usage.order!.id}`;
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4 mr-1" />
+                              Детали заказа
+                            </Button>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-8">
