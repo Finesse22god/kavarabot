@@ -232,8 +232,6 @@ export default function Cart() {
 
       <div className="pb-4">
         {cartItems && cartItems.length > 0 ? (
-          <>
-            {/* Content Wrapper */}
             <div className="mx-4 max-w-2xl lg:mx-auto">
               {/* Cart Title */}
               <h2 className="text-white text-lg font-semibold mb-4">Корзина:</h2>
@@ -373,82 +371,6 @@ export default function Cart() {
               })}
             </div>
             </div>
-
-            {/* Fixed Bottom Summary */}
-            <div className="fixed bottom-20 left-0 right-0 z-40">
-              <div className="mx-4 max-w-2xl lg:mx-auto">
-                <Card>
-                  <CardContent className="p-4 space-y-4">
-                    {/* Promo Code Input */}
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <Input
-                          placeholder="Введите промокод"
-                          value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                          className="pl-10 border-2 border-gray-300 focus:border-black"
-                          disabled={!!appliedPromo}
-                          data-testid="input-promo-code"
-                        />
-                      </div>
-                      {!appliedPromo ? (
-                        <Button
-                          onClick={handleApplyPromo}
-                          disabled={isValidatingPromo || !promoCode.trim()}
-                          className="bg-black hover:bg-gray-800 text-white px-6"
-                          data-testid="button-apply-promo"
-                        >
-                          {isValidatingPromo ? "..." : "Применить"}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => {
-                            setAppliedPromo(null);
-                            setPromoCode("");
-                          }}
-                          variant="outline"
-                          className="px-6"
-                          data-testid="button-remove-promo"
-                        >
-                          Удалить
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Price Summary */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-base">
-                        <span className="text-gray-600" data-testid="text-items-count">Товары ({totalItems} шт.)</span>
-                        <span className="font-semibold">{totalPrice.toLocaleString()}₽</span>
-                      </div>
-                      
-                      {appliedPromo && (
-                        <div className="flex justify-between items-center text-base text-green-600">
-                          <span data-testid="text-discount-label">Скидка ({appliedPromo.discountPercent}%)</span>
-                          <span className="font-semibold" data-testid="text-discount-amount">-{discount.toLocaleString()}₽</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between items-center text-xl pt-2 border-t-2 border-gray-200">
-                        <span className="font-bold">Итого</span>
-                        <span className="font-bold" data-testid="text-final-price">{finalPrice.toLocaleString()}₽</span>
-                      </div>
-                    </div>
-
-                    {/* Checkout Button */}
-                    <Button
-                      className="w-full bg-black hover:bg-gray-800 text-white py-6 text-lg font-semibold"
-                      onClick={handleCheckout}
-                      data-testid="button-checkout"
-                    >
-                      Оформить заказ
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </>
         ) : (
           <div className="text-center py-16">
             <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -463,6 +385,83 @@ export default function Cart() {
           </div>
         )}
       </div>
+
+      {/* Fixed Bottom Summary */}
+      {cartItems && cartItems.length > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 z-40">
+          <div className="mx-4 max-w-2xl lg:mx-auto">
+            <Card>
+              <CardContent className="p-4 space-y-4">
+                {/* Promo Code Input */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Input
+                      placeholder="Введите промокод"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      className="pl-10 border-2 border-gray-300 focus:border-black"
+                      disabled={!!appliedPromo}
+                      data-testid="input-promo-code"
+                    />
+                  </div>
+                  {!appliedPromo ? (
+                    <Button
+                      onClick={handleApplyPromo}
+                      disabled={isValidatingPromo || !promoCode.trim()}
+                      className="bg-black hover:bg-gray-800 text-white px-6"
+                      data-testid="button-apply-promo"
+                    >
+                      {isValidatingPromo ? "..." : "Применить"}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setAppliedPromo(null);
+                        setPromoCode("");
+                      }}
+                      variant="outline"
+                      className="px-6"
+                      data-testid="button-remove-promo"
+                    >
+                      Удалить
+                    </Button>
+                  )}
+                </div>
+
+                {/* Price Summary */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-base">
+                    <span className="text-gray-600" data-testid="text-items-count">Товары ({totalItems} шт.)</span>
+                    <span className="font-semibold">{totalPrice.toLocaleString()}₽</span>
+                  </div>
+                  
+                  {appliedPromo && (
+                    <div className="flex justify-between items-center text-base text-green-600">
+                      <span data-testid="text-discount-label">Скидка ({appliedPromo.discountPercent}%)</span>
+                      <span className="font-semibold" data-testid="text-discount-amount">-{discount.toLocaleString()}₽</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between items-center text-xl pt-2 border-t-2 border-gray-200">
+                    <span className="font-bold">Итого</span>
+                    <span className="font-bold" data-testid="text-final-price">{finalPrice.toLocaleString()}₽</span>
+                  </div>
+                </div>
+
+                {/* Checkout Button */}
+                <Button
+                  className="w-full bg-black hover:bg-gray-800 text-white py-6 text-lg font-semibold"
+                  onClick={handleCheckout}
+                  data-testid="button-checkout"
+                >
+                  Оформить заказ
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
