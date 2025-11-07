@@ -664,21 +664,21 @@ export default function Profile() {
                   
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
                         <p className="text-sm text-gray-600 mb-1">Доступно баллов</p>
-                        <p className="text-2xl font-bold text-orange-600">{loyaltyStats.totalPoints}</p>
+                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalPoints}</p>
                       </div>
-                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
                         <p className="text-sm text-gray-600 mb-1">Всего заработано</p>
-                        <p className="text-2xl font-bold text-green-600">{loyaltyStats.totalEarned}</p>
+                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalEarned}</p>
                       </div>
-                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
                         <p className="text-sm text-gray-600 mb-1">Использовано</p>
-                        <p className="text-2xl font-bold text-blue-600">{loyaltyStats.totalSpent}</p>
+                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalSpent}</p>
                       </div>
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
                         <p className="text-sm text-gray-600 mb-1">Рефералов</p>
-                        <p className="text-2xl font-bold text-purple-600">{loyaltyStats.totalReferrals}</p>
+                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalReferrals}</p>
                       </div>
                     </div>
                   </div>
@@ -711,18 +711,18 @@ export default function Profile() {
 
                     {/* Statistics */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-50 p-4 rounded-lg text-center">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg text-center">
                         <p className="text-sm text-gray-600 mb-1">Использований</p>
-                        <p className="text-2xl font-bold text-blue-600">
+                        <p className="text-2xl font-bold text-black">
                           {ownerPromoData.stats.totalUses}
                           {ownerPromoData.promoCode.maxUses && (
                             <span className="text-sm text-gray-500"> / {ownerPromoData.promoCode.maxUses}</span>
                           )}
                         </p>
                       </div>
-                      <div className="bg-green-50 p-4 rounded-lg text-center">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg text-center">
                         <p className="text-sm text-gray-600 mb-1">Заработано баллов</p>
-                        <p className="text-2xl font-bold text-green-600">{ownerPromoData.stats.totalPointsEarned}</p>
+                        <p className="text-2xl font-bold text-black">{ownerPromoData.stats.totalPointsEarned}</p>
                       </div>
                     </div>
 
