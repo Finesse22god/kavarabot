@@ -697,27 +697,6 @@ export default function Profile() {
                         <p className="text-2xl font-bold text-purple-600">{loyaltyStats.totalReferrals}</p>
                       </div>
                     </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium text-gray-700">Уровень: {loyaltyStats.level}</p>
-                        {loyaltyStats.nextLevelPoints > 0 && (
-                          <p className="text-xs text-gray-500">
-                            До следующего: {loyaltyStats.nextLevelPoints} баллов
-                          </p>
-                        )}
-                      </div>
-                      {loyaltyStats.nextLevelPoints > 0 && (
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-orange-500 h-2 rounded-full transition-all duration-300"
-                            style={{ 
-                              width: `${Math.min(100, (loyaltyStats.totalEarned / (loyaltyStats.totalEarned + loyaltyStats.nextLevelPoints)) * 100)}%` 
-                            }}
-                          ></div>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
