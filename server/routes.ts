@@ -1355,6 +1355,22 @@ router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
   try {
     const { code, discountPercent, maxUses, partnerName, partnerContact, expiresAt, ownerIdentifier, pointsPerUse } = req.body;
 
+    // Validate required fields
+    if (!code || !partnerName || !partnerContact) {
+      return res.status(400).json({ error: 'Заполните все обязательные поля: код, название партнера, контакты' });
+    }
+
+    // Validate pointsPerUse
+    const validatedPoints = parseInt(pointsPerUse) || 0;
+    if (validatedPoints < 0) {
+      return res.status(400).json({ error: 'Количество баллов за использование не может быть отрицательным' });
+    }
+
+    // Validate discount percent
+    if (discountPercent < 0 || discountPercent > 100) {
+      return res.status(400).json({ error: 'Размер скидки должен быть от 0 до 100%' });
+    }
+
     // Check if code already exists
     const existingCode = await storage.getPromoCodeByCode(code);
     if (existingCode) {
@@ -1363,10 +1379,12 @@ router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
 
     // Find owner if specified
     let ownerId = undefined;
-    if (ownerIdentifier) {
-      const owner = await storage.getUserByTelegramIdOrUsername(ownerIdentifier);
+    if (ownerIdentifier && ownerIdentifier.trim()) {
+      const owner = await storage.getUserByTelegramIdOrUsername(ownerIdentifier.trim());
       if (!owner) {
-        return res.status(404).json({ error: 'Пользователь не найден' });
+        return res.status(404).json({ 
+          error: `Пользователь с Telegram ID или username "${ownerIdentifier}" не найден. Убедитесь, что пользователь зарегистрирован в системе.` 
+        });
       }
       ownerId = owner.id;
     }
@@ -1378,13 +1396,13 @@ router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
       maxUses,
       expiresAt: expiresAt ? new Date(expiresAt) : undefined,
       ownerId,
-      pointsPerUse: pointsPerUse || 0
+      pointsPerUse: validatedPoints
     });
 
     res.json(promoCode);
   } catch (error) {
     console.error('Error creating promo code:', error);
-    res.status(500).json({ error: 'Failed to create promo code' });
+    res.status(500).json({ error: 'Не удалось создать промокод. Попробуйте еще раз.' });
   }
 });
 

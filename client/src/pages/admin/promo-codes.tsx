@@ -43,6 +43,24 @@ interface PromoCodeFormData {
   pointsPerUse: number;
 }
 
+interface PromoCodeUsage {
+  id: string;
+  createdAt: string;
+  user: {
+    id: string;
+    telegramId?: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  order: {
+    id: string;
+    orderNumber: string;
+    totalPrice: number;
+    discountAmount?: number;
+  };
+}
+
 export default function PromoCodes({ onBack }: { onBack: () => void }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -64,9 +82,19 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
     retry: false,
   });
 
+  const { data: usageStats, isLoading: isLoadingUsage } = useQuery<PromoCodeUsage[]>({
+    queryKey: ["/api/admin/promo-codes", selectedPromoCode?.id, "usage"],
+    enabled: !!selectedPromoCode,
+    retry: false,
+  });
+
   const createPromoCodeMutation = useMutation({
     mutationFn: async (data: PromoCodeFormData) => {
       const response = await apiRequest("POST", "/api/admin/promo-codes", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Не удалось создать промокод");
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -87,10 +115,10 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
         description: "Новый промокод успешно добавлен в систему"
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Ошибка",
-        description: error.message || "Не удалось создать промокод",
+        title: "Ошибка создания промокода",
+        description: error.message,
         variant: "destructive"
       });
     }
@@ -121,14 +149,37 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
     if (!formData.code || !formData.partnerName || !formData.partnerContact) {
       toast({
-        title: "Ошибка",
-        description: "Заполните все обязательные поля",
+        title: "Ошибка валидации",
+        description: "Заполните все обязательные поля: код, название партнера, контакты",
         variant: "destructive"
       });
       return;
     }
+
+    // Validate pointsPerUse
+    if (formData.pointsPerUse < 0) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Количество баллов не может быть отрицательным",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate discount percent
+    if (formData.discountPercent < 0 || formData.discountPercent > 100) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Размер скидки должен быть от 0 до 100%",
+        variant: "destructive"
+      });
+      return;
+    }
+
     createPromoCodeMutation.mutate(formData);
   };
 
@@ -208,24 +259,39 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Заказы с этим промокодом</CardTitle>
-              <CardDescription>История использования промокода</CardDescription>
+              <CardTitle>История использования промокода</CardTitle>
+              <CardDescription>Кто и когда использовал промокод</CardDescription>
             </CardHeader>
             <CardContent>
-              {selectedPromoCode.orders && selectedPromoCode.orders.length > 0 ? (
+              {isLoadingUsage ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin w-8 h-8 border-4 border-black border-t-transparent rounded-full" />
+                </div>
+              ) : usageStats && usageStats.length > 0 ? (
                 <div className="space-y-4">
-                  {selectedPromoCode.orders.map((order: any) => (
-                    <div key={order.id} className="flex justify-between items-center p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Заказ #{order.orderNumber}</p>
-                        <p className="text-sm text-gray-600">{order.customerName}</p>
-                        <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString('ru-RU')}</p>
+                  {usageStats.map((usage) => (
+                    <div key={usage.id} className="flex justify-between items-center p-4 border rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">
+                          {usage.user.firstName || usage.user.username || `User #${usage.user.telegramId}`}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Заказ #{usage.order.orderNumber}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(usage.createdAt).toLocaleString('ru-RU')}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">{order.totalPrice}₽</p>
+                        <p className="font-bold">{usage.order.totalPrice}₽</p>
                         <p className="text-sm text-green-600">
-                          Скидка: {order.discountAmount || Math.floor(order.totalPrice * selectedPromoCode.discountPercent / 100)}₽
+                          Скидка: {usage.order.discountAmount || Math.floor(usage.order.totalPrice * selectedPromoCode.discountPercent / 100)}₽
                         </p>
+                        {selectedPromoCode.pointsPerUse > 0 && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            +{selectedPromoCode.pointsPerUse} баллов владельцу
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
