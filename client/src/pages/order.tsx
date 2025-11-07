@@ -10,7 +10,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import LoadingOverlay from "@/components/loading-overlay";
-import LoyaltyPointsInput from "@/components/LoyaltyPointsInput";
 import type { Box, Order } from "@shared/schema";
 import { useTelegram } from "@/hooks/use-telegram";
 
@@ -41,19 +40,6 @@ export default function Order() {
   const { data: dbUser } = useQuery<{ id: string; telegramId: string; firstName?: string; lastName?: string; username?: string; loyaltyPoints: number }>({
     queryKey: [`/api/users/telegram/${telegramUser?.id}`],
     enabled: !!telegramUser?.id
-  });
-
-  // Get user loyalty stats
-  const { data: loyaltyStats } = useQuery<{
-    totalPoints: number;
-    totalEarned: number;
-    totalSpent: number;
-    totalReferrals: number;
-    level: string;
-    nextLevelPoints: number;
-  }>({
-    queryKey: [`/api/loyalty/${dbUser?.id}/stats`],
-    enabled: !!dbUser?.id
   });
 
   useEffect(() => {
@@ -145,10 +131,6 @@ export default function Order() {
     if (!selectedBox) return 0;
     const price = typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price;
     return price + calculateDeliveryPrice() + calculatePaymentFee();
-  };
-
-  const handleLoyaltyPointsUsed = (points: number) => {
-    setLoyaltyPointsUsed(points);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -509,18 +491,6 @@ export default function Order() {
             </div>
           </RadioGroup>
         </div>
-
-        {/* Loyalty Points Section */}
-        {dbUser && loyaltyStats && loyaltyStats.totalPoints > 0 && (
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <LoyaltyPointsInput
-              availablePoints={loyaltyStats.totalPoints}
-              onPointsUsed={handleLoyaltyPointsUsed}
-              currentUsage={loyaltyPointsUsed}
-              maxUsablePoints={Math.min(loyaltyStats.totalPoints, Math.floor(getOriginalPrice() * 0.4))} // Max 40% of order
-            />
-          </div>
-        )}
 
         {/* Order Summary */}
         <div className="bg-white rounded-xl shadow-lg p-6">
