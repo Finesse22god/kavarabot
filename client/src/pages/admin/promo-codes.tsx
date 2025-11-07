@@ -46,14 +46,17 @@ interface PromoCodeFormData {
 interface PromoCodeUsage {
   id: string;
   createdAt: string;
-  user: {
+  orderAmount: number;
+  discountAmount: number;
+  pointsAwarded: number;
+  user?: {
     id: string;
     telegramId?: string;
     username?: string;
     firstName?: string;
     lastName?: string;
   };
-  order: {
+  order?: {
     id: string;
     orderNumber: string;
     totalPrice: number;
@@ -90,12 +93,7 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
 
   const createPromoCodeMutation = useMutation({
     mutationFn: async (data: PromoCodeFormData) => {
-      const response = await apiRequest("POST", "/api/admin/promo-codes", data);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Не удалось создать промокод");
-      }
-      return response.json();
+      return await apiRequest("POST", "/api/admin/promo-codes", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/promo-codes"] });
@@ -272,23 +270,23 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
                     <div key={usage.id} className="flex justify-between items-center p-4 border rounded-lg">
                       <div className="flex-1">
                         <p className="font-medium">
-                          {usage.user.firstName || usage.user.username || `User #${usage.user.telegramId}`}
+                          {usage.user?.firstName || usage.user?.username || (usage.user ? `User #${usage.user.telegramId}` : 'Неизвестный пользователь')}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Заказ #{usage.order.orderNumber}
+                          {usage.order ? `Заказ #${usage.order.orderNumber}` : 'Заказ удален'}
                         </p>
                         <p className="text-xs text-gray-500">
                           {new Date(usage.createdAt).toLocaleString('ru-RU')}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">{usage.order.totalPrice}₽</p>
+                        <p className="font-bold">{usage.orderAmount}₽</p>
                         <p className="text-sm text-green-600">
-                          Скидка: {usage.order.discountAmount || Math.floor(usage.order.totalPrice * selectedPromoCode.discountPercent / 100)}₽
+                          Скидка: {usage.discountAmount}₽
                         </p>
-                        {selectedPromoCode.pointsPerUse > 0 && (
+                        {usage.pointsAwarded > 0 && (
                           <p className="text-xs text-blue-600 mt-1">
-                            +{selectedPromoCode.pointsPerUse} баллов владельцу
+                            +{usage.pointsAwarded} баллов владельцу
                           </p>
                         )}
                       </div>
