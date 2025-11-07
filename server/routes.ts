@@ -561,8 +561,20 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
                   relations: ['owner']
                 });
                 
-                if (promoCode && promoCode.owner && promoCode.pointsPerUse > 0) {
-                  console.log(`Awarding ${promoCode.pointsPerUse} points to promo code owner for order ${order.orderNumber}`);
+                // Calculate points to award based on reward type
+                let pointsToAward = 0;
+                if (promoCode && promoCode.owner) {
+                  if (promoCode.rewardPercent && promoCode.rewardPercent > 0) {
+                    // Calculate points as percentage of order total price
+                    pointsToAward = Math.floor(order.totalPrice * (promoCode.rewardPercent / 100));
+                  } else if (promoCode.pointsPerUse > 0) {
+                    // Use fixed points per use
+                    pointsToAward = promoCode.pointsPerUse;
+                  }
+                }
+                
+                if (promoCode && promoCode.owner && pointsToAward > 0) {
+                  console.log(`Awarding ${pointsToAward} points to promo code owner for order ${order.orderNumber}`);
                   
                   // Create usage record (unique constraint on orderId prevents duplicates)
                   const usage = PromoCodeUsageRepo.create({
@@ -571,7 +583,7 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
                     orderId: order.id,
                     orderAmount: order.totalPrice,
                     discountAmount: order.discountAmount || 0,
-                    pointsAwarded: promoCode.pointsPerUse
+                    pointsAwarded: pointsToAward
                   });
                   await PromoCodeUsageRepo.save(usage);
                   
@@ -581,7 +593,7 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
                   });
                   
                   if (ownerUser) {
-                    ownerUser.loyaltyPoints = (ownerUser.loyaltyPoints || 0) + promoCode.pointsPerUse;
+                    ownerUser.loyaltyPoints = (ownerUser.loyaltyPoints || 0) + pointsToAward;
                     await UserRepo.save(ownerUser);
                     
                     // Create loyalty transaction for tracking
@@ -589,12 +601,12 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
                       userId: ownerUser.id,
                       orderId: order.id,
                       type: 'earn',
-                      points: promoCode.pointsPerUse,
+                      points: pointsToAward,
                       description: `Начислено за использование промокода ${promoCode.code}`
                     });
                     await LoyaltyRepo.save(loyaltyTransaction);
                     
-                    console.log(`Successfully awarded ${promoCode.pointsPerUse} points to owner ${ownerUser.telegramId}`);
+                    console.log(`Successfully awarded ${pointsToAward} points to owner ${ownerUser.telegramId}`);
                   }
                 }
               } else {

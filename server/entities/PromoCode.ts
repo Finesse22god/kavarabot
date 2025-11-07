@@ -69,6 +69,9 @@ export class PromoCode {
   @Column({ type: "int", default: 0 })
   pointsPerUse!: number;
 
+  @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
+  rewardPercent!: number;
+
   @Column({ type: "varchar", nullable: true })
   partnerName?: string;
 

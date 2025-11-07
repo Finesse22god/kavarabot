@@ -30,6 +30,7 @@ interface PromoCode {
     lastName?: string;
   };
   pointsPerUse: number;
+  rewardPercent: number;
 }
 
 interface PromoCodeFormData {
@@ -41,6 +42,7 @@ interface PromoCodeFormData {
   expiresAt?: string;
   ownerIdentifier?: string;
   pointsPerUse: number;
+  rewardPercent: number;
 }
 
 interface PromoCodeUsage {
@@ -79,7 +81,8 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
     partnerContact: '',
     expiresAt: '',
     ownerIdentifier: '',
-    pointsPerUse: 0
+    pointsPerUse: 0,
+    rewardPercent: 0
   });
 
   const { data: promoCodes, isLoading } = useQuery<PromoCode[]>({
@@ -108,7 +111,8 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
         partnerContact: '',
         expiresAt: '',
         ownerIdentifier: '',
-        pointsPerUse: 0
+        pointsPerUse: 0,
+        rewardPercent: 0
       });
       toast({
         title: "Промокод создан",
@@ -515,7 +519,7 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
                     </p>
                   </div>
                   <div>
-                    <Label htmlFor="pointsPerUse">Баллов за использование</Label>
+                    <Label htmlFor="pointsPerUse">Баллов за использование (фиксировано)</Label>
                     <Input
                       id="pointsPerUse"
                       type="number"
@@ -525,7 +529,31 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
                       placeholder="0"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Сколько баллов владелец получит за каждое использование
+                      Фиксированные баллы за каждое использование
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="rewardPercent">% вознаграждения от суммы заказа</Label>
+                    <Input
+                      id="rewardPercent"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={formData.rewardPercent}
+                      onChange={(e) => setFormData({ ...formData, rewardPercent: parseFloat(e.target.value) || 0 })}
+                      placeholder="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Процент от суммы заказа, который начисляется баллами владельцу (например, 5 = 5%)
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <p className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                      💡 Если указан процент вознаграждения, владелец получит баллы от суммы заказа. Если указаны фиксированные баллы - фиксированную сумму за использование.
                     </p>
                   </div>
                 </div>
