@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -335,31 +336,29 @@ export default function Order() {
       </div>
 
       {/* Order Confirmation */}
-      <div className="p-4">
-        <div className="bg-white rounded-xl p-4 shadow-lg">
-          <h3 className="font-semibold mb-3">Подтверждение выбора</h3>
-          <div className="flex items-center space-x-4">
-            <img 
-              src={selectedBox.imageUrl || "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b"} 
-              alt={selectedBox.name}
-              className="w-20 h-20 object-cover rounded-lg"
-            />
-            <div className="flex-1">
-              <h4 className="font-semibold">{selectedBox.name}</h4>
-              <p className="text-sm text-gray-600">{selectedBox.description}</p>
-              <p className="text-lg font-bold text-primary mt-1">
-                {(typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString('ru-RU')}₽
-              </p>
+      <div className="px-4 pt-4">
+        <h2 className="text-white text-lg font-semibold mb-3">Ваш заказ:</h2>
+        <Card>
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedBox.name}</h3>
+                </div>
+                <div className="text-xl font-bold">
+                  {(typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString()}₽
+                </div>
+              </div>
+              <div className="h-px bg-gray-200"></div>
+              <button
+                onClick={() => window.history.back()}
+                className="text-sm underline text-gray-700 hover:text-black"
+              >
+                Изменить выбор
+              </button>
             </div>
-          </div>
-          <Button 
-            variant="outline" 
-            className="w-full mt-4"
-            onClick={() => window.history.back()}
-          >
-            Изменить выбор
-          </Button>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <form onSubmit={handleSubmit} className="p-4 space-y-4">
