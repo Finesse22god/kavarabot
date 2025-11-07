@@ -167,13 +167,13 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <ChevronUp className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setIsPhotoDialogOpen(true);
             }}
-            className="px-6 py-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors font-semibold text-sm"
+            className="px-3 py-2 sm:px-6 sm:py-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors font-semibold text-xs sm:text-sm whitespace-nowrap"
             data-testid={`button-photo-${box.id}`}
           >
             ФОТО
@@ -181,7 +181,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
           <button
             onClick={handleAddToCart}
-            className="px-8 py-3 rounded-full font-semibold transition-colors bg-black text-white hover:bg-gray-800"
+            className="px-4 py-2 sm:px-8 sm:py-3 rounded-full font-semibold transition-colors bg-black text-white hover:bg-gray-800 text-xs sm:text-base whitespace-nowrap"
             data-testid={`button-add-to-cart-${box.id}`}
           >
             В КОРЗИНУ
