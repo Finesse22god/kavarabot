@@ -103,6 +103,42 @@ export default function Profile() {
     enabled: !!user?.id,
   });
 
+  // Fetch loyalty stats
+  const { data: loyaltyStats } = useQuery<{
+    totalPoints: number;
+    totalEarned: number;
+    totalSpent: number;
+    totalReferrals: number;
+    level: string;
+    nextLevelPoints: number;
+  }>({
+    queryKey: [`/api/loyalty/${userData?.id}/stats`],
+    enabled: !!userData?.id
+  });
+
+  // Fetch user's owned promo code
+  const { data: ownerPromoData } = useQuery<{
+    promoCode: {
+      id: string;
+      code: string;
+      discountPercent: number;
+      pointsPerUse: number;
+      usedCount: number;
+      maxUses: number | null;
+      isActive: boolean;
+      partnerName?: string;
+      partnerContact?: string;
+    };
+    stats: {
+      totalUses: number;
+      totalPointsEarned: number;
+      recentUsages: any[];
+    };
+  } | null>({
+    queryKey: [`/api/promo-codes/owner/${userData?.id}`],
+    enabled: !!userData?.id
+  });
+
   // Handle feedback submission
   const handleFeedbackSubmit = () => {
     if (!feedbackForm.message.trim()) {
@@ -633,6 +669,111 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+
+              {/* Loyalty Points Section */}
+              {loyaltyStats && (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h3 className="font-semibold mb-4 flex items-center">
+                    <span className="text-2xl mr-2">🎁</span>
+                    Баллы лояльности
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Доступно баллов</p>
+                        <p className="text-2xl font-bold text-orange-600">{loyaltyStats.totalPoints}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Всего заработано</p>
+                        <p className="text-2xl font-bold text-green-600">{loyaltyStats.totalEarned}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Использовано</p>
+                        <p className="text-2xl font-bold text-blue-600">{loyaltyStats.totalSpent}</p>
+                      </div>
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Рефералов</p>
+                        <p className="text-2xl font-bold text-purple-600">{loyaltyStats.totalReferrals}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-gray-700">Уровень: {loyaltyStats.level}</p>
+                        {loyaltyStats.nextLevelPoints > 0 && (
+                          <p className="text-xs text-gray-500">
+                            До следующего: {loyaltyStats.nextLevelPoints} баллов
+                          </p>
+                        )}
+                      </div>
+                      {loyaltyStats.nextLevelPoints > 0 && (
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${Math.min(100, (loyaltyStats.totalEarned / (loyaltyStats.totalEarned + loyaltyStats.nextLevelPoints)) * 100)}%` 
+                            }}
+                          ></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Owner Promo Code Section */}
+              {ownerPromoData && ownerPromoData.promoCode && (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h3 className="font-semibold mb-4 flex items-center">
+                    <span className="text-2xl mr-2">🎫</span>
+                    Мой промокод
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    {/* Promo Code Display */}
+                    <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 rounded-xl text-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm opacity-90">Код для партнеров</p>
+                        <Badge variant={ownerPromoData.promoCode.isActive ? "default" : "secondary"} className="bg-white text-orange-600">
+                          {ownerPromoData.promoCode.isActive ? "Активен" : "Неактивен"}
+                        </Badge>
+                      </div>
+                      <p className="text-3xl font-bold tracking-wider mb-3">{ownerPromoData.promoCode.code}</p>
+                      <div className="flex items-center justify-between text-sm opacity-90">
+                        <span>Скидка: {ownerPromoData.promoCode.discountPercent}%</span>
+                        <span>Награда: {ownerPromoData.promoCode.pointsPerUse} баллов</span>
+                      </div>
+                    </div>
+
+                    {/* Statistics */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-blue-50 p-4 rounded-lg text-center">
+                        <p className="text-sm text-gray-600 mb-1">Использований</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {ownerPromoData.stats.totalUses}
+                          {ownerPromoData.promoCode.maxUses && (
+                            <span className="text-sm text-gray-500"> / {ownerPromoData.promoCode.maxUses}</span>
+                          )}
+                        </p>
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg text-center">
+                        <p className="text-sm text-gray-600 mb-1">Заработано баллов</p>
+                        <p className="text-2xl font-bold text-green-600">{ownerPromoData.stats.totalPointsEarned}</p>
+                      </div>
+                    </div>
+
+                    {/* Partner Info - Only show if both fields have values */}
+                    {ownerPromoData.promoCode.partnerName && ownerPromoData.promoCode.partnerContact && (
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-xs font-medium text-gray-500 mb-2">Информация о партнере</p>
+                        <p className="text-sm font-medium text-gray-900">{ownerPromoData.promoCode.partnerName}</p>
+                        <p className="text-sm text-gray-600">{ownerPromoData.promoCode.partnerContact}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </TabsContent>
           

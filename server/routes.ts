@@ -673,6 +673,48 @@ router.post("/api/promo-codes/validate", async (req, res) => {
   }
 });
 
+// Get user's owned promo code and usage stats
+router.get("/api/promo-codes/owner/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const PromoCodeRepo = AppDataSource.getRepository(PromoCodeEntity);
+    const PromoCodeUsageRepo = AppDataSource.getRepository(PromoCodeUsageEntity);
+    
+    // Find promo code owned by this user
+    const promoCode = await PromoCodeRepo.findOne({
+      where: { ownerId: userId },
+      relations: ['owner']
+    });
+    
+    if (!promoCode) {
+      return res.json(null);
+    }
+    
+    // Get usage statistics
+    const usages = await PromoCodeUsageRepo.find({
+      where: { promoCodeId: promoCode.id },
+      relations: ['user', 'order'],
+      order: { createdAt: 'DESC' }
+    });
+    
+    // Calculate total points earned
+    const totalPointsEarned = usages.reduce((sum, usage) => sum + (usage.pointsAwarded || 0), 0);
+    
+    res.json({
+      promoCode,
+      stats: {
+        totalUses: promoCode.usedCount,
+        totalPointsEarned,
+        recentUsages: usages.slice(0, 10) // Last 10 usages
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching owner promo code:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.post("/api/orders", async (req, res) => {
   try {
     const orderData: CreateOrderDto & {

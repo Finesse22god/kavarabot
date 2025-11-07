@@ -73,12 +73,18 @@ Preferred communication style: Simple, everyday language.
       - **Background Placeholders**: Added gray backgrounds to image containers for smoother visual transitions during loading
       - **Box Photo Dialog**: Optimized photo popup with responsive sizing (max 70vh height, 90vw width, rounded corners) and lazy loading
     - **Referral Promo Code System** (November 2025): Enhanced promo code system with owner tracking and automatic loyalty point rewards:
-      - **PromoCode Entity**: Added `ownerId` (relation to User) and `pointsPerUse` fields to track promo code ownership and reward amounts
+      - **PromoCode Entity**: Added `ownerId` (relation to User), `pointsPerUse`, `partnerName`, and `partnerContact` fields to track promo code ownership, reward amounts, and partner metadata
       - **PromoCodeUsage Entity**: New entity tracks detailed usage history (who used which promo code, when, and for which order)
       - **Automatic Point Distribution**: When a promo code is used in an order, the system automatically awards loyalty points to the code owner
-      - **Admin Panel Enhancements**: Added fields to assign promo codes to specific users by Telegram ID or username, set points-per-use rewards, and view detailed usage statistics
+      - **Admin Panel Enhancements**: Added fields to assign promo codes to specific users by Telegram ID or username, set points-per-use rewards, partner information, and view detailed usage statistics
       - **Validation**: Comprehensive frontend and backend validation for all promo code fields, including non-negative point values and descriptive error messages
       - **Usage Analytics**: Admin panel displays complete usage history showing which users used each promo code, associated order details, and points awarded to owners
+    - **Profile Loyalty & Promo Code Display** (November 2025): Enhanced user profile "Данные" (Data) tab with comprehensive loyalty and promo code information:
+      - **Loyalty Points Section**: Visual display of loyalty stats including available points, total earned, total spent, and referral count with color-coded cards. Progress bar shows advancement to next loyalty level (hidden when max level reached)
+      - **My Promo Code Section**: If user owns a promo code, displays prominent promo code card with code, discount percentage, and points-per-use reward. Shows usage statistics (total uses vs max uses) and total points earned from referrals
+      - **Partner Information**: Conditionally displays partner name and contact details when both fields are populated
+      - **API Endpoint**: New `GET /api/promo-codes/owner/:userId` endpoint returns user's owned promo code with aggregated usage statistics and points earned
+      - **Conditional Rendering**: Both sections only appear when relevant data exists, maintaining clean UI for users without promo codes or loyalty activity
 
 ## External Dependencies
 
