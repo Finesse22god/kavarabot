@@ -18,6 +18,7 @@ import { User as UserEntity } from "./entities/User";
 import { Order as OrderEntity } from "./entities/Order";
 import { LoyaltyTransaction as LoyaltyTransactionEntity } from "./entities/LoyaltyTransaction";
 import { PromoCode as PromoCodeEntity } from "./entities/PromoCode";
+import { PromoCodeUsage as PromoCodeUsageEntity } from "./entities/PromoCodeUsage";
 import { Trainer as TrainerEntity } from "./entities/Trainer";
 import type {
   User,
@@ -847,6 +848,51 @@ router.post("/api/orders", async (req, res) => {
         await manager.save(trainerEntity);
       }
 
+      // Record promo code usage and award points to owner
+      if (promoCodeData && createdOrder.userId) {
+        const PromoCodeUsageRepo = manager.getRepository(PromoCodeUsageEntity);
+        const PromoCodeWithOwner = await manager.getRepository(PromoCodeEntity).findOne({
+          where: { id: promoCodeData.id },
+          relations: ['owner']
+        });
+
+        if (PromoCodeWithOwner) {
+          // Create usage record
+          const usage = PromoCodeUsageRepo.create({
+            promoCodeId: promoCodeData.id,
+            userId: createdOrder.userId,
+            orderId: createdOrder.id,
+            orderAmount: orderData.totalPrice,
+            discountAmount: createdOrder.discountAmount || 0,
+            pointsAwarded: PromoCodeWithOwner.pointsPerUse || 0
+          });
+          await manager.save(usage);
+
+          // Award points to promo code owner if exists
+          if (PromoCodeWithOwner.owner && PromoCodeWithOwner.pointsPerUse > 0) {
+            const ownerUser = await UserRepo.findOne({
+              where: { id: PromoCodeWithOwner.owner.id },
+              lock: { mode: 'pessimistic_write' }
+            });
+
+            if (ownerUser) {
+              ownerUser.loyaltyPoints += PromoCodeWithOwner.pointsPerUse;
+              await manager.save(ownerUser);
+
+              // Create loyalty transaction for tracking
+              const loyaltyTransaction = LoyaltyRepo.create({
+                userId: ownerUser.id,
+                orderId: createdOrder.id,
+                type: 'earn',
+                points: PromoCodeWithOwner.pointsPerUse,
+                description: `Начислено за использование промокода ${PromoCodeWithOwner.code}`
+              });
+              await manager.save(loyaltyTransaction);
+            }
+          }
+        }
+      }
+
       return createdOrder;
     });
 
@@ -1307,7 +1353,7 @@ router.get('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
 
 router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
   try {
-    const { code, discountPercent, maxUses, partnerName, partnerContact, expiresAt } = req.body;
+    const { code, discountPercent, maxUses, partnerName, partnerContact, expiresAt, ownerIdentifier, pointsPerUse } = req.body;
 
     // Check if code already exists
     const existingCode = await storage.getPromoCodeByCode(code);
@@ -1315,12 +1361,24 @@ router.post('/api/admin/promo-codes', verifyAdminToken, async (req, res) => {
       return res.status(400).json({ error: 'Промокод уже существует' });
     }
 
+    // Find owner if specified
+    let ownerId = undefined;
+    if (ownerIdentifier) {
+      const owner = await storage.getUserByTelegramIdOrUsername(ownerIdentifier);
+      if (!owner) {
+        return res.status(404).json({ error: 'Пользователь не найден' });
+      }
+      ownerId = owner.id;
+    }
+
     const promoCode = await storage.createPromoCode({
       code: code.toUpperCase(),
       type: 'general',
       discountPercent,
       maxUses,
-      expiresAt: expiresAt ? new Date(expiresAt) : undefined
+      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
+      ownerId,
+      pointsPerUse: pointsPerUse || 0
     });
 
     res.json(promoCode);
@@ -1355,6 +1413,38 @@ router.get('/api/admin/promo-codes/:id/orders', verifyAdminToken, async (req, re
   } catch (error) {
     console.error('Error fetching promo code orders:', error);
     res.status(500).json({ error: 'Failed to fetch promo code orders' });
+  }
+});
+
+// Get promo code usage statistics
+router.get('/api/admin/promo-codes/:id/usage', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usageStats = await storage.getPromoCodeUsageStats(id);
+    res.json(usageStats);
+  } catch (error) {
+    console.error('Error fetching promo code usage stats:', error);
+    res.status(500).json({ error: 'Failed to fetch usage statistics' });
+  }
+});
+
+// Search users by Telegram ID or username
+router.get('/api/admin/users/search', verifyAdminToken, async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter is required' });
+    }
+    
+    const user = await storage.getUserByTelegramIdOrUsername(query as string);
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
+    }
+    
+    res.json(user);
+  } catch (error) {
+    console.error('Error searching user:', error);
+    res.status(500).json({ error: 'Failed to search user' });
   }
 });
 

@@ -10,6 +10,7 @@ import { LoyaltyTransaction } from "./entities/LoyaltyTransaction";
 import { Referral } from "./entities/Referral";
 import { Trainer } from "./entities/Trainer";
 import { PromoCode } from "./entities/PromoCode";
+import { PromoCodeUsage } from "./entities/PromoCodeUsage";
 import { Favorite } from "./entities/Favorite";
 import { Cart } from "./entities/Cart";
 import { Product } from "./entities/Product";
@@ -98,7 +99,7 @@ export interface IStorage {
   updateTrainerStats(trainerId: string, orderValue: number): Promise<Trainer | null>;
 
   // Promo Code System
-  createPromoCode(promoCode: CreatePromoCodeDto): Promise<PromoCode>;
+  createPromoCode(promoCode: CreatePromoCodeDto & { ownerId?: string, pointsPerUse?: number }): Promise<PromoCode>;
   validatePromoCode(code: string): Promise<PromoCodeValidationResult>;
   applyPromoCode(code: string): Promise<PromoCode | null>;
   getPromoCodeUsage(code: string): Promise<number>;
@@ -107,6 +108,9 @@ export interface IStorage {
   updatePromoCodeStatus(id: string, isActive: boolean): Promise<PromoCode | null>;
   getOrdersByPromoCodeId(promoCodeId: string): Promise<Order[]>;
   updateTrainerDiscount(trainerId: string, discountPercent: number): Promise<Trainer | null>;
+  getUserByTelegramIdOrUsername(identifier: string): Promise<User | null>;
+  recordPromoCodeUsage(promoCodeId: string, userId: string, orderId: string, orderAmount: number, discountAmount: number): Promise<void>;
+  getPromoCodeUsageStats(promoCodeId: string): Promise<any[]>;
 
   // Favorites System
   createFavorite(favorite: CreateFavoriteDto): Promise<any>;
@@ -150,6 +154,7 @@ export class DatabaseStorage implements IStorage {
   private referralRepository: Repository<Referral>;
   private trainerRepository: Repository<Trainer>;
   private promoCodeRepository: Repository<PromoCode>;
+  private promoCodeUsageRepository: Repository<PromoCodeUsage>;
   private favoriteRepository: Repository<Favorite>;
   private cartRepository: Repository<Cart>;
   private productRepository: Repository<Product>;
@@ -165,6 +170,7 @@ export class DatabaseStorage implements IStorage {
     this.referralRepository = AppDataSource.getRepository(Referral);
     this.trainerRepository = AppDataSource.getRepository(Trainer);
     this.promoCodeRepository = AppDataSource.getRepository(PromoCode);
+    this.promoCodeUsageRepository = AppDataSource.getRepository(PromoCodeUsage);
     this.favoriteRepository = AppDataSource.getRepository(Favorite);
     this.cartRepository = AppDataSource.getRepository(Cart);
     this.productRepository = AppDataSource.getRepository(Product);
@@ -746,10 +752,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Promo Code System Methods
-  async createPromoCode(promoCodeData: CreatePromoCodeDto): Promise<PromoCode> {
+  async createPromoCode(promoCodeData: CreatePromoCodeDto & { ownerId?: string, pointsPerUse?: number }): Promise<PromoCode> {
     const promoCode = this.promoCodeRepository.create({
       ...promoCodeData,
-      type: 'general' as any // Temporary fix for type compatibility
+      type: 'general' as any, // Temporary fix for type compatibility
+      ownerId: promoCodeData.ownerId,
+      pointsPerUse: promoCodeData.pointsPerUse || 0
     });
     return await this.promoCodeRepository.save(promoCode);
   }
@@ -757,7 +765,7 @@ export class DatabaseStorage implements IStorage {
   async validatePromoCode(code: string): Promise<PromoCodeValidationResult> {
     const promoCode = await this.promoCodeRepository.findOne({
       where: { code: code.toUpperCase() },
-      relations: ['trainer']
+      relations: ['trainer', 'owner']
     });
 
     if (!promoCode) {
@@ -846,6 +854,73 @@ export class DatabaseStorage implements IStorage {
     }
 
     return trainer;
+  }
+
+  // Get user by Telegram ID or username
+  async getUserByTelegramIdOrUsername(identifier: string): Promise<User | null> {
+    let user = await this.userRepository.findOne({
+      where: { telegramId: identifier }
+    });
+
+    if (!user) {
+      user = await this.userRepository.findOne({
+        where: { username: identifier }
+      });
+    }
+
+    return user;
+  }
+
+  // Record promo code usage and award points to owner
+  async recordPromoCodeUsage(
+    promoCodeId: string, 
+    userId: string, 
+    orderId: string, 
+    orderAmount: number, 
+    discountAmount: number
+  ): Promise<void> {
+    const promoCode = await this.promoCodeRepository.findOne({
+      where: { id: promoCodeId },
+      relations: ['owner']
+    });
+
+    if (!promoCode) return;
+
+    // Create usage record
+    const usage = this.promoCodeUsageRepository.create({
+      promoCodeId,
+      userId,
+      orderId,
+      orderAmount,
+      discountAmount,
+      pointsAwarded: promoCode.pointsPerUse
+    });
+
+    await this.promoCodeUsageRepository.save(usage);
+
+    // Award points to promo code owner if exists
+    if (promoCode.owner && promoCode.pointsPerUse > 0) {
+      const owner = promoCode.owner;
+      owner.loyaltyPoints += promoCode.pointsPerUse;
+      await this.userRepository.save(owner);
+
+      // Create loyalty transaction for tracking
+      await this.createLoyaltyTransaction({
+        userId: owner.id,
+        points: promoCode.pointsPerUse,
+        type: 'earn',
+        description: `Начислено за использование промокода ${promoCode.code}`
+      });
+    }
+  }
+
+  // Get promo code usage statistics
+  async getPromoCodeUsageStats(promoCodeId: string): Promise<any[]> {
+    return await this.promoCodeUsageRepository.find({
+      where: { promoCodeId },
+      relations: ['user', 'order'],
+      order: { createdAt: 'DESC' }
+    });
   }
 
   // Admin methods for user management

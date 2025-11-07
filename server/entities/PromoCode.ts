@@ -10,11 +10,13 @@ import {
 } from "typeorm";
 import { Trainer } from "./Trainer";
 import { Order } from "./Order";
+import { User } from "./User";
 
 export enum PromoCodeType {
   TRAINER = 'trainer',
   GENERAL = 'general',
-  LOYALTY_DISCOUNT = 'loyalty_discount'
+  LOYALTY_DISCOUNT = 'loyalty_discount',
+  REFERRAL = 'referral'
 }
 
 @Entity("promo_codes")
@@ -56,6 +58,16 @@ export class PromoCode {
   @ManyToOne(() => Trainer, trainer => trainer.orders, { nullable: true })
   @JoinColumn({ name: "trainerId" })
   trainer?: Trainer;
+
+  @Column({ type: "uuid", nullable: true })
+  ownerId?: string;
+
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: "ownerId" })
+  owner?: User;
+
+  @Column({ type: "int", default: 0 })
+  pointsPerUse!: number;
 
   @OneToMany(() => Order, order => order.promoCode)
   orders!: Order[];

@@ -22,6 +22,14 @@ interface PromoCode {
   createdAt: string;
   expiresAt?: string;
   orders?: any[];
+  owner?: {
+    id: string;
+    telegramId?: string;
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  pointsPerUse: number;
 }
 
 interface PromoCodeFormData {
@@ -31,6 +39,8 @@ interface PromoCodeFormData {
   partnerName: string;
   partnerContact: string;
   expiresAt?: string;
+  ownerIdentifier?: string;
+  pointsPerUse: number;
 }
 
 export default function PromoCodes({ onBack }: { onBack: () => void }) {
@@ -44,7 +54,9 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
     maxUses: 100,
     partnerName: '',
     partnerContact: '',
-    expiresAt: ''
+    expiresAt: '',
+    ownerIdentifier: '',
+    pointsPerUse: 0
   });
 
   const { data: promoCodes, isLoading } = useQuery<PromoCode[]>({
@@ -66,7 +78,9 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
         maxUses: 100,
         partnerName: '',
         partnerContact: '',
-        expiresAt: ''
+        expiresAt: '',
+        ownerIdentifier: '',
+        pointsPerUse: 0
       });
       toast({
         title: "Промокод создан",
@@ -333,6 +347,35 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
                   </div>
                 </div>
 
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="ownerIdentifier">Владелец промокода (необязательно)</Label>
+                    <Input
+                      id="ownerIdentifier"
+                      value={formData.ownerIdentifier}
+                      onChange={(e) => setFormData({ ...formData, ownerIdentifier: e.target.value })}
+                      placeholder="Telegram ID или @username"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Укажите Telegram ID или username пользователя, который получит баллы
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="pointsPerUse">Баллов за использование</Label>
+                    <Input
+                      id="pointsPerUse"
+                      type="number"
+                      min="0"
+                      value={formData.pointsPerUse}
+                      onChange={(e) => setFormData({ ...formData, pointsPerUse: parseInt(e.target.value) || 0 })}
+                      placeholder="0"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Сколько баллов владелец получит за каждое использование
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex gap-4">
                   <Button 
                     type="submit" 
@@ -379,6 +422,12 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
                       </div>
                       <p className="font-medium">{promoCode.partnerName}</p>
                       <p className="text-sm text-gray-600">{promoCode.partnerContact}</p>
+                      {promoCode.owner && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          Владелец: {promoCode.owner.firstName || promoCode.owner.username || promoCode.owner.telegramId} 
+                          {promoCode.pointsPerUse > 0 && ` (${promoCode.pointsPerUse} баллов за использование)`}
+                        </p>
+                      )}
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                         <span>Использований: {promoCode.usedCount} / {promoCode.maxUses}</span>
                         <span>

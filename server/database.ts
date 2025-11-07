@@ -11,6 +11,7 @@ import { LoyaltyTransaction } from "./entities/LoyaltyTransaction";
 import { Referral } from "./entities/Referral";
 import { Trainer } from "./entities/Trainer";
 import { PromoCode } from "./entities/PromoCode";
+import { PromoCodeUsage } from "./entities/PromoCodeUsage";
 import { Favorite } from "./entities/Favorite";
 import { Cart } from "./entities/Cart";
 import { Product } from "./entities/Product";
@@ -21,7 +22,7 @@ export const AppDataSource = new DataSource({
   url: process.env.DATABASE_URL,
   synchronize: true, // Only for development
   logging: true, // Enable logging for debugging
-  entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, Favorite, Cart, Product, BoxProduct],
+  entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, PromoCodeUsage, Favorite, Cart, Product, BoxProduct],
   ssl:
     process.env.NODE_ENV === "production"
       ? { rejectUnauthorized: false }
