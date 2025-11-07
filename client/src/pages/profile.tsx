@@ -576,31 +576,31 @@ export default function Profile() {
                 {userMeasurements || quizResponse ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Размер</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Размер</p>
+                        <p className="text-xl font-bold text-black text-center">
                           {userMeasurements?.preferredSize || quizResponse?.size || "Не указан"}
-                        </div>
+                        </p>
                       </div>
-                      <div className="flex flex-col">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Рост</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Рост</p>
+                        <p className="text-xl font-bold text-black text-center">
                           {userMeasurements?.height ? `${userMeasurements.height} см` : 
                            quizResponse?.height ? `${quizResponse.height} см` : "Не указан"}
-                        </div>
+                        </p>
                       </div>
-                      <div className="flex flex-col">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Вес</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Вес</p>
+                        <p className="text-xl font-bold text-black text-center">
                           {userMeasurements?.weight ? `${userMeasurements.weight} кг` : 
                            quizResponse?.weight ? `${quizResponse.weight} кг` : "Не указан"}
-                        </div>
+                        </p>
                       </div>
-                      <div className="flex flex-col">
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Рукав</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
+                      <div className="bg-white border-2 border-black p-4 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-1">Рукав</p>
+                        <p className="text-xl font-bold text-black text-center">
                           {userMeasurements?.sleeveLength ? `${userMeasurements.sleeveLength} см` : "Не указан"}
-                        </div>
+                        </p>
                       </div>
                     </div>
                     
@@ -608,23 +608,23 @@ export default function Profile() {
                       <div>
                         <Label className="text-sm font-medium text-gray-700 mb-3 block">Обхваты</Label>
                         <div className="grid grid-cols-3 gap-4">
-                          <div className="flex flex-col">
-                            <Label className="text-xs text-gray-600 mb-2 block h-8 flex items-center">Грудь</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex items-center justify-center min-h-[48px]">
+                          <div className="bg-white border-2 border-black p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Грудь</p>
+                            <p className="text-xl font-bold text-black text-center">
                               {userMeasurements.chestSize ? `${userMeasurements.chestSize} см` : "—"}
-                            </div>
+                            </p>
                           </div>
-                          <div className="flex flex-col">
-                            <Label className="text-xs text-gray-600 mb-2 block h-8 flex items-center">Талия</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex items-center justify-center min-h-[48px]">
+                          <div className="bg-white border-2 border-black p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Талия</p>
+                            <p className="text-xl font-bold text-black text-center">
                               {userMeasurements.waistSize ? `${userMeasurements.waistSize} см` : "—"}
-                            </div>
+                            </p>
                           </div>
-                          <div className="flex flex-col">
-                            <Label className="text-xs text-gray-600 mb-2 block h-8 flex items-center">Бедра</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex items-center justify-center min-h-[48px]">
+                          <div className="bg-white border-2 border-black p-4 rounded-lg">
+                            <p className="text-sm text-gray-600 mb-1">Бедра</p>
+                            <p className="text-xl font-bold text-black text-center">
                               {userMeasurements.hipSize ? `${userMeasurements.hipSize} см` : "—"}
-                            </div>
+                            </p>
                           </div>
                         </div>
                       </div>
