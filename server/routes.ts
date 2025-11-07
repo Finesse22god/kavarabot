@@ -541,6 +541,75 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
           // Also save the payment ID to the order
           await storage.updateOrderPaymentId(order.id, paymentId);
           
+          // Award promo code owner points ONLY after successful payment
+          if (order.promoCodeId && order.userId) {
+            try {
+              const PromoCodeRepo = AppDataSource.getRepository(PromoCodeEntity);
+              const PromoCodeUsageRepo = AppDataSource.getRepository(PromoCodeUsageEntity);
+              const UserRepo = AppDataSource.getRepository(UserEntity);
+              const LoyaltyRepo = AppDataSource.getRepository(LoyaltyTransactionEntity);
+              
+              // Check if usage already recorded (idempotency)
+              const existingUsage = await PromoCodeUsageRepo.findOne({
+                where: { orderId: order.id }
+              });
+              
+              if (!existingUsage) {
+                // Load promo code with owner relation
+                const promoCode = await PromoCodeRepo.findOne({
+                  where: { id: order.promoCodeId },
+                  relations: ['owner']
+                });
+                
+                if (promoCode && promoCode.owner && promoCode.pointsPerUse > 0) {
+                  console.log(`Awarding ${promoCode.pointsPerUse} points to promo code owner for order ${order.orderNumber}`);
+                  
+                  // Create usage record (unique constraint on orderId prevents duplicates)
+                  const usage = PromoCodeUsageRepo.create({
+                    promoCodeId: promoCode.id,
+                    userId: order.userId,
+                    orderId: order.id,
+                    orderAmount: order.totalPrice,
+                    discountAmount: order.discountAmount || 0,
+                    pointsAwarded: promoCode.pointsPerUse
+                  });
+                  await PromoCodeUsageRepo.save(usage);
+                  
+                  // Award points to owner
+                  const ownerUser = await UserRepo.findOne({
+                    where: { id: promoCode.owner.id }
+                  });
+                  
+                  if (ownerUser) {
+                    ownerUser.loyaltyPoints = (ownerUser.loyaltyPoints || 0) + promoCode.pointsPerUse;
+                    await UserRepo.save(ownerUser);
+                    
+                    // Create loyalty transaction for tracking
+                    const loyaltyTransaction = LoyaltyRepo.create({
+                      userId: ownerUser.id,
+                      orderId: order.id,
+                      type: 'earn',
+                      points: promoCode.pointsPerUse,
+                      description: `Начислено за использование промокода ${promoCode.code}`
+                    });
+                    await LoyaltyRepo.save(loyaltyTransaction);
+                    
+                    console.log(`Successfully awarded ${promoCode.pointsPerUse} points to owner ${ownerUser.telegramId}`);
+                  }
+                }
+              } else {
+                console.log(`Promo code usage already recorded for order ${order.orderNumber} (idempotency check)`);
+              }
+            } catch (error: any) {
+              // Handle unique constraint violation gracefully (duplicate webhook)
+              if (error.code === '23505' || error.message?.includes('duplicate')) {
+                console.log(`Promo code usage already recorded for order ${order.orderNumber} (duplicate webhook - unique constraint)`);
+              } else {
+                console.error(`Error awarding promo code owner points for order ${order.orderNumber}:`, error);
+              }
+            }
+          }
+          
           // Load full order with relations to get product/box details
           const fullOrder = await AppDataSource.getRepository(OrderEntity).findOne({
             where: { id: order.id },
@@ -890,50 +959,8 @@ router.post("/api/orders", async (req, res) => {
         await manager.save(trainerEntity);
       }
 
-      // Record promo code usage and award points to owner
-      if (promoCodeData && createdOrder.userId) {
-        const PromoCodeUsageRepo = manager.getRepository(PromoCodeUsageEntity);
-        const PromoCodeWithOwner = await manager.getRepository(PromoCodeEntity).findOne({
-          where: { id: promoCodeData.id },
-          relations: ['owner']
-        });
-
-        if (PromoCodeWithOwner) {
-          // Create usage record
-          const usage = PromoCodeUsageRepo.create({
-            promoCodeId: promoCodeData.id,
-            userId: createdOrder.userId,
-            orderId: createdOrder.id,
-            orderAmount: orderData.totalPrice,
-            discountAmount: createdOrder.discountAmount || 0,
-            pointsAwarded: PromoCodeWithOwner.pointsPerUse || 0
-          });
-          await manager.save(usage);
-
-          // Award points to promo code owner if exists
-          if (PromoCodeWithOwner.owner && PromoCodeWithOwner.pointsPerUse > 0) {
-            const ownerUser = await UserRepo.findOne({
-              where: { id: PromoCodeWithOwner.owner.id },
-              lock: { mode: 'pessimistic_write' }
-            });
-
-            if (ownerUser) {
-              ownerUser.loyaltyPoints += PromoCodeWithOwner.pointsPerUse;
-              await manager.save(ownerUser);
-
-              // Create loyalty transaction for tracking
-              const loyaltyTransaction = LoyaltyRepo.create({
-                userId: ownerUser.id,
-                orderId: createdOrder.id,
-                type: 'earn',
-                points: PromoCodeWithOwner.pointsPerUse,
-                description: `Начислено за использование промокода ${PromoCodeWithOwner.code}`
-              });
-              await manager.save(loyaltyTransaction);
-            }
-          }
-        }
-      }
+      // Note: Promo code owner points are awarded in YooKassa webhook upon successful payment
+      // This ensures points are only given for paid orders
 
       return createdOrder;
     });

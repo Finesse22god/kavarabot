@@ -5,12 +5,14 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Unique,
 } from "typeorm";
 import { User } from "./User";
 import { PromoCode } from "./PromoCode";
 import { Order } from "./Order";
 
 @Entity("promo_code_usages")
+@Unique(["orderId"]) // Prevent duplicate awards for the same order
 export class PromoCodeUsage {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
