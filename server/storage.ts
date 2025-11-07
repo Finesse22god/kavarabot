@@ -858,13 +858,16 @@ export class DatabaseStorage implements IStorage {
 
   // Get user by Telegram ID or username
   async getUserByTelegramIdOrUsername(identifier: string): Promise<User | null> {
+    // Remove @ from username if present
+    const cleanIdentifier = identifier.startsWith('@') ? identifier.substring(1) : identifier;
+    
     let user = await this.userRepository.findOne({
-      where: { telegramId: identifier }
+      where: { telegramId: cleanIdentifier }
     });
 
     if (!user) {
       user = await this.userRepository.findOne({
-        where: { username: identifier }
+        where: { username: cleanIdentifier }
       });
     }
 

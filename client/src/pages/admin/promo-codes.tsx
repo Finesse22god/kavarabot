@@ -126,8 +126,7 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
 
   const togglePromoCodeMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const response = await apiRequest("PUT", `/api/admin/promo-codes/${id}/toggle`, { isActive });
-      return response.json();
+      return await apiRequest("PUT", `/api/admin/promo-codes/${id}/toggle`, { isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/promo-codes"] });
