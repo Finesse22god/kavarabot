@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTelegram } from "@/hooks/use-telegram";
+import logoImage from "@assets/Group 1 (4)_1762503053535.png";
 
 interface CatalogHeaderProps {
   activeTab: "catalog" | "boxes";
@@ -28,7 +29,12 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
     <div className="bg-black text-white py-4 px-4 sticky top-0 z-50">
       {/* Logo */}
       <div className="text-center mb-4">
-        <h1 className="text-2xl font-bold tracking-widest">KAVARA</h1>
+        <img 
+          src={logoImage} 
+          alt="KAVARA" 
+          className="h-12 mx-auto"
+          data-testid="img-logo"
+        />
       </div>
 
       {/* Tab Switcher with Cart Button */}
