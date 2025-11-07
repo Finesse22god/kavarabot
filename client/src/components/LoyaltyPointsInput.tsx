@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Coins, Info } from "lucide-react";
 
 interface LoyaltyPointsInputProps {
@@ -33,19 +34,29 @@ export default function LoyaltyPointsInput({
     onPointsUsed(maxPoints);
   };
 
-  const clearPoints = () => {
-    setPointsToUse(0);
-    onPointsUsed(0);
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <Label>Использовать бонусные баллы</Label>
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Coins className="h-3 w-3" />
-          {availablePoints} доступно
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <Coins className="h-3 w-3" />
+            {availablePoints} доступно
+          </Badge>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-gray-300 hover:bg-gray-100 transition-colors">
+                <Info className="h-3 w-3 text-gray-600" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-3" side="left" align="start">
+              <div className="text-sm space-y-1">
+                <p className="font-medium">1 балл = 1 рубль скидки</p>
+                <p className="text-muted-foreground">Максимум: {maxUsablePoints} баллов</p>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -69,22 +80,6 @@ export default function LoyaltyPointsInput({
         >
           Все
         </Button>
-        <Button 
-          onClick={clearPoints}
-          variant="outline" 
-          size="sm"
-          disabled={pointsToUse === 0}
-        >
-          Очистить
-        </Button>
-      </div>
-
-      <div className="flex items-start gap-2 text-sm text-muted-foreground">
-        <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-        <div>
-          <p>1 балл = 1 рубль скидки</p>
-          <p>Максимум для этого заказа: {maxUsablePoints} баллов</p>
-        </div>
       </div>
 
       {pointsToUse > 0 && (
