@@ -344,6 +344,9 @@ export default function Order() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-lg">{selectedBox.name}</h3>
+                  {selectedBox.description && (
+                    <p className="text-sm text-gray-600">{selectedBox.description}</p>
+                  )}
                 </div>
                 <div className="text-xl font-bold">
                   {(typeof selectedBox.price === 'string' ? parseFloat(selectedBox.price) : selectedBox.price).toLocaleString()}₽
