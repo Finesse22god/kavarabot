@@ -69,6 +69,12 @@ export class PromoCode {
   @Column({ type: "int", default: 0 })
   pointsPerUse!: number;
 
+  @Column({ type: "varchar", nullable: true })
+  partnerName?: string;
+
+  @Column({ type: "varchar", nullable: true })
+  partnerContact?: string;
+
   @OneToMany(() => Order, order => order.promoCode)
   orders!: Order[];
 

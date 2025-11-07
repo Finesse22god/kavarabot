@@ -119,7 +119,7 @@ export default function Cart() {
 
       const data = await response.json();
 
-      if (data.valid) {
+      if (data.isValid) {
         setAppliedPromo({
           code: promoCode.toUpperCase(),
           discountPercent: data.discountPercent,
@@ -131,7 +131,7 @@ export default function Cart() {
       } else {
         toast({
           title: "Неверный промокод",
-          description: data.reason || "Промокод не найден или неактивен",
+          description: data.error || "Промокод не найден или неактивен",
           variant: "destructive",
         });
       }
