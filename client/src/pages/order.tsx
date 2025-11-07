@@ -465,13 +465,6 @@ export default function Order() {
                 <span className="font-medium">СДЭК</span>
               </Label>
             </div>
-            <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
-              <RadioGroupItem value="pickup" id="pickup" />
-              <Label htmlFor="pickup" className="flex items-center space-x-2 cursor-pointer">
-                <span className="text-xl">🏪</span>
-                <span className="font-medium">Самовывоз</span>
-              </Label>
-            </div>
           </RadioGroup>
         </div>
 
