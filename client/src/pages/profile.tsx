@@ -630,17 +630,10 @@ export default function Profile() {
                       </div>
                     )}
                     
-                    <div className="flex gap-3 pt-2">
+                    <div className="pt-2">
                       <Button 
                         variant="outline" 
-                        className="flex-1"
-                        onClick={() => setLocation("/catalog")}
-                      >
-                        Обновить в каталоге
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="flex-1"
+                        className="w-full"
                         onClick={() => setLocation("/quiz")}
                       >
                         Пройти опрос
@@ -651,21 +644,12 @@ export default function Profile() {
                   <div className="text-center py-8">
                     <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">Размеры и параметры не указаны</p>
-                    <div className="flex gap-3">
-                      <Button 
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setLocation("/catalog")}
-                      >
-                        Указать в каталоге
-                      </Button>
-                      <Button 
-                        className="flex-1"
-                        onClick={() => setLocation("/quiz")}
-                      >
-                        Пройти опрос
-                      </Button>
-                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => setLocation("/quiz")}
+                    >
+                      Пройти опрос
+                    </Button>
                   </div>
                 )}
               </div>
