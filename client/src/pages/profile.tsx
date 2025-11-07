@@ -576,30 +576,30 @@ export default function Profile() {
                 {userMeasurements || quizResponse ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Предпочитаемый размер</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
+                      <div className="flex flex-col">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Размер</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
                           {userMeasurements?.preferredSize || quizResponse?.size || "Не указан"}
                         </div>
                       </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Рост</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
+                      <div className="flex flex-col">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Рост</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
                           {userMeasurements?.height ? `${userMeasurements.height} см` : 
                            quizResponse?.height ? `${quizResponse.height} см` : "Не указан"}
                         </div>
                       </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Вес</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
+                      <div className="flex flex-col">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Вес</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
                           {userMeasurements?.weight ? `${userMeasurements.weight} кг` : 
                            quizResponse?.weight ? `${quizResponse.weight} кг` : "Не указан"}
                         </div>
                       </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-700 mb-2 block">Длина рукава</Label>
-                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
-                          {userMeasurements?.sleeveLength ? `${userMeasurements.sleeveLength} см` : "Не указана"}
+                      <div className="flex flex-col">
+                        <Label className="text-sm font-medium text-gray-700 mb-2 block h-10 flex items-center">Рукав</Label>
+                        <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex-1 flex items-center justify-center min-h-[48px]">
+                          {userMeasurements?.sleeveLength ? `${userMeasurements.sleeveLength} см` : "Не указан"}
                         </div>
                       </div>
                     </div>
@@ -608,21 +608,21 @@ export default function Profile() {
                       <div>
                         <Label className="text-sm font-medium text-gray-700 mb-3 block">Обхваты</Label>
                         <div className="grid grid-cols-3 gap-4">
-                          <div>
-                            <Label className="text-xs text-gray-600 mb-2 block">Грудь</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
+                          <div className="flex flex-col">
+                            <Label className="text-xs text-gray-600 mb-2 block h-8 flex items-center">Грудь</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex items-center justify-center min-h-[48px]">
                               {userMeasurements.chestSize ? `${userMeasurements.chestSize} см` : "—"}
                             </div>
                           </div>
-                          <div>
-                            <Label className="text-xs text-gray-600 mb-2 block">Талия</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
+                          <div className="flex flex-col">
+                            <Label className="text-xs text-gray-600 mb-2 block h-8 flex items-center">Талия</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex items-center justify-center min-h-[48px]">
                               {userMeasurements.waistSize ? `${userMeasurements.waistSize} см` : "—"}
                             </div>
                           </div>
-                          <div>
-                            <Label className="text-xs text-gray-600 mb-2 block">Бедра</Label>
-                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium">
+                          <div className="flex flex-col">
+                            <Label className="text-xs text-gray-600 mb-2 block h-8 flex items-center">Бедра</Label>
+                            <div className="p-3 bg-gray-50 rounded-lg text-center font-medium flex items-center justify-center min-h-[48px]">
                               {userMeasurements.hipSize ? `${userMeasurements.hipSize} см` : "—"}
                             </div>
                           </div>
