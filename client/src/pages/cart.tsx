@@ -375,7 +375,8 @@ export default function Cart() {
             </div>
 
             {/* Fixed Bottom Summary */}
-            <div className="fixed bottom-20 left-0 right-0 mx-4 max-w-2xl lg:mx-auto z-40">
+            <div className="fixed bottom-20 left-0 right-0 z-40">
+              <div className="mx-4 max-w-2xl lg:mx-auto">
                 <Card>
                   <CardContent className="p-4 space-y-4">
                     {/* Promo Code Input */}
@@ -445,6 +446,7 @@ export default function Cart() {
                     </Button>
                   </CardContent>
                 </Card>
+              </div>
             </div>
           </>
         ) : (
