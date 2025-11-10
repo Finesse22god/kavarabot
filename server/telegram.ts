@@ -108,12 +108,11 @@ async function handleMessage(message: any) {
       inline_keyboard: [
         [{ text: "🚀 Открыть приложение", web_app: { url: getWebAppUrl() } }],
         [
-          { text: "📋 Пройти тест", callback_data: "quiz" },
-          { text: "📦 Готовые боксы", callback_data: "ready_boxes" }
+          { text: "📞 Поддержка", callback_data: "support" }
         ],
         [
-          { text: "📞 Поддержка", callback_data: "support" },
-          { text: "ℹ️ О нас", callback_data: "about" }
+          { text: "📦 Готовые боксы", callback_data: "ready_boxes" },
+          { text: "🛍️ Каталог", callback_data: "catalog" }
         ]
       ]
     };
@@ -188,6 +187,15 @@ async function handleCallbackQuery(callbackQuery: any) {
       keyboard = {
         inline_keyboard: [
           [{ text: "💬 Связаться", web_app: { url: `${getWebAppUrl()}/support` } }]
+        ]
+      };
+      break;
+
+    case 'catalog':
+      responseText = '🛍️ Посмотрите наш полный каталог товаров!';
+      keyboard = {
+        inline_keyboard: [
+          [{ text: "🛍️ Открыть каталог", web_app: { url: `${getWebAppUrl()}/catalog` } }]
         ]
       };
       break;
