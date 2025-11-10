@@ -108,10 +108,10 @@ async function handleMessage(message: any) {
       inline_keyboard: [
         [{ text: "🚀 Открыть приложение", web_app: { url: getWebAppUrl() } }],
         [
-          { text: "📞 Поддержка", url: "https://t.me/kavarabrand" }
+          { text: "📞 Поддержка", callback_data: "support" }
         ],
         [
-          { text: "📦 Готовые боксы", web_app: { url: `${getWebAppUrl()}/ready-boxes` } },
+          { text: "📦 Готовые боксы", web_app: { url: `${getWebAppUrl()}/boxes` } },
           { text: "🛍️ Каталог", callback_data: "catalog" }
         ]
       ]
@@ -135,7 +135,7 @@ async function handleMessage(message: any) {
   } else if (text === '/boxes') {
     const keyboard = {
       inline_keyboard: [
-        [{ text: "🛍️ Смотреть боксы", web_app: { url: `${getWebAppUrl()}/ready-boxes` } }]
+        [{ text: "🛍️ Смотреть боксы", web_app: { url: `${getWebAppUrl()}/boxes` } }]
       ]
     };
     await sendMessage(chatId, '📦 Посмотрите наши готовые спортивные боксы!', keyboard);
@@ -183,10 +183,10 @@ async function handleCallbackQuery(callbackQuery: any) {
       break;
 
     case 'support':
-      responseText = '📞 Служба поддержки KAVARA готова помочь!';
+      responseText = '📞 Для связи с поддержкой напишите @kavarabrand';
       keyboard = {
         inline_keyboard: [
-          [{ text: "💬 Связаться", web_app: { url: `${getWebAppUrl()}/support` } }]
+          [{ text: "💬 Написать @kavarabrand", url: "https://t.me/kavarabrand" }]
         ]
       };
       break;
