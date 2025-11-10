@@ -29,9 +29,9 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // Setup bot commands and menu (GET version for browser access)
   app.get('/setup-bot', async (req, res) => {
     try {
-      // Set webhook - используем переменную окружения или автоматически определяем URL
-      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || 
-        `https://${process.env.REPL_SLUG || 'kavarabotapp'}.${process.env.REPL_OWNER || 'replit'}.repl.co/webhook`;
+      // Set webhook - используем правильный домен Replit
+      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'kavarabotapp.replit.app';
+      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
       const webhookResponse = await setWebhook(webhookUrl);
       
       // Set bot commands
@@ -55,9 +55,9 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // POST version for programmatic access
   app.post('/setup-bot', async (req, res) => {
     try {
-      // Set webhook - используем переменную окружения или автоматически определяем URL
-      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || 
-        `https://${process.env.REPL_SLUG || 'kavarabotapp'}.${process.env.REPL_OWNER || 'replit'}.repl.co/webhook`;
+      // Set webhook - используем правильный домен Replit
+      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'kavarabotapp.replit.app';
+      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
       await setWebhook(webhookUrl);
       
       // Set bot commands
