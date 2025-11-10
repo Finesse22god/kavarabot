@@ -177,7 +177,7 @@ async function handleCallbackQuery(callbackQuery: any) {
       responseText = '📦 Посмотрите наши готовые спортивные боксы!';
       keyboard = {
         inline_keyboard: [
-          [{ text: "🛍️ Смотреть боксы", web_app: { url: `${getWebAppUrl()}/ready-boxes` } }]
+          [{ text: "🛍️ Смотреть боксы", web_app: { url: `${getWebAppUrl()}/boxes` } }]
         ]
       };
       break;

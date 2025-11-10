@@ -7,7 +7,6 @@ import { useTelegram } from "./hooks/use-telegram";
 import Home from "./pages/home";
 import Quiz from "./pages/quiz";
 import PersonalBoxes from "./pages/personal-boxes";
-import ReadyBoxes from "./pages/ready-boxes";
 import Boxes from "./pages/boxes";
 import About from "./pages/about";
 import Order from "./pages/order";
@@ -38,7 +37,6 @@ function Router() {
       <Route path="/boxes" component={Boxes} />
       <Route path="/box/:id" component={BoxDetail} />
       <Route path="/product/:id" component={ProductDetail} />
-      <Route path="/ready-boxes" component={ReadyBoxes} />
       <Route path="/personal-boxes" component={PersonalBoxes} />
       <Route path="/about" component={About} />
       <Route path="/order" component={Order} />
