@@ -108,10 +108,10 @@ async function handleMessage(message: any) {
       inline_keyboard: [
         [{ text: "🚀 Открыть приложение", web_app: { url: getWebAppUrl() } }],
         [
-          { text: "📞 Поддержка", callback_data: "support" }
+          { text: "📞 Поддержка", url: "https://t.me/kavarabrand" }
         ],
         [
-          { text: "📦 Готовые боксы", callback_data: "ready_boxes" },
+          { text: "📦 Готовые боксы", web_app: { url: `${getWebAppUrl()}/ready-boxes` } },
           { text: "🛍️ Каталог", callback_data: "catalog" }
         ]
       ]
