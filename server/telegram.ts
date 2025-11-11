@@ -312,7 +312,7 @@ async function answerCallbackQuery(callbackQueryId: string) {
 }
 
 function getWebAppUrl(): string {
-  return 'https://kavarabotapp.replit.app';
+  return 'https://finesse22god-kavarabot-e967.twc1.net';
 }
 
 function getBotUsername(): string {
