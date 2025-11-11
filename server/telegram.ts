@@ -312,7 +312,23 @@ async function answerCallbackQuery(callbackQueryId: string) {
 }
 
 function getWebAppUrl(): string {
-  return 'https://kavarabotapp.replit.app';
+  // Приоритет: переменная окружения WEB_APP_URL > автоопределение домена > Timeweb URL
+  if (process.env.WEB_APP_URL) {
+    return process.env.WEB_APP_URL;
+  }
+  
+  // Автоопределение для Replit (если запущено на Replit)
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
+  
+  if (process.env.REPLIT_DOMAINS) {
+    const domain = process.env.REPLIT_DOMAINS.split(',')[0];
+    return `https://${domain}`;
+  }
+  
+  // Default: Timeweb URL
+  return 'https://finesse22god-kavarabot-e967.twc1.net';
 }
 
 function getBotUsername(): string {
