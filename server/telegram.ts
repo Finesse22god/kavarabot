@@ -30,7 +30,7 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   app.get('/setup-bot', async (req, res) => {
     try {
       // Set webhook - используем правильный домен Replit
-      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'kavarabotapp.replit.app';
+      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'finesse22god-kavarabot-e967.twc1.net';
       const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
       const webhookResponse = await setWebhook(webhookUrl);
       
@@ -56,7 +56,7 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   app.post('/setup-bot', async (req, res) => {
     try {
       // Set webhook - используем правильный домен Replit
-      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'kavarabotapp.replit.app';
+      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(',')[0] || 'finesse22god-kavarabot-e967.twc1.net';
       const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
       await setWebhook(webhookUrl);
       
