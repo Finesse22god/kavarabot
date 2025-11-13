@@ -71,7 +71,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
         <div className="flex items-center justify-between w-full">
           {/* Название */}
           <div className="flex-1">
-            <h3 className="text-xl font-bold tracking-wide">
+            <h3 className="text-xl font-normal tracking-wide">
               {box.name.toUpperCase()}
             </h3>
           </div>
@@ -83,7 +83,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
           {/* Цена */}
           <div className="flex-1 text-right">
-            <div className="text-xl font-bold">
+            <div className="text-xl font-normal">
               {typeof box.price === 'string' ? parseFloat(box.price).toLocaleString('ru-RU') : box.price.toLocaleString('ru-RU')} ₽
             </div>
           </div>
@@ -100,10 +100,10 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
     >
       {/* Заголовок */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold tracking-wide">
+        <h3 className="text-xl font-normal tracking-wide">
           {box.name.toUpperCase()}
         </h3>
-        <div className="text-xl font-bold">
+        <div className="text-xl font-normal">
           {typeof box.price === 'string' ? parseFloat(box.price).toLocaleString('ru-RU') : box.price.toLocaleString('ru-RU')} ₽
         </div>
       </div>
