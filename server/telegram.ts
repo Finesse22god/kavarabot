@@ -96,6 +96,29 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   });
 }
 
+// Автоматическая настройка webhook при запуске сервера
+export async function autoSetupWebhook() {
+  try {
+    console.log('🔄 Автоматическая настройка Telegram webhook...');
+    
+    // Определяем домен (приоритет: env переменная > автоопределение > Timeweb URL)
+    const domain = process.env.REPLIT_DEV_DOMAIN || 
+                   process.env.REPLIT_DOMAINS?.split(',')[0] || 
+                   'finesse22god-kavarabot-e967.twc1.net';
+    
+    const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
+    
+    // Настраиваем webhook, команды и меню
+    await setWebhook(webhookUrl);
+    await setMyCommands();
+    await setMenuButton();
+    
+    console.log('✅ Telegram webhook настроен автоматически:', webhookUrl);
+  } catch (error) {
+    console.error('❌ Ошибка автоматической настройки webhook:', error);
+  }
+}
+
 async function handleMessage(message: any) {
   const chatId = message.chat.id;
   const text = message.text;

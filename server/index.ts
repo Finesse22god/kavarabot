@@ -89,6 +89,16 @@ async function createServer() {
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
 
+  // Автоматически настроить webhook при старте (через 5 секунд после запуска)
+  setTimeout(async () => {
+    try {
+      const { autoSetupWebhook } = await import('./telegram.js');
+      await autoSetupWebhook();
+    } catch (error) {
+      console.error('Ошибка автоматической настройки webhook:', error);
+    }
+  }, 5000);
+
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
