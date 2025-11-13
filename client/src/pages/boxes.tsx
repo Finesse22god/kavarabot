@@ -142,7 +142,7 @@ export default function Boxes() {
         {boxes && (boxes as any[]).length > 0 ? (
           <>
             {/* Section Title */}
-            <h2 className="text-white text-lg font-semibold mb-4">ВЫБЕРИ ГОТОВЫЙ КОМПЛЕКТ</h2>
+            <h2 className="text-white text-lg font-normal mb-4 text-center">ВЫБЕРИ ГОТОВЫЙ КОМПЛЕКТ</h2>
             
             <div className="grid grid-cols-1 gap-4 mb-4">
             {(boxes as any[]).map((box: any, index: number) => (
