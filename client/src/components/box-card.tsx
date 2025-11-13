@@ -62,7 +62,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
     return (
       <div 
         onClick={handleToggleExpand}
-        className={`relative rounded-[63px] py-6 pr-6 pl-[45px] h-[111px] flex items-center transition-all cursor-pointer ${
+        className={`relative rounded-[63px] py-6 pr-[45px] pl-[45px] h-[111px] flex items-center transition-all cursor-pointer ${
           isWhiteVariant 
             ? 'bg-white text-black border-2 border-black hover:shadow-lg' 
             : 'bg-black text-white border-2 border-white hover:shadow-lg'
@@ -96,7 +96,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   // Развернутый вид (всегда белый фон, черный текст, черная кнопка)
   return (
     <div 
-      className="relative rounded-[40px] py-6 pr-6 pl-[45px] transition-all bg-white text-black border-2 border-black"
+      className="relative rounded-[40px] py-6 pr-[45px] pl-[45px] transition-all bg-white text-black border-2 border-black"
       data-testid={`box-card-expanded-${box.id}`}
     >
       {/* Заголовок */}
