@@ -36,16 +36,23 @@ export async function initializeDatabase() {
     console.log("Database connected successfully with TypeORM");
 
     // Run additional migrations
-    try {
-      const migrationPath = path.join(__dirname, "../db/migrations/02-update-products.sql");
-      if (fs.existsSync(migrationPath)) {
-        const migrationSql = fs.readFileSync(migrationPath, "utf8");
-        await AppDataSource.query(migrationSql);
-        console.log("✅ Products migration executed successfully");
+    const migrations = [
+      "02-update-products.sql",
+      "03-add-photourl-column.sql"
+    ];
+
+    for (const migrationFile of migrations) {
+      try {
+        const migrationPath = path.join(__dirname, "../db/migrations", migrationFile);
+        if (fs.existsSync(migrationPath)) {
+          const migrationSql = fs.readFileSync(migrationPath, "utf8");
+          await AppDataSource.query(migrationSql);
+          console.log(`✅ Migration ${migrationFile} executed successfully`);
+        }
+      } catch (migrationError: unknown) {
+        const errorMessage = migrationError instanceof Error ? migrationError.message : String(migrationError);
+        console.log(`Migration ${migrationFile} already applied or not needed:`, errorMessage);
       }
-    } catch (migrationError: unknown) {
-      const errorMessage = migrationError instanceof Error ? migrationError.message : String(migrationError);
-      console.log("Migration already applied or not needed:", errorMessage);
     }
 
     // Seed initial data in background (non-blocking)
