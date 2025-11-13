@@ -32,7 +32,7 @@ export default function BottomNav() {
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 px-2 py-3 max-w-md mx-auto z-[100] pb-safe ${bgClass}`}>
-      <div className="flex items-center justify-around">
+      <div className="flex items-center justify-center gap-16">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
             (item.path !== "/" && location.startsWith(item.path));
