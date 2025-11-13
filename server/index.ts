@@ -7,6 +7,7 @@ import routes from './routes.js';
 import { register1CRoutes } from "./routes-1c";
 import { initializeDatabase } from './database.js';
 import { setupTelegramBotWithApp } from './telegram.js';
+import { migrateImagesToS3 } from './migrate-images-to-s3.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,9 +20,16 @@ async function initializeDatabaseLazy() {
   if (dbInitialized) return;
   if (dbInitPromise) return dbInitPromise;
 
-  dbInitPromise = initializeDatabase().then(() => {
+  dbInitPromise = initializeDatabase().then(async () => {
     dbInitialized = true;
     console.log('✅ Database initialization completed');
+    
+    // Запускаем миграцию фото в S3 (только при первом деплое на Timeweb)
+    try {
+      await migrateImagesToS3();
+    } catch (error) {
+      console.error('⚠️  Миграция фото в S3 завершилась с ошибками (не критично):', error);
+    }
   }).catch((error) => {
     console.error('❌ Database initialization failed:', error);
     dbInitPromise = null; // Allow retry
