@@ -61,7 +61,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
     return (
       <div 
         onClick={handleToggleExpand}
-        className={`relative rounded-[40px] p-6 h-[111px] flex items-center transition-all cursor-pointer ${
+        className={`relative rounded-[63px] p-6 h-[111px] flex items-center transition-all cursor-pointer ${
           isWhiteVariant 
             ? 'bg-white text-black border-2 border-black hover:shadow-lg' 
             : 'bg-black text-white border-2 border-white hover:shadow-lg'
