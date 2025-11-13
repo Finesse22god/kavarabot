@@ -29,13 +29,14 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // Setup bot commands and menu (GET version for browser access)
   app.get("/setup-bot", async (req, res) => {
     try {
-      // Set webhook - используем правильный домен Replit
-      const domain =
-        process.env.REPLIT_DEV_DOMAIN ||
-        process.env.REPLIT_DOMAINS?.split(",")[0] ||
-        "finesse22god-kavarabot-e967.twc1.net";
-      const webhookUrl =
-        process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
+      // Set webhook - автоопределение домена
+      let webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+      
+      if (!webhookUrl) {
+        const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
+        const domain = replitDomain || "finesse22god-kavarabot-e967.twc1.net";
+        webhookUrl = `https://${domain}/webhook`;
+      }
       const webhookResponse = await setWebhook(webhookUrl);
 
       // Set bot commands
@@ -65,13 +66,14 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // POST version for programmatic access
   app.post("/setup-bot", async (req, res) => {
     try {
-      // Set webhook - используем правильный домен Replit
-      const domain =
-        process.env.REPLIT_DEV_DOMAIN ||
-        process.env.REPLIT_DOMAINS?.split(",")[0] ||
-        "finesse22god-kavarabot-e967.twc1.net";
-      const webhookUrl =
-        process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
+      // Set webhook - автоопределение домена
+      let webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+      
+      if (!webhookUrl) {
+        const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
+        const domain = replitDomain || "finesse22god-kavarabot-e967.twc1.net";
+        webhookUrl = `https://${domain}/webhook`;
+      }
       await setWebhook(webhookUrl);
 
       // Set bot commands
@@ -120,16 +122,16 @@ export async function autoSetupWebhook() {
     
     // Если не задан явно, пытаемся определить автоматически
     if (!webhookUrl) {
-      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
+      // Проверяем Replit домены
+      const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
       
-      if (domain) {
-        webhookUrl = `https://${domain}/webhook`;
+      if (replitDomain) {
+        webhookUrl = `https://${replitDomain}/webhook`;
       } else {
-        console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Не задана переменная TELEGRAM_WEBHOOK_URL!");
-        console.error("📝 Установите переменную окружения TELEGRAM_WEBHOOK_URL на вашем сервере.");
-        console.error("   Пример: TELEGRAM_WEBHOOK_URL=https://ваш-домен.twc1.net/webhook");
-        console.error("⚠️  Telegram webhook НЕ НАСТРОЕН! Бот не будет работать.");
-        return;
+        // Fallback на Timeweb домен
+        const timewebDomain = "finesse22god-kavarabot-e967.twc1.net";
+        webhookUrl = `https://${timewebDomain}/webhook`;
+        console.log("⚙️  Используется Timeweb домен:", timewebDomain);
       }
     }
 

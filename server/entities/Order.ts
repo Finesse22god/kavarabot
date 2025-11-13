@@ -78,7 +78,7 @@ export class Order {
   @JoinColumn({ name: "boxId" })
   box!: Box;
 
-  @ManyToOne(() => Product, (product) => product.orders, { onDelete: "SET NULL" })
+  @ManyToOne(() => Product, { onDelete: "SET NULL" })
   @JoinColumn({ name: "productId" })
   product?: Product;
 
