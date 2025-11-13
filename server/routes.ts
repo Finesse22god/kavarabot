@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import { promises as fs } from "fs";
-import { fileTypeFromFile } from "file-type";
+import { fileTypeFromFile, fileTypeFromBuffer } from "file-type";
 import { AppDataSource } from "./database";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
@@ -14,6 +14,7 @@ import {
   verifyNotification
 } from "./payment";
 import { createAdminToken, verifyToken } from "./auth";
+import { uploadToS3 } from "./s3";
 import { User as UserEntity } from "./entities/User";
 import { Order as OrderEntity } from "./entities/Order";
 import { LoyaltyTransaction as LoyaltyTransactionEntity } from "./entities/LoyaltyTransaction";
@@ -42,24 +43,9 @@ import type {
 
 const router = Router();
 
-// Configure multer for file uploads
-const uploadDir = path.join(process.cwd(), "public", "uploads");
+// Configure multer for S3 uploads (use memory storage)
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: async (req, file, cb) => {
-      try {
-        await fs.mkdir(uploadDir, { recursive: true });
-        cb(null, uploadDir);
-      } catch (error) {
-        cb(error as Error, uploadDir);
-      }
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      cb(null, `box-${uniqueSuffix}${ext}`);
-    },
-  }),
+  storage: multer.memoryStorage(), // Храним файлы в памяти для загрузки в S3
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -73,23 +59,9 @@ const upload = multer({
   },
 });
 
-// Multer configuration for product images
+// Multer configuration for product images (same as boxes, uses S3)
 const productUpload = multer({
-  storage: multer.diskStorage({
-    destination: async (req, file, cb) => {
-      try {
-        await fs.mkdir(uploadDir, { recursive: true });
-        cb(null, uploadDir);
-      } catch (error) {
-        cb(error as Error, uploadDir);
-      }
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      cb(null, `product-${uniqueSuffix}${ext}`);
-    },
-  }),
+  storage: multer.memoryStorage(), // Храним файлы в памяти для загрузки в S3
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -103,64 +75,56 @@ const productUpload = multer({
   },
 });
 
-// File upload endpoint for boxes
+// File upload endpoint for boxes (uploads to S3)
 router.post("/api/upload/box-image", upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Файл не загружен" });
     }
 
-    // Проверяем реальный тип файла (не только MIME type)
-    const fileType = await fileTypeFromFile(req.file.path);
+    // Проверяем реальный тип файла из буфера (безопасность)
+    const fileType = await fileTypeFromBuffer(req.file.buffer);
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     
     if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
-      // Удаляем недопустимый файл
-      await fs.unlink(req.file.path).catch(console.error);
       return res.status(400).json({ 
         error: "Недопустимый тип файла. Разрешены только изображения: JPG, PNG, WebP, GIF" 
       });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl, filename: req.file.filename });
+    // Загружаем в S3
+    const s3Url = await uploadToS3(req.file, "boxes");
+    
+    res.json({ url: s3Url });
   } catch (error) {
-    console.error("Error uploading file:", error);
-    // Удаляем файл в случае ошибки
-    if (req.file?.path) {
-      await fs.unlink(req.file.path).catch(console.error);
-    }
+    console.error("Error uploading file to S3:", error);
     res.status(500).json({ error: "Ошибка при загрузке файла" });
   }
 });
 
-// File upload endpoint for products
+// File upload endpoint for products (uploads to S3)
 router.post("/api/upload/product-image", productUpload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Файл не загружен" });
     }
 
-    // Проверяем реальный тип файла (не только MIME type)
-    const fileType = await fileTypeFromFile(req.file.path);
+    // Проверяем реальный тип файла из буфера (безопасность)
+    const fileType = await fileTypeFromBuffer(req.file.buffer);
     const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     
     if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
-      // Удаляем недопустимый файл
-      await fs.unlink(req.file.path).catch(console.error);
       return res.status(400).json({ 
         error: "Недопустимый тип файла. Разрешены только изображения: JPG, PNG, WebP, GIF" 
       });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl, filename: req.file.filename });
+    // Загружаем в S3
+    const s3Url = await uploadToS3(req.file, "products");
+    
+    res.json({ url: s3Url });
   } catch (error) {
-    console.error("Error uploading file:", error);
-    // Удаляем файл в случае ошибки
-    if (req.file?.path) {
-      await fs.unlink(req.file.path).catch(console.error);
-    }
+    console.error("Error uploading file to S3:", error);
     res.status(500).json({ error: "Ошибка при загрузке файла" });
   }
 });

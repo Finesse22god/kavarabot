@@ -26,6 +26,7 @@ Preferred communication style: Simple, everyday language.
 - **Primary Database**: PostgreSQL via Neon Database
 - **ORM**: TypeORM with decorators and entity classes. Uses JSON columns for `sizes`, `images`, and `sportTypes` within the Product entity.
 - **Session Storage**: Browser sessionStorage for temporary data
+- **File Storage**: Timeweb S3-compatible object storage for all product and box images. Images are uploaded to public buckets and served via direct S3 URLs (e.g., `https://s3.twcstorage.ru/355a4950-kavaraapp/products/product-123.jpg`). Uses AWS SDK v3 with memoryStorage multer configuration for secure file validation before upload.
 
 ### Authentication and Authorization
 - **Primary Auth**: Telegram WebApp authentication (initDataUnsafe)
@@ -92,4 +93,7 @@ Preferred communication style: Simple, everyday language.
 - **Telegram Platform**: Telegram WebApp API
 - **UI Framework**: Radix UI
 - **Payment Processing**: YooKassa (ЮKassa)
-- **Image Hosting**: External image URLs (e.g., Unsplash for placeholders)
+- **Object Storage**: Timeweb Cloud S3 Storage (S3-compatible API at s3.twcstorage.ru)
+  - Bucket: `355a4950-kavaraapp`
+  - Region: `ru-1`
+  - Required environment variables: `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET_NAME`
