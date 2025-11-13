@@ -78,7 +78,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
           {/* Плюс */}
           <div className="mx-6">
-            <span className="text-3xl font-light">+</span>
+            <span className="text-5xl font-light">+</span>
           </div>
 
           {/* Цена */}
