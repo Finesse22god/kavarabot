@@ -44,6 +44,12 @@ export class Box {
   @Column({ type: "simple-array", nullable: true })
   sportTypes?: string[];
 
+  @Column({ type: "simple-array", nullable: true })
+  availableTopSizes?: string[];
+
+  @Column({ type: "simple-array", nullable: true })
+  availableBottomSizes?: string[];
+
   @Column({ type: "jsonb", nullable: true })
   inventory?: Record<string, number> | null;
 

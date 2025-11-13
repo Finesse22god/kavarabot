@@ -30,6 +30,8 @@ interface EditBoxFormProps {
   onBack: () => void;
 }
 
+const AVAILABLE_SIZES = ["S", "M", "L", "XL", "2XL", "3XL"];
+
 export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
   const [formData, setFormData] = useState({
     name: box.name || "",
@@ -39,6 +41,8 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
     imageUrl: box.imageUrl || "",
     photoUrl: (box as any).photoUrl || "",
     sportTypes: box.sportTypes || [],
+    availableTopSizes: (box as any).availableTopSizes || [],
+    availableBottomSizes: (box as any).availableBottomSizes || [],
     isQuizOnly: box.isQuizOnly || false,
   });
   
@@ -450,6 +454,76 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Размеры верха */}
+                <div>
+                  <Label>Доступные размеры верха</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    {AVAILABLE_SIZES.map((size) => (
+                      <div key={`top-${size}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`top-size-${size}`}
+                          checked={formData.availableTopSizes.includes(size)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData(prev => ({
+                                ...prev,
+                                availableTopSizes: [...prev.availableTopSizes, size]
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                availableTopSizes: prev.availableTopSizes.filter((s: string) => s !== size)
+                              }));
+                            }
+                          }}
+                          data-testid={`checkbox-top-size-${size}`}
+                        />
+                        <Label 
+                          htmlFor={`top-size-${size}`}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {size}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Размеры низа */}
+                <div>
+                  <Label>Доступные размеры низа</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    {AVAILABLE_SIZES.map((size) => (
+                      <div key={`bottom-${size}`} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`bottom-size-${size}`}
+                          checked={formData.availableBottomSizes.includes(size)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData(prev => ({
+                                ...prev,
+                                availableBottomSizes: [...prev.availableBottomSizes, size]
+                              }));
+                            } else {
+                              setFormData(prev => ({
+                                ...prev,
+                                availableBottomSizes: prev.availableBottomSizes.filter((s: string) => s !== size)
+                              }));
+                            }
+                          }}
+                          data-testid={`checkbox-bottom-size-${size}`}
+                        />
+                        <Label 
+                          htmlFor={`bottom-size-${size}`}
+                          className="text-sm font-medium cursor-pointer"
+                        >
+                          {size}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-2">

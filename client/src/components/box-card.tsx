@@ -25,7 +25,8 @@ interface BoxCardProps {
 export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant = "default", userId, index = 0, isExpanded = false, onToggleExpand }: BoxCardProps) {
   const isComingSoon = variant === "coming-soon" || !box.isAvailable;
   const [, setLocation] = useLocation();
-  const [selectedSize, setSelectedSize] = useState<string>("");
+  const [selectedTopSize, setSelectedTopSize] = useState<string>("");
+  const [selectedBottomSize, setSelectedBottomSize] = useState<string>("");
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
 
   // Все боксы черные
@@ -40,13 +41,22 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onAddToCart) {
+      // Комбинируем выбранные размеры для передачи в корзину
+      const selectedSize = selectedTopSize && selectedBottomSize 
+        ? `Верх: ${selectedTopSize}, Низ: ${selectedBottomSize}`
+        : selectedTopSize || selectedBottomSize || "";
       onAddToCart(box, selectedSize);
     }
   };
   
-  const handleSizeClick = (e: React.MouseEvent, size: string) => {
+  const handleTopSizeClick = (e: React.MouseEvent, size: string) => {
     e.stopPropagation();
-    setSelectedSize(size);
+    setSelectedTopSize(size);
+  };
+
+  const handleBottomSizeClick = (e: React.MouseEvent, size: string) => {
+    e.stopPropagation();
+    setSelectedBottomSize(size);
   };
 
   const handleProductClick = (e: React.MouseEvent, product: any) => {
@@ -54,7 +64,8 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
     setLocation(`/product/${product.id}?from=boxes`);
   };
 
-  const availableSizes = ["S", "M", "L", "XL", "2XL", "3XL"];
+  const availableTopSizes = (box as any).availableTopSizes || [];
+  const availableBottomSizes = (box as any).availableBottomSizes || [];
 
   // Компактный вид
   if (!isExpanded) {
@@ -130,28 +141,55 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
         </div>
       )}
 
-      {/* Выбор размера */}
-      <div className="mb-6">
-        <div className="text-sm font-medium mb-3 pb-2 border-b border-black">
-          Выберите размер:
+      {/* Выбор размера верха */}
+      {availableTopSizes.length > 0 && (
+        <div className="mb-4">
+          <div className="text-sm font-medium mb-3 pb-2 border-b border-black">
+            Выберите размер Верха:
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {availableTopSizes.map((size: string) => (
+              <button
+                key={size}
+                onClick={(e) => handleTopSizeClick(e, size)}
+                className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] flex items-center justify-center transition-colors ${
+                  selectedTopSize === size
+                    ? 'bg-black text-white' 
+                    : 'bg-transparent border border-black text-black hover:bg-gray-100'
+                }`}
+                data-testid={`button-top-size-${size}`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {availableSizes.map((size) => (
-            <button
-              key={size}
-              onClick={(e) => handleSizeClick(e, size)}
-              className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] flex items-center justify-center transition-colors ${
-                selectedSize === size
-                  ? 'bg-black text-white' 
-                  : 'bg-transparent border border-black text-black hover:bg-gray-100'
-              }`}
-              data-testid={`button-size-${size}`}
-            >
-              {size}
-            </button>
-          ))}
+      )}
+
+      {/* Выбор размера низа */}
+      {availableBottomSizes.length > 0 && (
+        <div className="mb-6">
+          <div className="text-sm font-medium mb-3 pb-2 border-b border-black">
+            Выберите размер Низа:
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {availableBottomSizes.map((size: string) => (
+              <button
+                key={size}
+                onClick={(e) => handleBottomSizeClick(e, size)}
+                className={`px-4 py-2 rounded-lg font-semibold min-w-[48px] flex items-center justify-center transition-colors ${
+                  selectedBottomSize === size
+                    ? 'bg-black text-white' 
+                    : 'bg-transparent border border-black text-black hover:bg-gray-100'
+                }`}
+                data-testid={`button-bottom-size-${size}`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Кнопки действий */}
       <div className="flex items-center justify-between gap-4 mb-6">

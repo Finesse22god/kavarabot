@@ -102,6 +102,8 @@ export interface Box {
   isAvailable: boolean;
   isQuizOnly?: boolean;
   sportTypes?: string[];
+  availableTopSizes?: string[];
+  availableBottomSizes?: string[];
   boxProducts?: BoxProduct[];
   products?: (Product & { quantity: number })[];
   inventory?: Record<string, number> | null;
@@ -119,6 +121,8 @@ export interface CreateBoxDto {
   isAvailable?: boolean;
   isQuizOnly?: boolean;
   sportTypes?: string[];
+  availableTopSizes?: string[];
+  availableBottomSizes?: string[];
   productIds?: string[];
   productQuantities?: number[];
   inventory?: Record<string, number> | null;

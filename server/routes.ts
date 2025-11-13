@@ -1190,6 +1190,8 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
         imageUrl: createData.image || createData.imageUrl,
         photoUrl: createData.photoUrl,
         sportTypes: createData.sportTypes || [],
+        availableTopSizes: createData.availableTopSizes || [],
+        availableBottomSizes: createData.availableBottomSizes || [],
         isAvailable: createData.isAvailable !== false,
         productIds: createData.productIds || [],
         productQuantities: createData.productQuantities || []
@@ -1240,6 +1242,8 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
       imageUrl: updateData.imageUrl || updateData.image, // поддерживаем оба поля
       photoUrl: updateData.photoUrl,
       sportTypes: updateData.sportTypes || [], // добавляем поддержку видов спорта
+      availableTopSizes: updateData.availableTopSizes,
+      availableBottomSizes: updateData.availableBottomSizes,
     };
 
     const updatedBox = await storage.updateBox(id, boxUpdateData);

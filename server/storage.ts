@@ -326,6 +326,8 @@ export class DatabaseStorage implements IStorage {
         emoji: boxData.emoji,
         isAvailable: boxData.isAvailable ?? true,
         sportTypes: boxData.sportTypes || [],
+        availableTopSizes: boxData.availableTopSizes || [],
+        availableBottomSizes: boxData.availableBottomSizes || [],
       });
 
       console.log("💾 Объект бокса создан:", JSON.stringify(box, null, 2));
@@ -355,6 +357,8 @@ export class DatabaseStorage implements IStorage {
     if (data.emoji !== undefined) box.emoji = data.emoji;
     if (data.isAvailable !== undefined) box.isAvailable = data.isAvailable;
     if (data.sportTypes !== undefined) box.sportTypes = data.sportTypes;
+    if (data.availableTopSizes !== undefined) box.availableTopSizes = data.availableTopSizes;
+    if (data.availableBottomSizes !== undefined) box.availableBottomSizes = data.availableBottomSizes;
     if (data.inventory !== undefined) box.inventory = data.inventory;
 
     return await this.boxRepository.save(box);
