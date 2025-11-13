@@ -320,6 +320,7 @@ export class DatabaseStorage implements IStorage {
         description: boxData.description,
         price: boxData.price,
         imageUrl: boxData.imageUrl,
+        photoUrl: boxData.photoUrl,
         contents: boxData.contents,
         category: boxData.category,
         emoji: boxData.emoji,
@@ -349,6 +350,7 @@ export class DatabaseStorage implements IStorage {
     if (data.price !== undefined) box.price = data.price;
     if (data.category !== undefined) box.category = data.category;
     if (data.imageUrl !== undefined) box.imageUrl = data.imageUrl;
+    if (data.photoUrl !== undefined) box.photoUrl = data.photoUrl;
     if (data.contents !== undefined) box.contents = data.contents;
     if (data.emoji !== undefined) box.emoji = data.emoji;
     if (data.isAvailable !== undefined) box.isAvailable = data.isAvailable;

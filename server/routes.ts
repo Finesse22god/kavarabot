@@ -1188,6 +1188,7 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
         price: createData.price,
         category: createData.category,
         imageUrl: createData.image || createData.imageUrl,
+        photoUrl: createData.photoUrl,
         sportTypes: createData.sportTypes || [],
         isAvailable: createData.isAvailable !== false,
         productIds: createData.productIds || [],
@@ -1237,6 +1238,7 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
       price: updateData.price,
       category: updateData.category,
       imageUrl: updateData.imageUrl || updateData.image, // поддерживаем оба поля
+      photoUrl: updateData.photoUrl,
       sportTypes: updateData.sportTypes || [], // добавляем поддержку видов спорта
     };
 

@@ -23,6 +23,9 @@ export class Box {
   @Column({ type: "varchar", nullable: true })
   imageUrl?: string;
 
+  @Column({ type: "varchar", nullable: true })
+  photoUrl?: string;
+
   @Column({ type: "simple-array", nullable: true })
   contents?: string[];
 

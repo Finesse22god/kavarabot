@@ -95,6 +95,7 @@ export interface Box {
   description?: string;
   price: number;
   imageUrl?: string;
+  photoUrl?: string;
   contents?: string[];
   category?: string;
   emoji?: string;
@@ -111,6 +112,7 @@ export interface CreateBoxDto {
   description?: string;
   price: number;
   imageUrl?: string;
+  photoUrl?: string;
   contents?: string[];
   category?: string;
   emoji?: string;

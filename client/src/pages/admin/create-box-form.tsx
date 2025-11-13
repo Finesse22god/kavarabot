@@ -35,6 +35,7 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
     price: 0,
     category: "personal",
     imageUrl: "",
+    photoUrl: "",
     sportTypes: [] as string[],
     isQuizOnly: false,
   });
@@ -44,7 +45,9 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Use shared sport types
   const availableSportTypes = [...SPORT_TYPES];
@@ -110,6 +113,66 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
       setIsUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Ошибка",
+        description: "Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Ошибка",
+        description: "Размер файла не должен превышать 5МБ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/upload/box-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Ошибка при загрузке файла");
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, photoUrl: data.url }));
+      
+      toast({
+        title: "Успех!",
+        description: "Фото бокса успешно загружено",
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить фото",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+      if (photoInputRef.current) {
+        photoInputRef.current.value = "";
       }
     }
   };
@@ -358,6 +421,70 @@ export default function CreateBoxForm({ onBack }: CreateBoxFormProps) {
                         >
                           <X className="h-4 w-4 mr-1" />
                           Удалить изображение
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="photoUrl">Фото бокса (для кнопки "ФОТО")</Label>
+                  <div className="space-y-2">
+                    <Input
+                      id="photoUrl"
+                      value={formData.photoUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, photoUrl: e.target.value }))}
+                      placeholder="URL фото или загрузите файл"
+                      data-testid="input-box-photo"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        data-testid="input-photo-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={isUploadingPhoto}
+                        className="flex-1"
+                        data-testid="button-upload-photo"
+                      >
+                        {isUploadingPhoto ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Загрузка...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Загрузить фото
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {formData.photoUrl && (
+                      <div className="mt-2 p-2 border rounded-lg bg-gray-50">
+                        <img
+                          src={formData.photoUrl}
+                          alt="Превью фото"
+                          className="w-full h-32 object-contain rounded"
+                          data-testid="img-photo-preview"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormData(prev => ({ ...prev, photoUrl: "" }))}
+                          className="w-full mt-2"
+                          data-testid="button-clear-photo"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Удалить фото
                         </Button>
                       </div>
                     )}

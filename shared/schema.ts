@@ -54,6 +54,7 @@ export const boxes = pgTable("boxes", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
   imageUrl: text("image_url"),
+  photoUrl: text("photo_url"),
   category: varchar("category", { length: 50 }),
   isAvailable: boolean("is_available").default(true),
   isQuizOnly: boolean("is_quiz_only").default(false),

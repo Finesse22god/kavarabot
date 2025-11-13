@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft, Gift, Package, X } from "lucide-react";
+import { ArrowLeft, Gift, Package, X, Upload, Loader2 } from "lucide-react";
 import type { Box } from "@shared/schema";
 import { matchesCategory, SPORT_TYPES } from "@shared/constants";
 
@@ -37,6 +37,7 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
     price: Number(box.price) || 0,
     category: box.category || "personal",
     imageUrl: box.imageUrl || "",
+    photoUrl: (box as any).photoUrl || "",
     sportTypes: box.sportTypes || [],
     isQuizOnly: box.isQuizOnly || false,
   });
@@ -45,6 +46,8 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
   const [newSportType, setNewSportType] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Use shared sport types
   const availableSportTypes = [...SPORT_TYPES];
@@ -71,6 +74,66 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
       setSelectedProducts(productIds);
     }
   }, [currentBoxProducts]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Ошибка",
+        description: "Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Ошибка",
+        description: "Размер файла не должен превышать 5МБ",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("image", file);
+
+      const response = await fetch("/api/upload/box-image", {
+        method: "POST",
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Ошибка при загрузке файла");
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, photoUrl: data.url }));
+      
+      toast({
+        title: "Успех!",
+        description: "Фото успешно загружено",
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить фото",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingPhoto(false);
+      if (photoInputRef.current) {
+        photoInputRef.current.value = "";
+      }
+    }
+  };
 
   const updateBoxMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -266,6 +329,59 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
                     placeholder="https://example.com/image.jpg"
                     data-testid="input-box-image"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="photoUrl">Фото бокса (для кнопки "ФОТО")</Label>
+                  <div className="space-y-2">
+                    <Input
+                      id="photoUrl"
+                      value={formData.photoUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, photoUrl: e.target.value }))}
+                      placeholder="URL фото или загрузите файл"
+                      data-testid="input-box-photo"
+                    />
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                        data-testid="input-photo-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={isUploadingPhoto}
+                        className="flex-1"
+                        data-testid="button-upload-photo"
+                      >
+                        {isUploadingPhoto ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Загрузка...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Загрузить фото
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    {formData.photoUrl && (
+                      <div className="mt-2 p-2 border rounded-lg bg-gray-50">
+                        <p className="text-xs text-gray-600 mb-1">Предпросмотр:</p>
+                        <img 
+                          src={formData.photoUrl} 
+                          alt="Preview" 
+                          className="max-h-32 rounded object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>

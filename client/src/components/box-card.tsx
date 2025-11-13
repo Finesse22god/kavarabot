@@ -8,7 +8,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
-import boxPhotoImage from "@assets/image 855_1762420246746.png";
+import defaultBoxPhoto from "@assets/image 855_1762420246746.png";
 
 interface BoxCardProps {
   box: Box | any;
@@ -202,7 +202,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
               <X className="w-5 h-5" />
             </button>
             <img 
-              src={boxPhotoImage} 
+              src={box.photoUrl || defaultBoxPhoto} 
               alt="Фото бокса"
               loading="lazy"
               className="w-full max-h-[70vh] object-contain rounded-2xl"
