@@ -115,23 +115,46 @@ export async function autoSetupWebhook() {
   try {
     console.log("🔄 Автоматическая настройка Telegram webhook...");
 
-    // Определяем домен (приоритет: env переменная > автоопределение > Timeweb URL)
-    const domain =
-      process.env.REPLIT_DEV_DOMAIN ||
-      process.env.REPLIT_DOMAINS?.split(",")[0] ||
-      "finesse22god-kavarabot-e967.twc1.net";
+    // Определяем webhook URL
+    let webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+    
+    // Если не задан явно, пытаемся определить автоматически
+    if (!webhookUrl) {
+      const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
+      
+      if (domain) {
+        webhookUrl = `https://${domain}/webhook`;
+      } else {
+        console.error("❌ КРИТИЧЕСКАЯ ОШИБКА: Не задана переменная TELEGRAM_WEBHOOK_URL!");
+        console.error("📝 Установите переменную окружения TELEGRAM_WEBHOOK_URL на вашем сервере.");
+        console.error("   Пример: TELEGRAM_WEBHOOK_URL=https://ваш-домен.twc1.net/webhook");
+        console.error("⚠️  Telegram webhook НЕ НАСТРОЕН! Бот не будет работать.");
+        return;
+      }
+    }
 
-    const webhookUrl =
-      process.env.TELEGRAM_WEBHOOK_URL || `https://${domain}/webhook`;
+    console.log("📡 Настройка webhook на URL:", webhookUrl);
 
     // Настраиваем webhook, команды и меню
-    await setWebhook(webhookUrl);
+    const webhookResult = await setWebhook(webhookUrl);
     await setMyCommands();
     await setMenuButton();
 
-    console.log("✅ Telegram webhook настроен автоматически:", webhookUrl);
+    // Проверяем что webhook действительно установлен
+    const webhookInfo = await getWebhookInfo();
+    
+    if (webhookInfo.url === webhookUrl) {
+      console.log("✅ Telegram webhook успешно настроен!");
+      console.log("   URL:", webhookUrl);
+      console.log("   Pending updates:", webhookInfo.pending_update_count || 0);
+    } else {
+      console.error("⚠️  Webhook установлен, но URL не совпадает!");
+      console.error("   Ожидали:", webhookUrl);
+      console.error("   Получили:", webhookInfo.url);
+    }
   } catch (error) {
     console.error("❌ Ошибка автоматической настройки webhook:", error);
+    console.error("   Попробуйте вручную: curl https://ваш-домен/setup-bot");
   }
 }
 
@@ -380,6 +403,12 @@ async function setWebhook(webhookUrl: string) {
   });
 
   return response.json();
+}
+
+async function getWebhookInfo() {
+  const response = await fetch(`${TELEGRAM_API_URL}/getWebhookInfo`);
+  const data = await response.json();
+  return data.result || {};
 }
 
 async function sendMessage(chatId: number, text: string, replyMarkup?: any) {
