@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useTelegram } from "../hooks/use-telegram";
 import { useState } from "react";
 import heroVideo from "@assets/kavarademo.webm";
-import logoSrc from "@assets/Vector_1762270099139.png";
+import logoSrc from "@assets/Vector (3)_1763029030356.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
