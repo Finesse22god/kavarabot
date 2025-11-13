@@ -20,6 +20,8 @@ import { LoyaltyTransaction as LoyaltyTransactionEntity } from "./entities/Loyal
 import { PromoCode as PromoCodeEntity } from "./entities/PromoCode";
 import { PromoCodeUsage as PromoCodeUsageEntity } from "./entities/PromoCodeUsage";
 import { Trainer as TrainerEntity } from "./entities/Trainer";
+import { InventoryHistory } from "./entities/InventoryHistory";
+import { adjustInventory } from "./inventory-helpers";
 import type {
   User,
   QuizResponse,
