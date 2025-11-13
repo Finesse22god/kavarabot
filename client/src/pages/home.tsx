@@ -140,7 +140,7 @@ export default function Home() {
               onTouchEnd={handleTouchEnd}
               data-testid="swipe-indicator"
             >
-              <img src={logoSrc} alt="KAVARA" className="w-[14px] h-[11px]" />
+              <img src={logoSrc} alt="KAVARA" className="w-[28px] h-[22px]" />
             </div>
 
             {/* Boxes Section - Right */}
