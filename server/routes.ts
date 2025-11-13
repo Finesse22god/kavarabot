@@ -71,8 +71,69 @@ const upload = multer({
   },
 });
 
-// File upload endpoint
+// Multer configuration for product images
+const productUpload = multer({
+  storage: multer.diskStorage({
+    destination: async (req, file, cb) => {
+      try {
+        await fs.mkdir(uploadDir, { recursive: true });
+        cb(null, uploadDir);
+      } catch (error) {
+        cb(error as Error, uploadDir);
+      }
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, `product-${uniqueSuffix}${ext}`);
+    },
+  }),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/gif"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Недопустимый тип файла. Разрешены: JPG, PNG, WebP, GIF"));
+    }
+  },
+});
+
+// File upload endpoint for boxes
 router.post("/api/upload/box-image", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не загружен" });
+    }
+
+    // Проверяем реальный тип файла (не только MIME type)
+    const fileType = await fileTypeFromFile(req.file.path);
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    
+    if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
+      // Удаляем недопустимый файл
+      await fs.unlink(req.file.path).catch(console.error);
+      return res.status(400).json({ 
+        error: "Недопустимый тип файла. Разрешены только изображения: JPG, PNG, WebP, GIF" 
+      });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl, filename: req.file.filename });
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    // Удаляем файл в случае ошибки
+    if (req.file?.path) {
+      await fs.unlink(req.file.path).catch(console.error);
+    }
+    res.status(500).json({ error: "Ошибка при загрузке файла" });
+  }
+});
+
+// File upload endpoint for products
+router.post("/api/upload/product-image", productUpload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Файл не загружен" });

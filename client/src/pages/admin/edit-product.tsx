@@ -87,44 +87,26 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     },
   });
 
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d')!;
-      const img = new Image();
-      
-      img.onload = () => {
-        // Максимальные размеры
-        const maxWidth = 800;
-        const maxHeight = 600;
-        
-        let { width, height } = img;
-        
-        // Пропорциональное масштабирование
-        if (width > height) {
-          if (width > maxWidth) {
-            height = (height * maxWidth) / width;
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = (width * maxHeight) / height;
-            height = maxHeight;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Сжимаем до JPEG с качеством 0.8
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        resolve(compressedDataUrl);
-      };
-      
-      img.src = URL.createObjectURL(file);
+  const uploadImageToServer = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const token = localStorage.getItem("adminToken");
+    const response = await fetch('/api/upload/product-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
     });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Ошибка загрузки изображения');
+    }
+
+    const data = await response.json();
+    return data.url;
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,17 +133,24 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
       }
       
       try {
-        const compressedImage = await compressImage(file);
-        setImagePreviews(prev => [...prev, compressedImage]);
+        // Загружаем изображение на сервер
+        const imageUrl = await uploadImageToServer(file);
+        
+        setImagePreviews(prev => [...prev, imageUrl]);
         setFormData(prev => ({
           ...prev,
-          images: [...prev.images, compressedImage],
-          imageUrl: prev.images.length === 0 ? compressedImage : prev.imageUrl // Первое изображение как основное
+          images: [...prev.images, imageUrl],
+          imageUrl: prev.images.length === 0 ? imageUrl : prev.imageUrl // Первое изображение как основное
         }));
-      } catch (error) {
+        
+        toast({
+          title: "Успешно",
+          description: "Изображение загружено",
+        });
+      } catch (error: any) {
         toast({
           title: "Ошибка",
-          description: "Не удалось обработать изображение",
+          description: error.message || "Не удалось загрузить изображение",
           variant: "destructive",
         });
       }
