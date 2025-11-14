@@ -97,11 +97,42 @@ async function createServer() {
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
 
-  // ОТКЛЮЧЕНА автоматическая настройка webhook при старте сервера
-  // Это предотвращает случайную перезапись production webhook на development URL
-  // Для настройки webhook вручную откройте: https://finesse22god-kavarabot-e967.twc1.net/setup-bot
-  console.log('ℹ️  Автонастройка webhook ОТКЛЮЧЕНА');
-  console.log('   Для настройки webhook откройте: https://finesse22god-kavarabot-e967.twc1.net/setup-bot');
+  // Автоматическая настройка бота при старте + проверка каждые 5 минут
+  const PRODUCTION_WEBHOOK_URL = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
+  
+  async function checkAndRestoreWebhook() {
+    try {
+      const { getWebhookInfo, setWebhook, setMenuButton } = await import('./telegram.js');
+      const webhookInfo = await getWebhookInfo();
+      
+      if (webhookInfo.url !== PRODUCTION_WEBHOOK_URL) {
+        console.warn('⚠️  Webhook неправильный:', webhookInfo.url);
+        console.log('🔄 Восстановление на:', PRODUCTION_WEBHOOK_URL);
+        
+        await setWebhook(PRODUCTION_WEBHOOK_URL);
+        await setMenuButton();
+        
+        console.log('✅ Webhook восстановлен!');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка проверки webhook:', error);
+    }
+  }
+  
+  // Первая настройка через 5 секунд после старта
+  setTimeout(async () => {
+    try {
+      const { setupWebhookAndCommands } = await import('./telegram.js');
+      await setupWebhookAndCommands();
+      
+      // Запускаем периодическую проверку каждые 5 минут
+      setInterval(checkAndRestoreWebhook, 300000);
+    } catch (error) {
+      console.error('❌ Ошибка автонастройки:', error);
+    }
+  }, 5000);
+  
+  console.log('🛡️  Автоматическая защита webhook: включена');
 
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));

@@ -26,56 +26,6 @@ export async function setupTelegramBotWithApp(app: express.Application) {
     }
   });
 
-  // Setup bot commands and menu (GET version for browser access)
-  app.get("/setup-bot", async (req, res) => {
-    try {
-      // PRODUCTION ONLY: используем только явный URL или production домен
-      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
-      const webhookResponse = await setWebhook(webhookUrl);
-
-      // Set bot commands
-      await setMyCommands();
-
-      // Set menu button (Mini App)
-      await setMenuButton();
-
-      res.json({
-        success: true,
-        message: "Bot setup completed",
-        webhook: webhookResponse,
-        commands:
-          "Commands registered: /start, /app, /quiz, /boxes, /orders, /support",
-      });
-    } catch (error) {
-      console.error("Setup error:", error);
-      res
-        .status(500)
-        .json({
-          error: "Setup failed",
-          details: error instanceof Error ? error.message : "Unknown error",
-        });
-    }
-  });
-
-  // POST version for programmatic access
-  app.post("/setup-bot", async (req, res) => {
-    try {
-      // PRODUCTION ONLY: используем только явный URL или production домен
-      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
-      await setWebhook(webhookUrl);
-
-      // Set bot commands
-      await setMyCommands();
-
-      // Set menu button (Mini App)
-      await setMenuButton();
-
-      res.json({ success: true, message: "Bot setup completed" });
-    } catch (error) {
-      console.error("Setup error:", error);
-      res.status(500).json({ error: "Setup failed" });
-    }
-  });
 
   // Get Mini App URL
   app.get("/mini-app-url", (req, res) => {
@@ -101,35 +51,30 @@ export async function setupTelegramBotWithApp(app: express.Application) {
 }
 
 // Автоматическая настройка webhook при запуске сервера
-export async function autoSetupWebhook() {
+export async function setupWebhookAndCommands() {
+  const PRODUCTION_URL = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
+  
   try {
-    console.log("🔄 Автоматическая настройка Telegram webhook...");
+    console.log("🔄 Настройка Telegram бота...");
+    console.log("📡 Webhook URL:", PRODUCTION_URL);
 
-    // PRODUCTION ONLY: используем только явный URL или production домен
-    const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
+    // Настраиваем всё одновременно
+    await Promise.all([
+      setWebhook(PRODUCTION_URL),
+      setMyCommands(),
+      setMenuButton()
+    ]);
 
-    console.log("📡 Настройка webhook на URL:", webhookUrl);
-
-    // Настраиваем webhook, команды и меню
-    const webhookResult = await setWebhook(webhookUrl);
-    await setMyCommands();
-    await setMenuButton();
-
-    // Проверяем что webhook действительно установлен
+    // Проверяем результат
     const webhookInfo = await getWebhookInfo();
     
-    if (webhookInfo.url === webhookUrl) {
-      console.log("✅ Telegram webhook успешно настроен!");
-      console.log("   URL:", webhookUrl);
-      console.log("   Pending updates:", webhookInfo.pending_update_count || 0);
+    if (webhookInfo.url === PRODUCTION_URL) {
+      console.log("✅ Telegram бот настроен успешно!");
     } else {
-      console.error("⚠️  Webhook установлен, но URL не совпадает!");
-      console.error("   Ожидали:", webhookUrl);
-      console.error("   Получили:", webhookInfo.url);
+      console.warn("⚠️  URL не совпадает! Ожидали:", PRODUCTION_URL, "Получили:", webhookInfo.url);
     }
   } catch (error) {
-    console.error("❌ Ошибка автоматической настройки webhook:", error);
-    console.error("   Попробуйте вручную: curl https://ваш-домен/setup-bot");
+    console.error("❌ Ошибка настройки бота:", error);
   }
 }
 
@@ -351,7 +296,7 @@ async function setMyCommands() {
   return response.json();
 }
 
-async function setMenuButton() {
+export async function setMenuButton() {
   const menuButton = {
     type: "web_app",
     text: "Открыть KAVARA",
@@ -367,7 +312,7 @@ async function setMenuButton() {
   return response.json();
 }
 
-async function setWebhook(webhookUrl: string) {
+export async function setWebhook(webhookUrl: string) {
   const response = await fetch(`${TELEGRAM_API_URL}/setWebhook`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -380,7 +325,7 @@ async function setWebhook(webhookUrl: string) {
   return response.json();
 }
 
-async function getWebhookInfo() {
+export async function getWebhookInfo() {
   const response = await fetch(`${TELEGRAM_API_URL}/getWebhookInfo`);
   const data = await response.json();
   return data.result || {};

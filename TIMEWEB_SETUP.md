@@ -47,12 +47,19 @@ EOF
 pm2 restart all
 ```
 
-### 3. Настройка webhook после деплоя
+### 3. Настройка webhook после деплоя (защищено токеном)
 
-После установки переменных окружения откройте в браузере:
+После установки переменных окружения откройте в браузере (замените YOUR_ADMIN_TOKEN):
 
 ```
-https://finesse22god-kavarabot-e967.twc1.net/setup-bot
+https://finesse22god-kavarabot-e967.twc1.net/setup-bot?token=YOUR_ADMIN_TOKEN
+```
+
+Или через curl:
+
+```bash
+curl -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  https://finesse22god-kavarabot-e967.twc1.net/setup-bot
 ```
 
 Вы должны увидеть:
@@ -66,6 +73,8 @@ https://finesse22god-kavarabot-e967.twc1.net/setup-bot
   }
 }
 ```
+
+**ВАЖНО:** Эндпоинт теперь защищен админ токеном для безопасности!
 
 ### 4. Проверка webhook
 
@@ -95,3 +104,6 @@ curl -s "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getWebhookInfo" | jq
 - ✅ Команды работают 24/7
 - ✅ Menu button открывает production версию
 - ✅ Рестарты сервера НЕ влияют на webhook
+- ✅ Автоматическая проверка webhook каждые 5 минут
+- ✅ Автовосстановление при сбое
+- ✅ Защита от несанкционированного доступа к /setup-bot
