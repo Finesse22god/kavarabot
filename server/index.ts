@@ -100,10 +100,27 @@ async function createServer() {
   // Автоматическая настройка бота при старте + проверка каждые 5 минут
   const PRODUCTION_WEBHOOK_URL = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
   
+  // КРИТИЧЕСКАЯ ПРОВЕРКА переменных окружения
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
+    console.error('🚨 ОШИБКА: TELEGRAM_BOT_TOKEN не установлен!');
+    console.error('📋 Инструкции: см. TIMEWEB_ENV_SETUP.md');
+  } else {
+    console.log('✅ TELEGRAM_BOT_TOKEN установлен');
+  }
+  
+  if (!process.env.TELEGRAM_WEBHOOK_URL) {
+    console.warn('⚠️  TELEGRAM_WEBHOOK_URL не установлен, используется fallback URL');
+  } else {
+    console.log('✅ TELEGRAM_WEBHOOK_URL установлен:', process.env.TELEGRAM_WEBHOOK_URL);
+  }
+  
   async function checkAndRestoreWebhook() {
     try {
       const { getWebhookInfo, setWebhook, setMenuButton } = await import('./telegram.js');
       const webhookInfo = await getWebhookInfo();
+      
+      const currentTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+      console.log(`[${currentTime}] 🔍 Проверка webhook...`);
       
       if (webhookInfo.url !== PRODUCTION_WEBHOOK_URL) {
         console.warn('⚠️  Webhook неправильный:', webhookInfo.url);
@@ -113,6 +130,8 @@ async function createServer() {
         await setMenuButton();
         
         console.log('✅ Webhook восстановлен!');
+      } else {
+        console.log(`[${currentTime}] ✅ Webhook в порядке`);
       }
     } catch (error) {
       console.error('❌ Ошибка проверки webhook:', error);
@@ -127,12 +146,12 @@ async function createServer() {
       
       // Запускаем периодическую проверку каждые 5 минут
       setInterval(checkAndRestoreWebhook, 300000);
+      
+      console.log('🛡️  Автоматическая защита webhook: АКТИВНА (проверка каждые 5 минут)');
     } catch (error) {
       console.error('❌ Ошибка автонастройки:', error);
     }
   }, 5000);
-  
-  console.log('🛡️  Автоматическая защита webhook: включена');
 
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
