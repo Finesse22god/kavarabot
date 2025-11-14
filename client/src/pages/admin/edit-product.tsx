@@ -196,9 +196,25 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Фильтруем base64 Data URLs (начинаются с "data:")
+    const cleanImages = formData.images.filter(url => !url.startsWith('data:'));
+    const cleanImageUrl = formData.imageUrl && !formData.imageUrl.startsWith('data:') 
+      ? formData.imageUrl 
+      : (cleanImages.length > 0 ? cleanImages[0] : '');
+    
+    // Предупреждение если были найдены base64 URLs
+    if (cleanImages.length !== formData.images.length) {
+      console.warn('⚠️ Найдены и удалены base64 Data URLs из images');
+    }
+    if (formData.imageUrl && formData.imageUrl.startsWith('data:')) {
+      console.warn('⚠️ imageUrl содержал base64 Data URL - заменен на S3 URL');
+    }
+    
     const submitData = {
       ...formData,
       price: Number(formData.price),
+      images: cleanImages,
+      imageUrl: cleanImageUrl,
     };
 
     saveProductMutation.mutate(submitData);

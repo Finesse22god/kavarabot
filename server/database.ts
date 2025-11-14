@@ -38,7 +38,8 @@ export async function initializeDatabase() {
     // Run additional migrations
     const migrations = [
       "02-update-products.sql",
-      "03-add-photourl-column.sql"
+      "03-add-photourl-column.sql",
+      "04-cleanup-base64-images.sql"
     ];
 
     for (const migrationFile of migrations) {

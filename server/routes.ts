@@ -1404,10 +1404,32 @@ router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
     const { id } = req.params;
     const productData: Partial<CreateProductDto> = req.body;
 
+    console.log("📝 Обновление товара:", id);
+    console.log("Полученные данные:", JSON.stringify({
+      ...productData,
+      imageUrl: productData.imageUrl?.substring(0, 100) + (productData.imageUrl && productData.imageUrl.length > 100 ? '...' : ''),
+      images: productData.images?.map(url => url.substring(0, 100) + (url.length > 100 ? '...' : ''))
+    }, null, 2));
+
     // Validate required fields if provided
     if ((productData.name !== undefined && !productData.name) ||
       (productData.price !== undefined && !productData.price)) {
       return res.status(400).json({ error: "Name and price cannot be empty" });
+    }
+
+    // Защита от base64 Data URLs - отклоняем их
+    if (productData.imageUrl && productData.imageUrl.startsWith('data:')) {
+      console.error("❌ Попытка сохранить base64 Data URL в imageUrl");
+      return res.status(400).json({ 
+        error: "Недопустимый формат изображения. Используйте загрузку через /api/upload/product-image" 
+      });
+    }
+    
+    if (productData.images && productData.images.some(url => url.startsWith('data:'))) {
+      console.error("❌ Попытка сохранить base64 Data URL в images");
+      return res.status(400).json({ 
+        error: "Недопустимый формат изображений. Используйте загрузку через /api/upload/product-image" 
+      });
     }
 
     const product = await storage.updateProduct(id, productData);
@@ -1415,10 +1437,15 @@ router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
       return res.status(404).json({ error: "Product not found" });
     }
 
+    console.log("✅ Товар успешно обновлен");
     res.json(product);
   } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ error: "Failed to update product" });
+    console.error("❌ Error updating product:", error);
+    console.error("Stack trace:", error instanceof Error ? error.stack : "No stack trace");
+    res.status(500).json({ 
+      error: "Failed to update product",
+      details: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
