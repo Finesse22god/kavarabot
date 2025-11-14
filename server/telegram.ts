@@ -29,14 +29,8 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // Setup bot commands and menu (GET version for browser access)
   app.get("/setup-bot", async (req, res) => {
     try {
-      // Set webhook - автоопределение домена
-      let webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
-      
-      if (!webhookUrl) {
-        const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
-        const domain = replitDomain || "finesse22god-kavarabot-e967.twc1.net";
-        webhookUrl = `https://${domain}/webhook`;
-      }
+      // PRODUCTION ONLY: используем только явный URL или production домен
+      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
       const webhookResponse = await setWebhook(webhookUrl);
 
       // Set bot commands
@@ -66,14 +60,8 @@ export async function setupTelegramBotWithApp(app: express.Application) {
   // POST version for programmatic access
   app.post("/setup-bot", async (req, res) => {
     try {
-      // Set webhook - автоопределение домена
-      let webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
-      
-      if (!webhookUrl) {
-        const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
-        const domain = replitDomain || "finesse22god-kavarabot-e967.twc1.net";
-        webhookUrl = `https://${domain}/webhook`;
-      }
+      // PRODUCTION ONLY: используем только явный URL или production домен
+      const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
       await setWebhook(webhookUrl);
 
       // Set bot commands
@@ -117,23 +105,8 @@ export async function autoSetupWebhook() {
   try {
     console.log("🔄 Автоматическая настройка Telegram webhook...");
 
-    // Определяем webhook URL
-    let webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
-    
-    // Если не задан явно, пытаемся определить автоматически
-    if (!webhookUrl) {
-      // Проверяем Replit домены
-      const replitDomain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS?.split(",")[0];
-      
-      if (replitDomain) {
-        webhookUrl = `https://${replitDomain}/webhook`;
-      } else {
-        // Fallback на Timeweb домен
-        const timewebDomain = "finesse22god-kavarabot-e967.twc1.net";
-        webhookUrl = `https://${timewebDomain}/webhook`;
-        console.log("⚙️  Используется Timeweb домен:", timewebDomain);
-      }
-    }
+    // PRODUCTION ONLY: используем только явный URL или production домен
+    const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
 
     console.log("📡 Настройка webhook на URL:", webhookUrl);
 
@@ -444,24 +417,8 @@ async function answerCallbackQuery(callbackQueryId: string) {
 }
 
 function getWebAppUrl(): string {
-  // Приоритет: переменная окружения WEB_APP_URL > автоопределение домена > Timeweb URL
-  if (process.env.WEB_APP_URL) {
-    return process.env.WEB_APP_URL;
-  }
-
-  // Автоопределение для Replit (если запущено на Replit)
-  if (process.env.REPLIT_DEV_DOMAIN) {
-    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
-  }
-
-  if (process.env.REPLIT_DOMAINS) {
-    const domain = process.env.REPLIT_DOMAINS.split(",")[0];
-    return `https://${domain}`;
-  }
-
-  // Default: Timeweb URL
-
-  return "https://finesse22god-kavarabot-e967.twc1.net";
+  // PRODUCTION ONLY: используем только явный URL или production домен
+  return process.env.WEB_APP_URL || "https://finesse22god-kavarabot-e967.twc1.net";
 }
 
 function getBotUsername(): string {
