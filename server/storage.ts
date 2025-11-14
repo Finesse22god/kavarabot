@@ -1113,7 +1113,10 @@ export class DatabaseStorage implements IStorage {
     const product = await this.productRepository.findOneBy({ id });
     if (!product) return null;
 
-    Object.assign(product, data);
+    // Исключаем externalId из обновляемых полей (он уникален и не должен меняться)
+    const { externalId, ...updateData } = data;
+    
+    Object.assign(product, updateData);
     return await this.productRepository.save(product);
   }
 
