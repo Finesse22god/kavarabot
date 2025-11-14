@@ -1391,6 +1391,24 @@ router.post("/api/admin/products", verifyAdminToken, async (req, res) => {
       return res.status(400).json({ error: "Name and price are required" });
     }
 
+    // Функция проверки на base64 Data URL с нормализацией (защита от обхода)
+    const isDataUrl = (url: string) => url.trim().toLowerCase().startsWith('data:');
+    
+    // Защита от base64 Data URLs - отклоняем их
+    if (productData.imageUrl && isDataUrl(productData.imageUrl)) {
+      console.error("❌ Попытка создать товар с base64 Data URL в imageUrl");
+      return res.status(400).json({ 
+        error: "Недопустимый формат изображения. Используйте загрузку через /api/upload/product-image" 
+      });
+    }
+    
+    if (productData.images && productData.images.some(url => isDataUrl(url))) {
+      console.error("❌ Попытка создать товар с base64 Data URL в images");
+      return res.status(400).json({ 
+        error: "Недопустимый формат изображений. Используйте загрузку через /api/upload/product-image" 
+      });
+    }
+
     const product = await storage.createProduct(productData);
     res.status(201).json(product);
   } catch (error) {
@@ -1417,15 +1435,18 @@ router.put("/api/admin/products/:id", verifyAdminToken, async (req, res) => {
       return res.status(400).json({ error: "Name and price cannot be empty" });
     }
 
+    // Функция проверки на base64 Data URL с нормализацией (защита от обхода)
+    const isDataUrl = (url: string) => url.trim().toLowerCase().startsWith('data:');
+    
     // Защита от base64 Data URLs - отклоняем их
-    if (productData.imageUrl && productData.imageUrl.startsWith('data:')) {
-      console.error("❌ Попытка сохранить base64 Data URL в imageUrl");
+    if (productData.imageUrl && isDataUrl(productData.imageUrl)) {
+      console.error("❌ Попытка сохранить base64 Data URL в imageUrl:", productData.imageUrl.substring(0, 50));
       return res.status(400).json({ 
         error: "Недопустимый формат изображения. Используйте загрузку через /api/upload/product-image" 
       });
     }
     
-    if (productData.images && productData.images.some(url => url.startsWith('data:'))) {
+    if (productData.images && productData.images.some(url => isDataUrl(url))) {
       console.error("❌ Попытка сохранить base64 Data URL в images");
       return res.status(400).json({ 
         error: "Недопустимый формат изображений. Используйте загрузку через /api/upload/product-image" 

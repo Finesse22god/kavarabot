@@ -196,9 +196,12 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Фильтруем base64 Data URLs (начинаются с "data:")
-    const cleanImages = formData.images.filter(url => !url.startsWith('data:'));
-    const cleanImageUrl = formData.imageUrl && !formData.imageUrl.startsWith('data:') 
+    // Проверка на base64 Data URLs с нормализацией (trim + lowercase)
+    const isDataUrl = (url: string) => url.trim().toLowerCase().startsWith('data:');
+    
+    // Фильтруем base64 Data URLs
+    const cleanImages = formData.images.filter(url => !isDataUrl(url));
+    const cleanImageUrl = formData.imageUrl && !isDataUrl(formData.imageUrl) 
       ? formData.imageUrl 
       : (cleanImages.length > 0 ? cleanImages[0] : '');
     
@@ -206,7 +209,7 @@ export default function EditProduct({ product, onBack }: EditProductProps) {
     if (cleanImages.length !== formData.images.length) {
       console.warn('⚠️ Найдены и удалены base64 Data URLs из images');
     }
-    if (formData.imageUrl && formData.imageUrl.startsWith('data:')) {
+    if (formData.imageUrl && isDataUrl(formData.imageUrl)) {
       console.warn('⚠️ imageUrl содержал base64 Data URL - заменен на S3 URL');
     }
     

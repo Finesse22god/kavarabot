@@ -1,99 +1,44 @@
 # KAVARA - Telegram Sports Fashion Bot
 
 ## Overview
-KAVARA is a Telegram-based sports fashion styling service that provides personalized athletic wear recommendations through a web interface. Users can take a quiz for custom box recommendations or browse pre-curated boxes. The system manages the entire purchase flow, from selection to order completion, and includes integrated notification systems. The project aims to deliver a streamlined, personalized shopping experience for sports fashion, featuring quiz-exclusive boxes and robust catalog management.
+KAVARA is a Telegram-based sports fashion styling service offering personalized athletic wear recommendations through a web interface. It allows users to take a quiz for custom box recommendations or browse pre-curated boxes. The system manages the entire purchase flow from selection to order completion, including integrated notification systems. The project aims to provide a streamlined, personalized shopping experience with quiz-exclusive boxes and robust catalog management, delivering significant market potential in personalized e-commerce.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-### Frontend
-- **Framework**: React 18 with TypeScript
-- **Routing**: Wouter
-- **UI Components**: Radix UI with shadcn/ui
-- **Styling**: Tailwind CSS
-- **State Management**: TanStack Query for server state, React hooks for local state
-- **Build Tool**: Vite
-- **UI/UX Decisions**: Optimized for Telegram WebApp compatibility. Features simplified product cards in the catalog (photo, name, price, button only) and detailed product pages with tabs for size selection and collapsible sections for descriptions/characteristics. Consistent image-first card layout across products and boxes. Photo carousel with `embla-carousel-react` for multiple product images.
+### UI/UX Decisions
+The user interface is optimized for Telegram WebApp compatibility, featuring simplified product cards in the catalog and detailed product pages with tabs for size selection and collapsible descriptions. A consistent image-first card layout is used across products and boxes, with a photo carousel for multiple product images. The navigation includes an INFO page, Home, and Profile. The Profile tab is streamlined to "Данные", "Заказы", and "Избранное", with orders displayed inline.
 
-### Backend
-- **Runtime**: Node.js with Express.js
-- **Database**: PostgreSQL with TypeORM (Neon Database)
-- **API Design**: RESTful API with JSON responses
+### Technical Implementation
+- **Frontend**: React 18 with TypeScript, Wouter for routing, Radix UI with shadcn/ui for components, Tailwind CSS for styling, TanStack Query for server state, and Vite for building.
+- **Backend**: Node.js with Express.js.
+- **Database**: PostgreSQL (Neon Database) with TypeORM, utilizing JSON columns for `sizes`, `images`, and `sportTypes` within the Product entity. UUID primary keys are used across entities.
+- **Authentication**: Telegram WebApp authentication (`initDataUnsafe`) using Telegram user ID for identification and a stateless session management approach.
+- **File Storage**: Timeweb S3-compatible object storage for all product and box images, with secure upload validation using AWS SDK v3 and `multer`. Base64 image protection is implemented across all layers.
+- **Payment**: YooKassa integration with webhook verification for automatic status updates and Telegram Mini App redirection. Payment pages open within Telegram's built-in browser using `WebApp.openLink()` with `try_instant_view`.
+- **Admin Panel**: A web-based panel for comprehensive order, user, product, and inventory management, including loyalty statistics, analytics, and quiz settings.
+- **Referral System**: Client-based referral program using personalized promo codes, awarding loyalty points to owners upon successful payment confirmation.
+- **Inventory Management**: Comprehensive, size-specific inventory tracking system for products and boxes, with visual indicators for stock levels in the admin panel.
+- **Performance**: Implemented image lazy loading, React Query caching (`staleTime: 5 minutes`, `gcTime: 10 minutes`), smart image loading for carousels, and background placeholders for smoother visual transitions.
+- **Security & Reliability**: Includes cryptographically secure admin token generation, server-side content validation for file uploads, transaction support with pessimistic write locking for order creation, mandatory user validation, cryptographically secure and unique order number generation, enhanced YooKassa error handling, and environment variable configuration.
+- **Notifications**: Optimized Telegram notifications for payment confirmation, including detailed order, payment, and customer information. Admin notifications include full product/box lists with sizes and quantities.
 
-### Data Storage
-- **Primary Database**: PostgreSQL via Neon Database
-- **ORM**: TypeORM with decorators and entity classes. Uses JSON columns for `sizes`, `images`, and `sportTypes` within the Product entity.
-- **Session Storage**: Browser sessionStorage for temporary data
-- **File Storage**: Timeweb S3-compatible object storage for all product and box images. Images are uploaded to public buckets and served via direct S3 URLs (e.g., `https://s3.twcstorage.ru/355a4950-kavaraapp/products/product-123.jpg`). Uses AWS SDK v3 with memoryStorage multer configuration for secure file validation before upload.
-
-### Authentication and Authorization
-- **Primary Auth**: Telegram WebApp authentication (initDataUnsafe)
-- **User Identification**: Telegram user ID
-- **Session Management**: Stateless approach using Telegram's built-in security
-
-### Key Architectural Decisions
-- **Database Design**: TypeORM entities with UUID primary keys and defined relationships (users, quiz responses, boxes, orders, notifications). Handles both box and product favorites with nullable `boxId` and `productId` in the favorites table.
-- **API Structure**: RESTful endpoints organized by resource type with proper HTTP status codes, supporting both box and product favorite operations.
-- **Component Architecture**: Reusable UI components, custom hooks for logic, and page-level components.
-- **Development vs Production**: Dual-mode configuration using `import.meta.env.DEV` flag. In development mode, shows mock user "Dev" for testing. In production mode (`import.meta.env.PROD`), requires Telegram WebApp access - displays TelegramRequired page (`/telegram-required`) with link to @kavaraappbot if accessed outside Telegram.
-- **State Management**: Server state via TanStack Query, local state via React hooks, temporary data in sessionStorage.
-- **Error Handling**: Comprehensive error boundaries and HTTP status code handling.
-- **Payment Integration**: YooKassa payment system with webhook verification for automatic status updates and Telegram Mini App redirection. Webhook correctly searches orders by orderNumber from metadata (not paymentId). Payment success page (`/payment/success`) displays purchased items, payment status, and manager contact information for both box and cart orders. YooKassa `return_url` configured to open Telegram Mini App (`https://t.me/kavaraappbot/app?startapp=payment_success`) when user clicks "Back to Shop" button after payment.
-- **Admin Panel**: Web-based admin panel (`/admin`) for order, user, and product management, including detailed user profiles, loyalty statistics, and comprehensive analytics (revenue tracking, order distribution, key metrics, top orders). Features include quiz settings management, category filtering, search, and improved box/product association with manual main photo selection.
-- **Referral System**: Client-based referral program using personalized promo codes for loyalty points.
-- **Feature Specifications**:
-    - **Profile and Navigation Updates** (November 2025): Created standalone INFO page (`/info`) with FAQ, operator contact, and Telegram channel subscription. Bottom navigation now shows INFO (left) → HOME/KAVARA logo (center) → PROFILE (right). Profile tabs streamlined to 3: Данные (Data), Заказы (Orders), Избранное (Favorites). Orders now display inline within Profile tab instead of redirecting to separate page, showing "Текущие заказы" and "История" sub-tabs with full order management.
-    - **Quiz-Exclusive Boxes**: Implemented `isQuizOnly` flag for boxes, allowing distinct inventories for public catalog and personalized quiz recommendations.
-    - **Product Favorites**: Full support for favoriting individual products, in addition to boxes, with unified API and UI handling.
-    - **Product Size Handling**: Enhanced product entity to store sizes, images, and sport types as JSON columns. UI includes quick size selection on product cards and dynamic "Add to Cart" button labels based on size selection.
-    - **Catalog Enhancements**: Sorting functionality (price, name) and improved filter layout.
-    - **Phone Number Formatting** (October 2025): Strict +7 prefix enforcement for Russian phone numbers with automatic formatting (+7 (XXX) XXX-XX-XX). Prevents invalid input and ensures exactly 11 digits.
-    - **Telegram Notifications** (October 2025): Optimized to send single comprehensive notification only when payment is confirmed, including all order details, payment info, customer data, and Telegram username. Notifications include discount and loyalty points information when applicable.
-    - **Order Data Enhancement** (October 2025): Added `telegramUsername` field to orders schema to capture customer's Telegram handle for better customer support and communication.
-    - **Analytics Improvements** (October 2025): Fixed revenue calculation to only count paid orders. Added separate tracking for unpaid orders. Date filters now properly apply to all metrics and charts.
-    - **Payment Redirect Fix** (October 2025): Fixed YooKassa return URL to properly redirect users to Telegram Mini App (`https://t.me/kavaraappbot/app?startapp=payment_success`) instead of web URL after payment completion. Updated in both checkout flow and order repayment flow.
-    - **Telegram In-App Payment** (October 2025): Payment pages now open inside Telegram's built-in browser using `WebApp.openLink()` with `try_instant_view` option, keeping users within the app instead of redirecting to external browser. Includes proper fallbacks for non-Telegram environments.
-    - **Enhanced Order Notifications** (October 2025): Admin Telegram notifications now include detailed product/box lists with sizes and quantities. Webhook handler loads full order relations and parses cart items to provide complete order details for administrators.
-    - **Manager Contact Update** (October 2025): All "Contact Manager" buttons and links now redirect to t.me/kavarabrand instead of previous team/channel links for unified customer communication.
-    - **Security & Reliability Enhancements** (October 2025):
-      - **Admin Authentication**: Cryptographically secure token generation with automatic 24h expiration (server/auth.ts). Uses crypto.randomBytes for 64-char hex tokens with backward compatibility.
-      - **File Upload Security**: Server-side content validation using file-type library to prevent malicious file uploads disguised as images.
-      - **Race Condition Prevention**: Full transaction support with pessimistic write locking for order creation, preventing concurrent overwrites of promo codes and loyalty point balances.
-      - **Data Integrity**: Mandatory user validation for all orders - strict telegramId->UUID conversion with fail-fast on missing users.
-      - **Order Number Uniqueness**: Cryptographically secure order number generation using timestamp + crypto.randomInt with database uniqueness verification.
-      - **Payment Error Handling**: Enhanced YooKassa integration with detailed error diagnostics, typed error responses, and comprehensive logging.
-      - **Catalog Parser Optimization**: Early termination on consecutive empty pages to reduce unnecessary API calls.
-      - **Configuration Management**: Removed hardcoded Telegram values, now using environment variables for ADMIN_CHAT_ID and dynamic webhook URL detection.
-    - **Inventory Management System** (October 2025): Comprehensive inventory tracking system for products and boxes with size-specific stock management. Added `inventory` JSON field to products and boxes tables to store stock quantities by size (e.g., {"S": 10, "M": 15, "L": 8}). New admin panel "Остатки" (Inventory) tab provides dedicated interface for managing stock levels with visual indicators for low stock (yellow badge < 10 units) and out-of-stock (red badge, 0 units) items. Product and box cards in admin panel now display real-time inventory status badges. PATCH API endpoints (`/api/admin/products/:id` and `/api/admin/boxes/:id`) enable partial inventory updates. System designed with future 1C integration in mind for automated stock synchronization and payment reconciliation.
-    - **Performance Optimizations** (November 2025): Implemented comprehensive loading speed improvements across the application:
-      - **Image Lazy Loading**: Added `loading="lazy"` attribute to all product, box, and cart images for on-demand loading
-      - **React Query Caching**: Configured `staleTime: 5 minutes` and `gcTime: 10 minutes` for boxes, catalog, and product detail queries to reduce redundant API calls
-      - **Smart Image Loading**: First carousel image loads eagerly, subsequent images load lazily for better perceived performance
-      - **Background Placeholders**: Added gray backgrounds to image containers for smoother visual transitions during loading
-      - **Box Photo Dialog**: Optimized photo popup with responsive sizing (max 70vh height, 90vw width, rounded corners) and lazy loading
-    - **Referral Promo Code System** (November 2025): Enhanced promo code system with owner tracking and automatic loyalty point rewards:
-      - **PromoCode Entity**: Added `ownerId` (relation to User), `pointsPerUse`, `partnerName`, and `partnerContact` fields to track promo code ownership, reward amounts, and partner metadata
-      - **PromoCodeUsage Entity**: New entity tracks detailed usage history with @Unique constraint on orderId to prevent duplicate awards
-      - **Automatic Point Distribution**: Loyalty points are awarded to promo code owners ONLY after successful payment confirmation via YooKassa webhook (payment.succeeded event), ensuring points are never given for unpaid orders. Idempotency guaranteed through database unique constraint and existingUsage checks with graceful handling of duplicate webhook deliveries
-      - **Admin Panel Enhancements**: Added fields to assign promo codes to specific users by Telegram ID or username, set points-per-use rewards, partner information, and view detailed usage statistics
-      - **Validation**: Comprehensive frontend and backend validation for all promo code fields, including non-negative point values and descriptive error messages
-      - **Usage Analytics**: Admin panel displays complete usage history showing which users used each promo code, associated order details, and points awarded to owners
-    - **Profile Loyalty & Promo Code Display** (November 2025): Enhanced user profile "Данные" (Data) tab with comprehensive loyalty and promo code information:
-      - **Loyalty Points Section**: Visual display of loyalty stats including available points, total earned, total spent, and referral count with color-coded cards. Progress bar shows advancement to next loyalty level (hidden when max level reached)
-      - **My Promo Code Section**: If user owns a promo code, displays prominent promo code card with code, discount percentage, and points-per-use reward. Shows usage statistics (total uses vs max uses) and total points earned from referrals
-      - **Partner Information**: Conditionally displays partner name and contact details when both fields are populated
-      - **API Endpoint**: New `GET /api/promo-codes/owner/:userId` endpoint returns user's owned promo code with aggregated usage statistics and points earned
-      - **Conditional Rendering**: Both sections only appear when relevant data exists, maintaining clean UI for users without promo codes or loyalty activity
+### Core Features
+- **Quiz-Exclusive Boxes**: Supports `isQuizOnly` flag for distinct inventory management.
+- **Product & Box Favorites**: Unified API and UI handling for favoriting both products and boxes.
+- **Product Size Handling**: Enhanced entity to store sizes as JSON, with UI for quick selection and dynamic cart buttons.
+- **Catalog Enhancements**: Sorting and improved filter layout.
+- **Phone Number Formatting**: Strict `+7` prefix enforcement and automatic formatting for Russian phone numbers.
+- **Order Data Enhancement**: `telegramUsername` field added to orders schema.
+- **Analytics**: Improved revenue calculation (paid orders only) and accurate date filters.
+- **Profile Loyalty & Promo Code Display**: Enhanced user profile with loyalty stats, available points, total earned/spent, referral count, and owned promo code details with usage statistics.
 
 ## External Dependencies
 
-- **Database**: Neon Database (PostgreSQL-compatible serverless database)
+- **Database**: Neon Database (PostgreSQL)
 - **Telegram Platform**: Telegram WebApp API
 - **UI Framework**: Radix UI
 - **Payment Processing**: YooKassa (ЮKassa)
-- **Object Storage**: Timeweb Cloud S3 Storage (S3-compatible API at s3.twcstorage.ru)
-  - Bucket: `355a4950-kavaraapp`
-  - Region: `ru-1`
-  - Required environment variables: `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET_NAME`
+- **Object Storage**: Timeweb Cloud S3 Storage (S3-compatible API)

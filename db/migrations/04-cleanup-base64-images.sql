@@ -7,23 +7,34 @@ UPDATE products
 SET "imageUrl" = NULL 
 WHERE "imageUrl" LIKE 'data:%';
 
--- Очищаем base64 Data URLs из массива images
+-- Очищаем base64 Data URLs из JSON массива images
 UPDATE products 
-SET images = ARRAY(
-  SELECT unnest(images) 
-  WHERE unnest NOT LIKE 'data:%'
+SET images = (
+  SELECT json_agg(elem)
+  FROM json_array_elements_text(images::json) AS elem
+  WHERE elem NOT LIKE 'data:%'
 )
 WHERE images IS NOT NULL 
+  AND images::text != 'null'
   AND EXISTS (
-    SELECT 1 FROM unnest(images) AS img 
-    WHERE img LIKE 'data:%'
+    SELECT 1 
+    FROM json_array_elements_text(images::json) AS elem
+    WHERE elem LIKE 'data:%'
   );
+
+-- Очищаем пустые массивы
+UPDATE products
+SET images = '[]'::json
+WHERE images IS NOT NULL 
+  AND images::text = 'null';
 
 -- Логируем результат
 DO $$
 DECLARE
-  affected_count integer;
+  cleaned_imageurl integer;
+  cleaned_images integer;
 BEGIN
-  GET DIAGNOSTICS affected_count = ROW_COUNT;
-  RAISE NOTICE 'Очищено % товаров с base64 изображениями', affected_count;
+  SELECT COUNT(*) INTO cleaned_imageurl FROM products WHERE "imageUrl" IS NULL;
+  SELECT COUNT(*) INTO cleaned_images FROM products WHERE images::text = '[]';
+  RAISE NOTICE 'Очищено товаров: imageUrl = %, images = %', cleaned_imageurl, cleaned_images;
 END $$;
