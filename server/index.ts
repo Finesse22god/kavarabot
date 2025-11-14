@@ -97,15 +97,21 @@ async function createServer() {
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
 
-  // Автоматически настроить webhook при старте (через 5 секунд после запуска)
-  setTimeout(async () => {
-    try {
-      const { autoSetupWebhook } = await import('./telegram.js');
-      await autoSetupWebhook();
-    } catch (error) {
-      console.error('Ошибка автоматической настройки webhook:', error);
-    }
-  }, 5000);
+  // Автоматически настроить webhook при старте ТОЛЬКО на production
+  // На development (Replit) пропускаем автонастройку, чтобы не переписывать production webhook
+  if (isProduction || process.env.TELEGRAM_WEBHOOK_URL) {
+    setTimeout(async () => {
+      try {
+        const { autoSetupWebhook } = await import('./telegram.js');
+        await autoSetupWebhook();
+      } catch (error) {
+        console.error('Ошибка автоматической настройки webhook:', error);
+      }
+    }, 5000);
+  } else {
+    console.log('⏭️  Пропущена автонастройка webhook (development mode)');
+    console.log('   Для настройки вручную: curl https://ваш-домен/setup-bot');
+  }
 
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
