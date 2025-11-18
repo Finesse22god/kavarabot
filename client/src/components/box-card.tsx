@@ -213,7 +213,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       )}
 
       {/* Кнопки действий */}
-      <div className="flex items-center justify-between gap-4 mb-6 -mr-2">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -226,7 +226,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <ChevronUp className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 sm:gap-3 mr-2">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -241,7 +241,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <button
             onClick={handleAddToCart}
             disabled={!canAddToCart()}
-            className={`px-4 py-2 sm:px-8 sm:py-3 rounded-full font-semibold transition-colors text-xs sm:text-base whitespace-nowrap ${
+            className={`pl-4 pr-2 py-2 sm:pl-8 sm:pr-4 sm:py-3 rounded-full font-semibold transition-colors text-xs sm:text-base whitespace-nowrap ${
               canAddToCart()
                 ? 'bg-black text-white hover:bg-gray-800 cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
