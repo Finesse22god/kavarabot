@@ -213,7 +213,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       )}
 
       {/* Кнопки действий */}
-      <div className="flex items-center justify-between gap-4 mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6 -mr-2">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -226,7 +226,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <ChevronUp className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 mr-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
