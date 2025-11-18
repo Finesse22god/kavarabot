@@ -40,6 +40,18 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Проверяем что выбраны ОБА размера если они доступны
+    if (availableTopSizes.length > 0 && !selectedTopSize) {
+      alert('Пожалуйста, выберите размер ВЕРХ');
+      return;
+    }
+    
+    if (availableBottomSizes.length > 0 && !selectedBottomSize) {
+      alert('Пожалуйста, выберите размер НИЗ');
+      return;
+    }
+    
     if (onAddToCart) {
       const sizes = {
         top: selectedTopSize,
@@ -47,6 +59,15 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       };
       onAddToCart(box, JSON.stringify(sizes));
     }
+  };
+  
+  // Проверка что можно добавить в корзину
+  const canAddToCart = () => {
+    // Если есть размеры ВЕРХ, они должны быть выбраны
+    if (availableTopSizes.length > 0 && !selectedTopSize) return false;
+    // Если есть размеры НИЗ, они должны быть выбраны
+    if (availableBottomSizes.length > 0 && !selectedBottomSize) return false;
+    return true;
   };
   
   const handleTopSizeClick = (e: React.MouseEvent, size: string) => {
@@ -219,7 +240,12 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
           <button
             onClick={handleAddToCart}
-            className="px-4 py-2 sm:px-8 sm:py-3 rounded-full font-semibold transition-colors bg-black text-white hover:bg-gray-800 text-xs sm:text-base whitespace-nowrap"
+            disabled={!canAddToCart()}
+            className={`px-4 py-2 sm:px-8 sm:py-3 rounded-full font-semibold transition-colors text-xs sm:text-base whitespace-nowrap ${
+              canAddToCart()
+                ? 'bg-black text-white hover:bg-gray-800 cursor-pointer'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
+            }`}
             data-testid={`button-add-to-cart-${box.id}`}
           >
             В КОРЗИНУ
