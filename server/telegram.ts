@@ -110,7 +110,7 @@ async function handleMessage(message: any) {
         [
           {
             text: "📄 Открыть политику конфиденциальности",
-            web_app: { url: `${getWebAppUrl()}/privacy-policy` },
+            web_app: { url: `${getWebAppUrl()}?startapp=privacy` },
           },
         ],
       ],
@@ -153,7 +153,7 @@ async function handleMessage(message: any) {
         [
           {
             text: "🛍️ Смотреть боксы",
-            web_app: { url: `${getWebAppUrl()}/boxes` },
+            web_app: { url: `${getWebAppUrl()}?startapp=boxes` },
           },
         ],
       ],
@@ -169,7 +169,7 @@ async function handleMessage(message: any) {
         [
           {
             text: "📦 Мои заказы",
-            web_app: { url: `${getWebAppUrl()}/orders` },
+            web_app: { url: `${getWebAppUrl()}?startapp=orders` },
           },
         ],
       ],
@@ -185,7 +185,7 @@ async function handleMessage(message: any) {
         [
           {
             text: "💬 Связаться",
-            web_app: { url: `${getWebAppUrl()}/support` },
+            web_app: { url: `${getWebAppUrl()}?startapp=support` },
           },
         ],
       ],

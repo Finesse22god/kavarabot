@@ -24,6 +24,7 @@ The user interface is optimized for Telegram WebApp compatibility, featuring sim
 - **Performance**: Implemented image lazy loading, React Query caching (`staleTime: 5 minutes`, `gcTime: 10 minutes`), smart image loading for carousels, and background placeholders for smoother visual transitions.
 - **Security & Reliability**: Includes cryptographically secure admin token generation, server-side content validation for file uploads, transaction support with pessimistic write locking for order creation, mandatory user validation, cryptographically secure and unique order number generation, enhanced YooKassa error handling, and environment variable configuration.
 - **Notifications**: Optimized Telegram notifications for payment confirmation, including detailed order, payment, and customer information. Admin notifications include full product/box lists with sizes and quantities.
+- **Routing**: All Telegram buttons and slash commands use query parameter approach (`?startapp=<page>`) instead of direct routes, eliminating 404 errors and Nginx configuration requirements. Client-side redirect logic in App.tsx handles navigation automatically.
 
 ### Core Features
 - **Quiz-Exclusive Boxes**: Supports `isQuizOnly` flag for distinct inventory management.

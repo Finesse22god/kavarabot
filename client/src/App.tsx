@@ -88,6 +88,15 @@ function App() {
         case 'quiz':
           navigate('/quiz');
           break;
+        case 'orders':
+          navigate('/my-orders');
+          break;
+        case 'support':
+          navigate('/info');
+          break;
+        case 'privacy':
+          navigate('/privacy-policy');
+          break;
         default:
           // If it's a referral code (ref_xxx), stay on home page
           // Other parameters are ignored
