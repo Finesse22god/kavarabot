@@ -94,9 +94,6 @@ export default function Home() {
           <p className="text-sm sm:text-base text-white font-normal tracking-wide drop-shadow-md">
             ТРЕНИРОВОК
           </p>
-          <div className="mt-4 sm:mt-8">
-            <div className="w-16 sm:w-20 h-0.5 bg-white mx-auto"></div>
-          </div>
         </div>
 
         {/* Main Actions - Centered */}
