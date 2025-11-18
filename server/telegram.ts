@@ -104,6 +104,22 @@ async function handleMessage(message: any) {
     };
 
     await sendMessage(chatId, welcomeMessage, keyboard);
+  } else if (text === "/privacy") {
+    const keyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: "📄 Открыть политику конфиденциальности",
+            web_app: { url: `${getWebAppUrl()}/privacy-policy` },
+          },
+        ],
+      ],
+    };
+    await sendMessage(
+      chatId,
+      "📄 Политика конфиденциальности KAVARA\n\nНажмите кнопку ниже, чтобы ознакомиться с политикой обработки персональных данных.",
+      keyboard,
+    );
   } else if (text === "/app") {
     const keyboard = {
       inline_keyboard: [
@@ -288,6 +304,7 @@ async function setMyCommands() {
     { command: "boxes", description: "Готовые боксы" },
     { command: "orders", description: "Мои заказы" },
     { command: "support", description: "Поддержка" },
+    { command: "privacy", description: "Политика конфиденциальности" },
   ];
 
   const response = await fetch(`${TELEGRAM_API_URL}/setMyCommands`, {

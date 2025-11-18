@@ -28,6 +28,7 @@ import BottomNav from "./components/bottom-nav";
 import Catalog from "./pages/catalog";
 import BoxDetail from "./pages/box-detail";
 import ProductDetail from "./pages/product-detail";
+import PrivacyPolicy from "./pages/privacy-policy";
 
 function Router() {
   return (
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/profile" component={Profile} />
       <Route path="/info" component={Info} />
+      <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/create-box" component={AdminCreateBox} />
