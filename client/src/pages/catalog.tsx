@@ -81,18 +81,35 @@ export default function Catalog() {
   // Отслеживание скролла для кнопки "вверх"
   useEffect(() => {
     const handleScroll = () => {
+      // Проверяем несколько вариантов для совместимости с Telegram WebApp
+      const scrollTop = window.pageYOffset 
+        || document.documentElement.scrollTop 
+        || document.body.scrollTop 
+        || 0;
+      
       // Показываем кнопку после прокрутки на 800px (примерно 2 товара)
       const scrollThreshold = 800;
-      setShowScrollTop(window.scrollY > scrollThreshold);
+      setShowScrollTop(scrollTop > scrollThreshold);
     };
 
+    // Проверяем при монтировании
+    handleScroll();
+
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    document.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   // Функция прокрутки вверх
   const scrollToTop = () => {
+    // Пробуем несколько способов для совместимости
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
+    document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
   };
 
 
@@ -397,16 +414,14 @@ export default function Catalog() {
         )}
       </div>
 
-      {/* Scroll to Top Button */}
-      {showScrollTop && (
-        <Button
-          onClick={scrollToTop}
-          className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-100 transition-all duration-300 z-50"
-          data-testid="button-scroll-top"
-        >
-          <ArrowUp className="w-6 h-6" />
-        </Button>
-      )}
+      {/* Scroll to Top Button - ТЕСТ: всегда видна */}
+      <Button
+        onClick={scrollToTop}
+        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-100 transition-all duration-300 z-50"
+        data-testid="button-scroll-top"
+      >
+        <ArrowUp className="w-6 h-6" />
+      </Button>
     </div>
   );
 }
