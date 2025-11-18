@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { ArrowLeft, ShoppingCart, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Search, ArrowUpDown, ArrowUp } from "lucide-react";
 import { useTelegram } from "@/hooks/use-telegram";
 import BoxCard from "@/components/box-card";
 import ProductCard from "@/components/product-card";
@@ -76,6 +76,24 @@ export default function Catalog() {
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  // Отслеживание скролла для кнопки "вверх"
+  useEffect(() => {
+    const handleScroll = () => {
+      // Показываем кнопку после прокрутки примерно на 6 товаров (каждый ~400px высотой)
+      const scrollThreshold = 400 * 6; // ~2400px
+      setShowScrollTop(window.scrollY > scrollThreshold);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Функция прокрутки вверх
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
 
 
@@ -379,6 +397,16 @@ export default function Catalog() {
         )}
       </div>
 
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-100 transition-all duration-300 z-50"
+          data-testid="button-scroll-top"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </Button>
+      )}
     </div>
   );
 }
