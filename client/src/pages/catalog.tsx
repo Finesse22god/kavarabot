@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { ArrowLeft, ShoppingCart, Search, ArrowUpDown, ArrowUp } from "lucide-react";
@@ -77,14 +77,7 @@ export default function Catalog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
   const [showScrollTop, setShowScrollTop] = useState(false);
-
-  // Функция прокрутки вверх
-  const scrollToTop = () => {
-    // Пробуем несколько способов для совместимости
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
-    document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
-  };
+  const triggerRef = useRef<HTMLDivElement>(null);
 
 
 
@@ -184,6 +177,31 @@ export default function Catalog() {
     
     return categoryMatch && searchMatch;
   }) || [];
+
+  // Отслеживание триггера для кнопки "наверх"
+  useEffect(() => {
+    const trigger = triggerRef.current;
+    if (!trigger || !filteredItems || filteredItems.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Кнопка появляется когда триггер ВЫШЕ экрана (прокрутили вниз)
+        const isAbove = entry.boundingClientRect.top < 0 && !entry.isIntersecting;
+        setShowScrollTop(isAbove);
+      },
+      { threshold: 0, rootMargin: '0px' }
+    );
+
+    observer.observe(trigger);
+    return () => observer.disconnect();
+  }, [filteredItems?.length]); // Пересоздаём observer когда меняется список
+
+  // Функция прокрутки вверх
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo?.({ top: 0, behavior: 'smooth' });
+    document.body.scrollTo?.({ top: 0, behavior: 'smooth' });
+  };
 
   // Сортировка товаров
   if (sortBy !== "default" && filteredItems) {
@@ -343,27 +361,11 @@ export default function Catalog() {
         {filteredItems.length > 0 ? (
           <div className="space-y-6 mb-8">
             {filteredItems.map((item, index) => (
-              <>
+              <div key={item.id}>
                 {/* Невидимый триггер после 6-го товара */}
-                {index === 5 && (
-                  <div
-                    ref={(el) => {
-                      if (el) {
-                        const observer = new IntersectionObserver(
-                          ([entry]) => {
-                            // Кнопка появляется когда триггер выходит из видимости (прокрутили дальше 6 товаров)
-                            setShowScrollTop(!entry.isIntersecting);
-                          },
-                          { threshold: 0, rootMargin: '0px' }
-                        );
-                        observer.observe(el);
-                      }
-                    }}
-                    className="h-0"
-                  />
-                )}
+                {index === 5 && <div ref={triggerRef} className="h-0" />}
+                
                 <ProductCard
-                  key={item.id}
                   product={item as Product}
                   variant="default"
                   userId={dbUser?.id}
@@ -390,7 +392,7 @@ export default function Catalog() {
                   });
                 }}
                 />
-              </>
+              </div>
             ))}
           </div>
         ) : (
