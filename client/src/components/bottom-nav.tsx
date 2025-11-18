@@ -50,24 +50,21 @@ export default function BottomNav() {
               }`}
               data-testid={`button-nav-${item.path === "/" ? "home" : item.path === "/info" ? "info" : "profile"}`}
             >
-              <div className="relative">
-                {item.isLogo ? (
+              {item.isLogo ? (
+                <div className="relative">
                   <img 
                     src={kavaraLogo} 
                     alt="KAVARA Logo" 
                     className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
                   />
-                ) : IconComponent ? (
-                  <IconComponent 
-                    className={`w-6 h-6 ${isActive ? "stroke-2" : "stroke-1"}`} 
-                  />
-                ) : null}
-              </div>
-              <span className={`text-[10px] font-bold tracking-wide ${
-                isActive ? "text-white" : "text-white/70"
-              }`}>
-                {item.label}
-              </span>
+                </div>
+              ) : (
+                <span className={`text-[10px] font-bold tracking-wide ${
+                  isActive ? "text-white" : "text-white/70"
+                }`}>
+                  {item.label}
+                </span>
+              )}
             </button>
           );
         })}
