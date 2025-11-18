@@ -213,7 +213,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
       )}
 
       {/* Кнопки действий */}
-      <div className="flex items-center justify-between gap-4 mb-6">
+      <div className="flex items-center justify-between gap-3 sm:gap-4 mb-6">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -226,13 +226,13 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <ChevronUp className="w-3 h-3 sm:w-4 sm:h-4" />
         </button>
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setIsPhotoDialogOpen(true);
             }}
-            className="px-2.5 py-2 sm:px-6 sm:py-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors font-semibold text-xs sm:text-sm whitespace-nowrap"
+            className="px-4 py-2 sm:px-6 sm:py-2 rounded-full border-2 border-black text-black hover:bg-black hover:text-white transition-colors font-semibold text-xs sm:text-sm whitespace-nowrap"
             data-testid={`button-photo-${box.id}`}
           >
             ФОТО
@@ -241,7 +241,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
           <button
             onClick={handleAddToCart}
             disabled={!canAddToCart()}
-            className={`px-3 py-2 sm:px-8 sm:py-3 rounded-full font-semibold transition-colors text-xs sm:text-base whitespace-nowrap ${
+            className={`px-5 py-2 sm:px-7 sm:py-3 rounded-full font-semibold transition-colors text-xs sm:text-base whitespace-nowrap ${
               canAddToCart()
                 ? 'bg-black text-white hover:bg-gray-800 cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-50'
