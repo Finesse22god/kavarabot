@@ -81,8 +81,8 @@ export default function Catalog() {
   // Отслеживание скролла для кнопки "вверх"
   useEffect(() => {
     const handleScroll = () => {
-      // Показываем кнопку после прокрутки примерно на 6 товаров (каждый ~400px высотой)
-      const scrollThreshold = 400 * 6; // ~2400px
+      // Показываем кнопку после прокрутки на 800px (примерно 2 товара)
+      const scrollThreshold = 800;
       setShowScrollTop(window.scrollY > scrollThreshold);
     };
 
