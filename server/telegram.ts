@@ -93,11 +93,11 @@ async function handleMessage(message: any) {
         [
           {
             text: "📦 Готовые боксы",
-            web_app: { url: `${getWebAppUrl()}/boxes` },
+            web_app: { url: `${getWebAppUrl()}?startapp=boxes` },
           },
           {
             text: "🛍️ Каталог",
-            web_app: { url: `${getWebAppUrl()}/catalog` },
+            web_app: { url: `${getWebAppUrl()}?startapp=catalog` },
           },
         ],
       ],
@@ -121,7 +121,7 @@ async function handleMessage(message: any) {
         [
           {
             text: "📋 Начать тест",
-            web_app: { url: `${getWebAppUrl()}/quiz` },
+            web_app: { url: `${getWebAppUrl()}?startapp=quiz` },
           },
         ],
       ],

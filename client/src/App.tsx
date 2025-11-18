@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -58,9 +59,40 @@ function Router() {
 }
 
 function App() {
-  const [location] = useLocation();
-  const { isInTelegram } = useTelegram();
+  const [location, navigate] = useLocation();
+  const { isInTelegram, webApp } = useTelegram();
   const isAdminPage = location.startsWith('/admin');
+
+  // Handle startapp parameter from Telegram deep links
+  useEffect(() => {
+    // Check for start_param from Telegram WebApp
+    const startParam = webApp?.initDataUnsafe?.start_param;
+    
+    // Also check URL query parameter as fallback
+    const urlParams = new URLSearchParams(window.location.search);
+    const startAppParam = urlParams.get('startapp');
+    
+    const param = startParam || startAppParam;
+    
+    if (param && location === '/') {
+      // Navigate based on the parameter
+      switch (param) {
+        case 'catalog':
+          navigate('/catalog');
+          break;
+        case 'boxes':
+          navigate('/boxes');
+          break;
+        case 'quiz':
+          navigate('/quiz');
+          break;
+        default:
+          // If it's a referral code (ref_xxx), stay on home page
+          // Other parameters are ignored
+          break;
+      }
+    }
+  }, [webApp, location, navigate]);
 
   // In production, show TelegramRequired page if not in Telegram (except for admin pages)
   if (!import.meta.env.DEV && !isInTelegram && !isAdminPage) {
