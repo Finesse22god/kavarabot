@@ -59,7 +59,7 @@ export default function BottomNav() {
                   />
                 </div>
               ) : (
-                <span className={`text-[10px] font-bold tracking-wide ${
+                <span className={`text-xs font-bold tracking-wide ${
                   isActive ? "text-white" : "text-white/70"
                 }`}>
                   {item.label}
