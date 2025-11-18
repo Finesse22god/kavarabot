@@ -95,7 +95,10 @@ async function handleMessage(message: any) {
             text: "📦 Готовые боксы",
             web_app: { url: `${getWebAppUrl()}/boxes` },
           },
-          { text: "🛍️ Каталог", callback_data: "catalog" },
+          {
+            text: "🛍️ Каталог",
+            web_app: { url: `${getWebAppUrl()}/catalog` },
+          },
         ],
       ],
     };
