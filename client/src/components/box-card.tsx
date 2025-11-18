@@ -127,7 +127,7 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   // Развернутый вид (всегда белый фон, черный текст, черная кнопка)
   return (
     <div 
-      className="relative rounded-[40px] p-[45px] transition-all bg-white text-black border-2 border-black"
+      className="relative rounded-[40px] py-6 pr-[45px] pl-[45px] transition-all bg-white text-black border-2 border-black"
       data-testid={`box-card-expanded-${box.id}`}
     >
       {/* Заголовок */}
