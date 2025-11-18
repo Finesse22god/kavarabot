@@ -78,32 +78,6 @@ export default function Catalog() {
   const [sortBy, setSortBy] = useState("default");
   const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Отслеживание скролла для кнопки "вверх"
-  useEffect(() => {
-    const handleScroll = () => {
-      // Проверяем несколько вариантов для совместимости с Telegram WebApp
-      const scrollTop = window.pageYOffset 
-        || document.documentElement.scrollTop 
-        || document.body.scrollTop 
-        || 0;
-      
-      // Показываем кнопку после прокрутки на 800px (примерно 2 товара)
-      const scrollThreshold = 800;
-      setShowScrollTop(scrollTop > scrollThreshold);
-    };
-
-    // Проверяем при монтировании
-    handleScroll();
-
-    window.addEventListener('scroll', handleScroll);
-    document.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
   // Функция прокрутки вверх
   const scrollToTop = () => {
     // Пробуем несколько способов для совместимости
@@ -368,12 +342,31 @@ export default function Catalog() {
         
         {filteredItems.length > 0 ? (
           <div className="space-y-6 mb-8">
-            {filteredItems.map((item) => (
-              <ProductCard
-                key={item.id}
-                product={item as Product}
-                variant="default"
-                userId={dbUser?.id}
+            {filteredItems.map((item, index) => (
+              <>
+                {/* Невидимый триггер после 2-го товара */}
+                {index === 2 && (
+                  <div
+                    ref={(el) => {
+                      if (el) {
+                        const observer = new IntersectionObserver(
+                          ([entry]) => {
+                            // Кнопка появляется когда триггер выходит из видимости
+                            setShowScrollTop(!entry.isIntersecting);
+                          },
+                          { threshold: 0, rootMargin: '0px' }
+                        );
+                        observer.observe(el);
+                      }
+                    }}
+                    className="h-0"
+                  />
+                )}
+                <ProductCard
+                  key={item.id}
+                  product={item as Product}
+                  variant="default"
+                  userId={dbUser?.id}
                 onAddToCart={(product, selectedSize) => {
                   if (!dbUser?.id) {
                     toast({
@@ -396,7 +389,8 @@ export default function Catalog() {
                     itemType: itemType
                   });
                 }}
-              />
+                />
+              </>
             ))}
           </div>
         ) : (
