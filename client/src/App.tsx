@@ -64,6 +64,7 @@ function App() {
   const [location, navigate] = useLocation();
   const { isInTelegram, webApp } = useTelegram();
   const isAdminPage = location.startsWith('/admin');
+  const isHomePage = location === '/';
 
   // Handle startapp parameter from Telegram deep links
   useEffect(() => {
@@ -122,7 +123,7 @@ function App() {
         <div className={isAdminPage ? "w-full min-h-screen bg-gray-50 font-inter" : "telegram-app font-inter"}>
           <Toaster />
           <Router />
-          {!isAdminPage && <BottomNav />}
+          {!isAdminPage && !isHomePage && <BottomNav />}
         </div>
       </TooltipProvider>
     </QueryClientProvider>

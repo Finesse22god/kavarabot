@@ -9,7 +9,7 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-The user interface is optimized for Telegram WebApp compatibility, featuring simplified product cards in the catalog and detailed product pages with tabs for size selection and collapsible descriptions. A consistent image-first card layout is used across products and boxes, with a photo carousel for multiple product images. The navigation includes an INFO page, Home, and Profile. The Profile tab is streamlined to "Данные", "Заказы", and "Избранное", with orders displayed inline.
+The user interface is optimized for Telegram WebApp compatibility, featuring simplified product cards in the catalog and detailed product pages with tabs for size selection and collapsible descriptions. A consistent image-first card layout is used across products and boxes, with a photo carousel for multiple product images. The navigation includes an INFO page, Home, and Profile. The Profile tab is streamlined to "Данные", "Заказы", and "Избранное", with orders displayed inline. The bottom navigation menu (INFO/ГЛАВНАЯ/ПРОФИЛЬ) is hidden on the home page for a cleaner, immersive experience, but remains visible on all other pages.
 
 ### Technical Implementation
 - **Frontend**: React 18 with TypeScript, Wouter for routing, Radix UI with shadcn/ui for components, Tailwind CSS for styling, TanStack Query for server state, and Vite for building.
