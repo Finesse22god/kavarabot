@@ -414,14 +414,16 @@ export default function Catalog() {
         )}
       </div>
 
-      {/* Scroll to Top Button - ТЕСТ: всегда видна */}
-      <Button
-        onClick={scrollToTop}
-        className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-100 transition-all duration-300 z-50"
-        data-testid="button-scroll-top"
-      >
-        <ArrowUp className="w-6 h-6" />
-      </Button>
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-24 right-6 w-12 h-12 rounded-full bg-white text-black shadow-lg hover:bg-gray-100 transition-all duration-300 z-50"
+          data-testid="button-scroll-top"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </Button>
+      )}
     </div>
   );
 }
