@@ -344,14 +344,14 @@ export default function Catalog() {
           <div className="space-y-6 mb-8">
             {filteredItems.map((item, index) => (
               <>
-                {/* Невидимый триггер после 2-го товара */}
-                {index === 2 && (
+                {/* Невидимый триггер после 6-го товара */}
+                {index === 5 && (
                   <div
                     ref={(el) => {
                       if (el) {
                         const observer = new IntersectionObserver(
                           ([entry]) => {
-                            // Кнопка появляется когда триггер выходит из видимости
+                            // Кнопка появляется когда триггер выходит из видимости (прокрутили дальше 6 товаров)
                             setShowScrollTop(!entry.isIntersecting);
                           },
                           { threshold: 0, rootMargin: '0px' }
