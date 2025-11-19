@@ -206,10 +206,10 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
       return;
     }
 
-    if (selectedProducts.length > 10) {
+    if (selectedProducts.length > 6) {
       toast({
         title: "Ошибка",
-        description: "Максимум 10 товаров в боксе",
+        description: "Максимум 6 товаров в боксе",
         variant: "destructive",
       });
       return;
@@ -230,12 +230,12 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
     setSelectedProducts(prev => {
       if (prev.includes(productId)) {
         return prev.filter(id => id !== productId);
-      } else if (prev.length < 10) {
+      } else if (prev.length < 6) {
         return [...prev, productId];
       } else {
         toast({
           title: "Лимит товаров",
-          description: "Максимум 10 товаров в боксе",
+          description: "Максимум 6 товаров в боксе",
           variant: "destructive",
         });
         return prev;
@@ -557,7 +557,7 @@ export default function EditBoxForm({ box, onBack }: EditBoxFormProps) {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Package className="h-5 w-5 mr-2" />
-                Выбор товаров ({selectedProducts.length}/10)
+                Выбор товаров ({selectedProducts.length}/6)
               </CardTitle>
             </CardHeader>
             <CardContent>

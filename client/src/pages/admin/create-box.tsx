@@ -225,7 +225,7 @@ export default function AdminCreateBox() {
 
               {/* Product Selection */}
               <div>
-                <Label>Выберите товары для бокса (максимум 10)</Label>
+                <Label>Выберите товары для бокса (максимум 6)</Label>
                 <div className="grid grid-cols-1 gap-2 mt-2 max-h-60 overflow-y-auto border rounded-lg p-4">
                   {products.map((product: any) => (
                     <div key={product.id} className="flex items-center space-x-2">
@@ -234,7 +234,7 @@ export default function AdminCreateBox() {
                         checked={boxData.selectedProducts.includes(product.id)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            if (boxData.selectedProducts.length < 10) {
+                            if (boxData.selectedProducts.length < 6) {
                               setBoxData(prev => ({
                                 ...prev,
                                 selectedProducts: [...prev.selectedProducts, product.id]
@@ -242,7 +242,7 @@ export default function AdminCreateBox() {
                             } else {
                               toast({
                                 title: "Предупреждение",
-                                description: "Максимум 10 товаров в боксе",
+                                description: "Максимум 6 товаров в боксе",
                                 variant: "destructive"
                               });
                             }
@@ -253,7 +253,7 @@ export default function AdminCreateBox() {
                             }));
                           }
                         }}
-                        disabled={!boxData.selectedProducts.includes(product.id) && boxData.selectedProducts.length >= 10}
+                        disabled={!boxData.selectedProducts.includes(product.id) && boxData.selectedProducts.length >= 6}
                       />
                       <Label htmlFor={product.id} className="text-sm">
                         {product.name} - {product.price}₽ ({product.category})
@@ -262,7 +262,7 @@ export default function AdminCreateBox() {
                   ))}
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
-                  Выбрано: {boxData.selectedProducts.length} из 10
+                  Выбрано: {boxData.selectedProducts.length} из 6
                 </p>
               </div>
 
