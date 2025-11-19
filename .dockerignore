@@ -1,0 +1,77 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Development files
+.git
+.gitignore
+.env.local
+.env.development
+*.log
+.DS_Store
+
+# Testing
+coverage
+.nyc_output
+test-results
+
+# Documentation
+*.md
+!README.md
+docs
+TIMEWEB_*.md
+MINI_APP_INFO.md
+test_results.md
+
+# Database
+db
+*.sql
+*.db
+database_export.sql
+production_export.sql
+part1_schema.sql
+
+# Git hooks
+*.sample
+applypatch-msg.sample
+commit-msg.sample
+COMMIT_EDITMSG
+FETCH_HEAD
+HEAD
+ORIG_HEAD
+index
+config
+description
+exclude
+
+# Build artifacts (будут пересобраны в контейнере)
+dist
+build
+.vite
+.next
+out
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Временные файлы
+tmp
+temp
+*.tmp
+
+# Replit specific
+.replit
+replit.nix
+.config
+.cache
+
+# Large assets that aren't needed in production
+# (если есть большие видео или изображения, которые не нужны)
+# attached_assets/*.webm
+# attached_assets/*.mp4

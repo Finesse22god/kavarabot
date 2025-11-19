@@ -14,6 +14,7 @@ The user interface is optimized for Telegram WebApp compatibility, featuring sim
 ### Technical Implementation
 - **Frontend**: React 18 with TypeScript, Wouter for routing, Radix UI with shadcn/ui for components, Tailwind CSS for styling, TanStack Query for server state, and Vite for building.
 - **Backend**: Node.js with Express.js.
+- **Deployment**: Optimized multi-stage Dockerfile for Timeweb Cloud with .dockerignore to minimize image size and deployment time.
 - **Database**: PostgreSQL (Neon Database) with TypeORM, utilizing JSON columns for `sizes`, `images`, and `sportTypes` within the Product entity. UUID primary keys are used across entities.
 - **Authentication**: Telegram WebApp authentication (`initDataUnsafe`) using Telegram user ID for identification and a stateless session management approach.
 - **File Storage**: Timeweb S3-compatible object storage for all product and box images, with secure upload validation using AWS SDK v3 and `multer`. Base64 image protection is implemented across all layers.
