@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+.nyc_output
+
+# Development
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Cache
+.cache
+.replit
+.config
+.upm
+.local
+.npm
+.yarn
+.pnpm-store
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Misc
+README.md
+*.md
+.prettierrc
+.eslintrc*
+tsconfig.json
+vite.config.ts
+tailwind.config.ts
+
+# Replit specific
+attached_assets/kavarademo_original_backup.webm
+replit.nix
+.replit.toml

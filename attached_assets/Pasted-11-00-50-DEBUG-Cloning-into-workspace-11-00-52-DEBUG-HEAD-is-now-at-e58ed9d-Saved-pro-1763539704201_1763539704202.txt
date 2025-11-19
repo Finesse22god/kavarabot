@@ -1,0 +1,719 @@
+11:00:50 | DEBUG | Cloning into '/workspace'...
+11:00:52 | DEBUG | HEAD is now at e58ed9d Saved progress at the end of the loop
+11:00:52 | DEBUG | If you want to create a new branch to retain commits you create, you may
+11:00:52 | DEBUG | Note: switching to 'e58ed9d7aadbc28ca2c10053acc9de7d45434eca'.
+11:00:52 | DEBUG | Turn off this advice by setting config variable advice.detachedHead to false
+11:00:52 | DEBUG | git switch -
+11:00:52 | DEBUG | Or undo this operation with:
+11:00:52 | DEBUG | git switch -c <new-branch-name>
+11:00:52 | DEBUG | do so (now or later) by using -c with the switch command. Example:
+11:00:52 | DEBUG | state without impacting any branches by switching back to a branch.
+11:00:52 | DEBUG | changes and commit them, and you can discard any commits you make in this
+11:00:52 | DEBUG | You are in 'detached HEAD' state. You can look around, make experimental
+11:00:55 | DEBUG | #4 [internal] load build context
+11:00:55 | DEBUG | #6 DONE 0.0s
+11:00:55 | DEBUG | #5 DONE 0.0s
+11:00:55 | DEBUG | #5 resolve docker.io/library/node:22-slim@sha256:330fc735268c38d88788c3469a8dff2d0ad834af58569a42c61c47e4578d953b 0.0s done
+11:00:55 | DEBUG | #5 [ 1/10] FROM docker.io/library/node:22-slim@sha256:330fc735268c38d88788c3469a8dff2d0ad834af58569a42c61c47e4578d953b
+11:00:55 | DEBUG | #4 DONE 0.0s
+11:00:55 | DEBUG | #4 [internal] load build context
+11:00:55 | DEBUG | #3 DONE 0.0s
+11:00:55 | DEBUG | #3 transferring context: 2B 0.0s done
+11:00:55 | DEBUG | #3 [internal] load .dockerignore
+11:00:55 | DEBUG | #2 DONE 0.4s
+11:00:55 | DEBUG | #2 [internal] load metadata for docker.io/library/node:22-slim
+11:00:55 | DEBUG | #1 DONE 0.0s
+11:00:55 | DEBUG | #1 WARN: NoEmptyContinuation: Empty continuation line (line 49)
+11:00:55 | DEBUG | #1 transferring dockerfile: 1.64kB 0.0s done
+11:00:55 | DEBUG | #1 [internal] load build definition from Dockerfile
+11:00:55 | INFO | Build started
+11:00:57 | DEBUG | #4 DONE 3.1s
+11:00:57 | DEBUG | #10 CACHED
+11:00:57 | DEBUG | #10 [ 4/10] RUN npm install -g pm2
+11:00:57 | DEBUG | #9 CACHED
+11:00:57 | DEBUG | #9 [ 3/10] RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends     curl     && rm -rf /var/lib/apt/lists/*
+11:00:57 | DEBUG | #8 CACHED
+11:00:57 | DEBUG | #8 [ 2/10] RUN corepack enable
+11:00:57 | DEBUG | #4 transferring context: 104.16MB 3.1s done
+11:00:57 | DEBUG | #14 [ 8/10] COPY --chown=app:app . .
+11:00:57 | DEBUG | #13 CACHED
+11:00:57 | DEBUG | #13 [ 7/10] COPY package.json pnpm-lock.yaml* package-lock.json* pnpm-workspace.yaml* ./
+11:00:57 | DEBUG | #12 CACHED
+11:00:57 | DEBUG | #12 [ 6/10] WORKDIR /app
+11:00:57 | DEBUG | #11 CACHED
+11:00:57 | DEBUG | #11 [ 5/10] RUN groupadd --gid 2000 app && useradd --uid 2000 --gid 2000 -m -s /bin/bash app
+11:01:02 | DEBUG | #14 DONE 4.8s
+11:01:02 | DEBUG | #15 [ 9/10] RUN if [ -f pnpm-lock.yaml ]; then       echo "Detected pnpm workspace";       corepack use pnpm && pnpm install --frozen-lockfile --prod;     elif [ -f package-lock.json ]; then       echo "Detected npm project";       npm ci --only=production;     else       echo "No lockfile, fallback to basic install";       npm install;     fi
+11:01:03 | DEBUG | #15 0.372 Detected npm project
+11:01:04 | DEBUG | #15 1.315 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+11:01:19 | DEBUG | #15 16.82 npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+11:01:20 | DEBUG | #15 17.54 npm warn deprecated @types/axios@0.14.4: This is a stub types definition. axios provides its own type definitions, so you do not need this installed.
+11:01:23 | DEBUG | #15 20.36 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+11:01:23 | DEBUG | #15 20.58 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+11:02:00 | DEBUG | #15 57.70   run `npm fund` for details
+11:02:00 | DEBUG | #15 57.70 110 packages are looking for funding
+11:02:00 | DEBUG | #15 57.70
+11:02:00 | DEBUG | #15 57.70 added 708 packages, and audited 709 packages in 57s
+11:02:00 | DEBUG | #15 57.70
+11:02:00 | DEBUG | #15 57.78 Run `npm audit` for details.
+11:02:00 | DEBUG | #15 57.78
+11:02:00 | DEBUG | #15 57.78 a different dependency.
+11:02:00 | DEBUG | #15 57.78 Some issues need review, and may require choosing
+11:02:00 | DEBUG | #15 57.78
+11:02:00 | DEBUG | #15 57.78   npm audit fix --force
+11:02:00 | DEBUG | #15 57.78 To address all issues possible (including breaking changes), run:
+11:02:00 | DEBUG | #15 57.78
+11:02:00 | DEBUG | #15 57.78   npm audit fix
+11:02:00 | DEBUG | #15 57.78 To address issues that do not require attention, run:
+11:02:00 | DEBUG | #15 57.78
+11:02:00 | DEBUG | #15 57.78 15 vulnerabilities (3 low, 8 moderate, 4 high)
+11:02:00 | DEBUG | #15 57.78
+11:02:05 | DEBUG | #15 DONE 62.4s
+11:02:05 | DEBUG | #16 [10/10] RUN npm i & npm run build
+11:02:06 | DEBUG | #16 1.106
+11:02:06 | DEBUG | #16 1.106 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+11:02:06 | DEBUG | #16 1.106 > rest-express@1.0.0 build
+11:02:06 | DEBUG | #16 1.106
+11:02:06 | DEBUG | #16 1.595 [36mvite v5.4.19 [32mbuilding for production...[36m[39m
+11:02:06 | DEBUG | #16 1.708 transforming...
+11:02:07 | DEBUG | #16 2.738 Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+11:02:07 | DEBUG | #16 2.738   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+11:02:07 | DEBUG | #16 2.738   npx update-browserslist-db@latest
+11:02:10 | DEBUG | #16 4.938   run `npm fund` for details
+11:02:10 | DEBUG | #16 4.938 110 packages are looking for funding
+11:02:10 | DEBUG | #16 4.938
+11:02:10 | DEBUG | #16 4.938 up to date, audited 709 packages in 4s
+11:02:10 | DEBUG | #16 4.938
+11:02:10 | DEBUG | #16 5.020 Run `npm audit` for details.
+11:02:10 | DEBUG | #16 5.020
+11:02:10 | DEBUG | #16 5.020 a different dependency.
+11:02:10 | DEBUG | #16 5.020 Some issues need review, and may require choosing
+11:02:10 | DEBUG | #16 5.020
+11:02:10 | DEBUG | #16 5.020   npm audit fix --force
+11:02:10 | DEBUG | #16 5.020 To address all issues possible (including breaking changes), run:
+11:02:10 | DEBUG | #16 5.020
+11:02:10 | DEBUG | #16 5.020   npm audit fix
+11:02:10 | DEBUG | #16 5.020 To address issues that do not require attention, run:
+11:02:10 | DEBUG | #16 5.020
+11:02:10 | DEBUG | #16 5.020 15 vulnerabilities (3 low, 8 moderate, 4 high)
+11:02:10 | DEBUG | #16 5.020
+11:02:25 | DEBUG | #16 20.09 [32m✓[39m 2572 modules transformed.
+11:02:26 | DEBUG | #16 21.10 rendering chunks...
+11:02:26 | DEBUG | #16 21.23 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+11:02:26 | DEBUG | #16 21.23 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+11:02:26 | DEBUG | #16 21.23 [33m
+11:02:26 | DEBUG | #16 21.14 computing gzip size...
+11:02:26 | DEBUG | #16 21.23 - Using dynamic import() to code-split the application
+11:02:26 | DEBUG | #16 21.23 (!) Some chunks are larger than 500 kB after minification. Consider:
+11:02:26 | DEBUG | #16 21.24 [2m../dist/public/[22m[2massets/[22m[36mindex-DDXA1CtZ.js                       [39m[1m[33m1,059.63 kB[39m[22m[2m │ gzip: 296.10 kB[22m
+11:02:26 | DEBUG | #16 21.24 [2m../dist/public/[22m[2massets/[22m[35mindex-D5IyoDUV.css                      [39m[1m[2m   80.51 kB[22m[1m[22m[2m │ gzip:  13.54 kB[22m
+11:02:26 | DEBUG | #16 21.24 [2m../dist/public/[22m[2massets/[22m[32mkavarademo-CYrsrcTH.webm                [39m[1m[2m1,770.20 kB[22m[1m[22m
+11:02:26 | DEBUG | #16 21.24 [2m../dist/public/[22m[2massets/[22m[32mimage 855_1762420246746-BQrf7cg7.png    [39m[1m[2m  113.46 kB[22m[1m[22m
+11:02:26 | DEBUG | #16 21.24 [2m../dist/public/[22m[2massets/[22m[32mGroup 1 (4)_1762503053535-ClF7g6yj.png  [39m[1m[2m    4.62 kB[22m[1m[22m
+11:02:26 | DEBUG | #16 21.24 [2m../dist/public/[22m[32mindex.html                                     [39m[1m[2m    1.03 kB[22m[1m[22m[2m │ gzip:   0.61 kB[22m
+11:02:26 | DEBUG | #16 21.24 [32m✓ built in 19.59s[39m
+11:02:26 | DEBUG | #16 21.43 ⚡ Done in 64ms
+11:02:26 | DEBUG | #16 21.43
+11:02:26 | DEBUG | #16 21.43   dist/index.js  218.5kb
+11:02:26 | DEBUG | #16 21.43
+11:02:26 | DEBUG | #16 DONE 21.6s
+11:02:26 | DEBUG | #17 exporting to image
+11:02:26 | DEBUG | #17 exporting layers
+11:03:36 | DEBUG | #17 exporting layers 69.3s done
+11:03:36 | DEBUG | #17 exporting manifest sha256:0a2fa366bd4773f4139c7f72a76dbd3e7b71ed63f3d74cc5aebe5ddb7bfc3db7
+11:03:36 | DEBUG | #17 exporting config sha256:de7875583fc781d1e68956c386d6f991caa1c402a8c7196f70795d57af8e435b
+11:03:36 | DEBUG | #17 exporting manifest sha256:0a2fa366bd4773f4139c7f72a76dbd3e7b71ed63f3d74cc5aebe5ddb7bfc3db7 0.4s done
+11:03:36 | DEBUG | #17 exporting config sha256:de7875583fc781d1e68956c386d6f991caa1c402a8c7196f70795d57af8e435b 0.4s done
+11:03:37 | DEBUG | #17 ...
+11:03:37 | DEBUG | #17 pushing layers
+11:03:37 | DEBUG | #17 exporting to image
+11:03:37 | DEBUG | #18 DONE 0.0s
+11:03:37 | DEBUG | #17 ...
+11:03:37 | DEBUG | #19 DONE 0.0s
+11:03:37 | DEBUG | #17 exporting to image
+11:03:38 | DEBUG | #17 71.78 retrying in 1s
+11:03:38 | DEBUG | #17 71.78 unknown: unknown error
+11:03:38 | DEBUG | #17 71.89 retrying in 1s
+11:03:38 | DEBUG | #17 71.89 unknown: unknown error
+11:03:38 | DEBUG | #17 71.88 retrying in 1s
+11:03:38 | DEBUG | #17 71.88 unknown: unknown error
+11:03:38 | DEBUG | #17 71.85 retrying in 1s
+11:03:38 | DEBUG | #17 71.85 unknown: unknown error
+11:03:38 | DEBUG | #17 72.06 retrying in 1s
+11:03:38 | DEBUG | #17 72.06 unknown: unknown error
+11:03:38 | DEBUG | #17 72.21 retrying in 1s
+11:03:38 | DEBUG | #17 72.21 unknown: unknown error
+11:03:39 | DEBUG | #17 72.30 retrying in 1s
+11:03:39 | DEBUG | #17 72.30 unknown: unknown error
+11:03:39 | DEBUG | #17 72.48 retrying in 1s
+11:03:39 | DEBUG | #17 72.48 unknown: unknown error
+11:03:39 | DEBUG | #17 72.87 retrying in 1s
+11:03:39 | DEBUG | #17 72.87 unknown: unknown error
+11:03:40 | DEBUG | #17 73.38 retrying in 1s
+11:03:40 | DEBUG | #17 73.38 unknown: unknown error
+11:03:40 | DEBUG | #17 73.51 retrying in 1s
+11:03:40 | DEBUG | #17 73.51 unknown: unknown error
+11:03:40 | DEBUG | #17 73.69 retrying in 1s
+11:03:40 | DEBUG | #17 73.69 unknown: unknown error
+11:03:40 | DEBUG | #17 73.71 retrying in 1s
+11:03:40 | DEBUG | #17 73.71 unknown: unknown error
+11:03:40 | DEBUG | #17 73.87 retrying in 1s
+11:03:40 | DEBUG | #17 73.87 unknown: unknown error
+11:03:40 | DEBUG | #17 74.11 retrying in 2s
+11:03:40 | DEBUG | #17 74.11 unknown: unknown error
+11:03:40 | DEBUG | #17 73.97 retrying in 2s
+11:03:40 | DEBUG | #17 73.97 unknown: unknown error
+11:03:40 | DEBUG | #17 73.88 retrying in 1s
+11:03:40 | DEBUG | #17 73.88 unknown: unknown error
+11:03:41 | DEBUG | #17 74.26 retrying in 2s
+11:03:41 | DEBUG | #17 74.26 unknown: unknown error
+11:03:41 | DEBUG | #17 74.19 retrying in 2s
+11:03:41 | DEBUG | #17 74.19 unknown: unknown error
+11:03:41 | DEBUG | #17 74.16 retrying in 2s
+11:03:41 | DEBUG | #17 74.16 unknown: unknown error
+11:03:41 | DEBUG | #17 74.35 retrying in 2s
+11:03:41 | DEBUG | #17 74.35 unknown: unknown error
+11:03:41 | DEBUG | #17 74.28 retrying in 2s
+11:03:41 | DEBUG | #17 74.28 unknown: unknown error
+11:03:41 | DEBUG | #17 74.27 retrying in 2s
+11:03:41 | DEBUG | #17 74.27 unknown: unknown error
+11:03:41 | DEBUG | #17 74.53 retrying in 2s
+11:03:41 | DEBUG | #17 74.53 unknown: unknown error
+11:03:41 | DEBUG | #17 74.90 retrying in 2s
+11:03:41 | DEBUG | #17 74.90 unknown: unknown error
+11:03:41 | DEBUG | #17 75.10 retrying in 2s
+11:03:41 | DEBUG | #17 75.10 unknown: unknown error
+11:03:42 | DEBUG | #17 75.24 retrying in 2s
+11:03:42 | DEBUG | #17 75.24 unknown: unknown error
+11:03:42 | DEBUG | #17 75.37 retrying in 2s
+11:03:42 | DEBUG | #17 75.37 unknown: unknown error
+11:03:42 | DEBUG | #17 75.34 retrying in 2s
+11:03:42 | DEBUG | #17 75.34 unknown: unknown error
+11:03:42 | DEBUG | #17 75.26 retrying in 2s
+11:03:42 | DEBUG | #17 75.26 unknown: unknown error
+11:03:43 | DEBUG | #17 76.92 retrying in 4s
+11:03:43 | DEBUG | #17 76.92 unknown: unknown error
+11:03:43 | DEBUG | #17 76.95 retrying in 4s
+11:03:43 | DEBUG | #17 76.95 unknown: unknown error
+11:03:43 | DEBUG | #17 76.98 retrying in 4s
+11:03:43 | DEBUG | #17 76.98 unknown: unknown error
+11:03:43 | DEBUG | #17 77.14 retrying in 4s
+11:03:43 | DEBUG | #17 77.14 unknown: unknown error
+11:03:44 | DEBUG | #17 77.27 retrying in 4s
+11:03:44 | DEBUG | #17 77.27 unknown: unknown error
+11:03:44 | DEBUG | #17 77.48 retrying in 4s
+11:03:44 | DEBUG | #17 77.48 unknown: unknown error
+11:03:44 | DEBUG | #17 77.36 retrying in 4s
+11:03:44 | DEBUG | #17 77.36 unknown: unknown error
+11:03:44 | DEBUG | #17 77.30 retrying in 4s
+11:03:44 | DEBUG | #17 77.30 unknown: unknown error
+11:03:44 | DEBUG | #17 77.58 retrying in 4s
+11:03:44 | DEBUG | #17 77.58 unknown: unknown error
+11:03:44 | DEBUG | #17 77.76 retrying in 4s
+11:03:44 | DEBUG | #17 77.76 unknown: unknown error
+11:03:44 | DEBUG | #17 77.62 retrying in 4s
+11:03:44 | DEBUG | #17 77.62 unknown: unknown error
+11:03:44 | DEBUG | #17 77.61 retrying in 4s
+11:03:44 | DEBUG | #17 77.61 unknown: unknown error
+11:03:44 | DEBUG | #17 77.58 retrying in 4s
+11:03:44 | DEBUG | #17 77.58 unknown: unknown error
+11:03:44 | DEBUG | #17 77.80 retrying in 4s
+11:03:44 | DEBUG | #17 77.80 unknown: unknown error
+11:03:44 | DEBUG | #17 77.76 retrying in 4s
+11:03:44 | DEBUG | #17 77.76 unknown: unknown error
+11:03:47 | DEBUG | #17 80.99 unknown: unknown error
+11:03:48 | DEBUG | #17 pushing layers 11.7s done
+11:03:48 | DEBUG | status code: 403, request id: tx00000fb778113579c1e36-00691d79e3-399841093-ru-1, host id:
+11:03:50 | DEBUG | ------
+11:03:50 | DEBUG | 80.99 unknown: unknown error
+11:03:50 | DEBUG | 77.80 retrying in 4s
+11:03:50 | DEBUG | 77.80 unknown: unknown error
+11:03:50 | DEBUG | 77.76 retrying in 4s
+11:03:50 | DEBUG | 77.76 unknown: unknown error
+11:03:50 | DEBUG | 77.76 retrying in 4s
+11:03:50 | DEBUG | 77.76 unknown: unknown error
+11:03:50 | DEBUG | > exporting to image:
+11:03:50 | DEBUG | ------
+11:03:50 | DEBUG | ------
+11:03:50 | DEBUG | ------
+11:03:50 | DEBUG | status code: 403, request id: tx00000fb778113579c1e36-00691d79e3-399841093-ru-1, host id:
+11:03:50 | INFO | Build failed
+11:04:05 | DEBUG | Cloning into '/workspace'...
+11:04:07 | DEBUG | Note: switching to 'e58ed9d7aadbc28ca2c10053acc9de7d45434eca'.
+11:04:07 | DEBUG | HEAD is now at e58ed9d Saved progress at the end of the loop
+11:04:07 | DEBUG | Turn off this advice by setting config variable advice.detachedHead to false
+11:04:07 | DEBUG | git switch -
+11:04:07 | DEBUG | Or undo this operation with:
+11:04:07 | DEBUG | git switch -c <new-branch-name>
+11:04:07 | DEBUG | do so (now or later) by using -c with the switch command. Example:
+11:04:07 | DEBUG | If you want to create a new branch to retain commits you create, you may
+11:04:07 | DEBUG | state without impacting any branches by switching back to a branch.
+11:04:07 | DEBUG | changes and commit them, and you can discard any commits you make in this
+11:04:07 | DEBUG | You are in 'detached HEAD' state. You can look around, make experimental
+11:04:10 | DEBUG | #3 [internal] load .dockerignore
+11:04:10 | DEBUG | #2 DONE 0.5s
+11:04:10 | DEBUG | #2 [internal] load metadata for docker.io/library/node:22-slim
+11:04:10 | DEBUG | #1 DONE 0.0s
+11:04:10 | DEBUG | #1 WARN: NoEmptyContinuation: Empty continuation line (line 49)
+11:04:10 | DEBUG | #1 transferring dockerfile: 1.64kB 0.0s done
+11:04:10 | DEBUG | #1 [internal] load build definition from Dockerfile
+11:04:10 | INFO | Build started
+11:04:10 | DEBUG | #4 [internal] load build context
+11:04:10 | DEBUG | #6 DONE 0.0s
+11:04:10 | DEBUG | #5 DONE 0.0s
+11:04:10 | DEBUG | #5 resolve docker.io/library/node:22-slim@sha256:330fc735268c38d88788c3469a8dff2d0ad834af58569a42c61c47e4578d953b 0.0s done
+11:04:10 | DEBUG | #5 [ 1/10] FROM docker.io/library/node:22-slim@sha256:330fc735268c38d88788c3469a8dff2d0ad834af58569a42c61c47e4578d953b
+11:04:10 | DEBUG | #4 DONE 0.0s
+11:04:10 | DEBUG | #4 [internal] load build context
+11:04:10 | DEBUG | #3 DONE 0.0s
+11:04:10 | DEBUG | #3 transferring context: 2B 0.0s done
+11:04:12 | DEBUG | #4 transferring context: 104.16MB 1.6s done
+11:04:12 | DEBUG | #14 [ 8/10] COPY --chown=app:app . .
+11:04:12 | DEBUG | #13 CACHED
+11:04:12 | DEBUG | #13 [ 7/10] COPY package.json pnpm-lock.yaml* package-lock.json* pnpm-workspace.yaml* ./
+11:04:12 | DEBUG | #12 CACHED
+11:04:12 | DEBUG | #12 [ 6/10] WORKDIR /app
+11:04:12 | DEBUG | #11 CACHED
+11:04:12 | DEBUG | #11 [ 5/10] RUN groupadd --gid 2000 app && useradd --uid 2000 --gid 2000 -m -s /bin/bash app
+11:04:12 | DEBUG | #10 CACHED
+11:04:12 | DEBUG | #10 [ 4/10] RUN npm install -g pm2
+11:04:12 | DEBUG | #9 CACHED
+11:04:12 | DEBUG | #9 [ 3/10] RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends     curl     && rm -rf /var/lib/apt/lists/*
+11:04:12 | DEBUG | #8 CACHED
+11:04:12 | DEBUG | #8 [ 2/10] RUN corepack enable
+11:04:12 | DEBUG | #4 DONE 1.6s
+11:04:13 | DEBUG | #14 DONE 0.8s
+11:04:13 | DEBUG | #15 [ 9/10] RUN if [ -f pnpm-lock.yaml ]; then       echo "Detected pnpm workspace";       corepack use pnpm && pnpm install --frozen-lockfile --prod;     elif [ -f package-lock.json ]; then       echo "Detected npm project";       npm ci --only=production;     else       echo "No lockfile, fallback to basic install";       npm install;     fi
+11:04:13 | DEBUG | #15 0.105 Detected npm project
+11:04:13 | DEBUG | #15 0.666 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+11:04:18 | DEBUG | #15 5.856 npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+11:04:21 | DEBUG | #15 8.001 npm warn deprecated @types/axios@0.14.4: This is a stub types definition. axios provides its own type definitions, so you do not need this installed.
+11:04:22 | DEBUG | #15 9.264 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+11:04:22 | DEBUG | #15 9.332 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+11:04:34 | DEBUG | #15 21.78   run `npm fund` for details
+11:04:34 | DEBUG | #15 21.78
+11:04:34 | DEBUG | #15 21.78
+11:04:34 | DEBUG | #15 21.78 110 packages are looking for funding
+11:04:34 | DEBUG | #15 21.78 added 708 packages, and audited 709 packages in 21s
+11:04:35 | DEBUG | #15 21.83 To address issues that do not require attention, run:
+11:04:35 | DEBUG | #15 21.83
+11:04:35 | DEBUG | #15 21.83 15 vulnerabilities (3 low, 8 moderate, 4 high)
+11:04:35 | DEBUG | #15 21.83
+11:04:35 | DEBUG | #15 21.83 Run `npm audit` for details.
+11:04:35 | DEBUG | #15 21.83
+11:04:35 | DEBUG | #15 21.83 a different dependency.
+11:04:35 | DEBUG | #15 21.83 Some issues need review, and may require choosing
+11:04:35 | DEBUG | #15 21.83
+11:04:35 | DEBUG | #15 21.83   npm audit fix --force
+11:04:35 | DEBUG | #15 21.83 To address all issues possible (including breaking changes), run:
+11:04:35 | DEBUG | #15 21.83
+11:04:35 | DEBUG | #15 21.83   npm audit fix
+11:04:37 | DEBUG | #15 DONE 24.2s
+11:04:37 | DEBUG | #16 [10/10] RUN npm i & npm run build
+11:04:38 | DEBUG | #16 0.791
+11:04:38 | DEBUG | #16 0.791 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+11:04:38 | DEBUG | #16 0.791 > rest-express@1.0.0 build
+11:04:38 | DEBUG | #16 0.791
+11:04:38 | DEBUG | #16 1.091 [36mvite v5.4.19 [32mbuilding for production...[36m[39m
+11:04:38 | DEBUG | #16 1.150 transforming...
+11:04:38 | DEBUG | #16 1.633 Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+11:04:38 | DEBUG | #16 1.633   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+11:04:38 | DEBUG | #16 1.633   npx update-browserslist-db@latest
+11:04:40 | DEBUG | #16 3.027   run `npm fund` for details
+11:04:40 | DEBUG | #16 3.027 110 packages are looking for funding
+11:04:40 | DEBUG | #16 3.027
+11:04:40 | DEBUG | #16 3.027 up to date, audited 709 packages in 2s
+11:04:40 | DEBUG | #16 3.027
+11:04:40 | DEBUG | #16 3.085 a different dependency.
+11:04:40 | DEBUG | #16 3.085 Some issues need review, and may require choosing
+11:04:40 | DEBUG | #16 3.085
+11:04:40 | DEBUG | #16 3.085   npm audit fix --force
+11:04:40 | DEBUG | #16 3.085 To address all issues possible (including breaking changes), run:
+11:04:40 | DEBUG | #16 3.085
+11:04:40 | DEBUG | #16 3.085   npm audit fix
+11:04:40 | DEBUG | #16 3.085 To address issues that do not require attention, run:
+11:04:40 | DEBUG | #16 3.085
+11:04:40 | DEBUG | #16 3.085 15 vulnerabilities (3 low, 8 moderate, 4 high)
+11:04:40 | DEBUG | #16 3.085
+11:04:40 | DEBUG | #16 3.085 Run `npm audit` for details.
+11:04:40 | DEBUG | #16 3.085
+11:04:47 | DEBUG | #16 10.38 [32m✓[39m 2572 modules transformed.
+11:04:48 | DEBUG | #16 11.18 rendering chunks...
+11:04:48 | DEBUG | #16 11.24 [2m../dist/public/[22m[2massets/[22m[32mkavarademo-CYrsrcTH.webm                [39m[1m[2m1,770.20 kB[22m[1m[22m
+11:04:48 | DEBUG | #16 11.24 [2m../dist/public/[22m[2massets/[22m[32mimage 855_1762420246746-BQrf7cg7.png    [39m[1m[2m  113.46 kB[22m[1m[22m
+11:04:48 | DEBUG | #16 11.24 [2m../dist/public/[22m[2massets/[22m[32mGroup 1 (4)_1762503053535-ClF7g6yj.png  [39m[1m[2m    4.62 kB[22m[1m[22m
+11:04:48 | DEBUG | #16 11.24 [2m../dist/public/[22m[32mindex.html                                     [39m[1m[2m    1.03 kB[22m[1m[22m[2m │ gzip:   0.61 kB[22m
+11:04:48 | DEBUG | #16 11.20 computing gzip size...
+11:04:48 | DEBUG | #16 11.34 ⚡ Done in 22ms
+11:04:48 | DEBUG | #16 11.34
+11:04:48 | DEBUG | #16 11.34   dist/index.js  218.5kb
+11:04:48 | DEBUG | #16 11.34
+11:04:48 | DEBUG | #16 11.24 [32m✓ built in 10.13s[39m
+11:04:48 | DEBUG | #16 11.24 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+11:04:48 | DEBUG | #16 11.24 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+11:04:48 | DEBUG | #16 11.24 - Using dynamic import() to code-split the application
+11:04:48 | DEBUG | #16 11.24 (!) Some chunks are larger than 500 kB after minification. Consider:
+11:04:48 | DEBUG | #16 11.24 [33m
+11:04:48 | DEBUG | #16 11.24 [2m../dist/public/[22m[2massets/[22m[36mindex-DDXA1CtZ.js                       [39m[1m[33m1,059.63 kB[39m[22m[2m │ gzip: 296.10 kB[22m
+11:04:48 | DEBUG | #16 11.24 [2m../dist/public/[22m[2massets/[22m[35mindex-D5IyoDUV.css                      [39m[1m[2m   80.51 kB[22m[1m[22m[2m │ gzip:  13.54 kB[22m
+11:04:48 | DEBUG | #16 DONE 11.6s
+11:04:48 | DEBUG | #17 exporting layers
+11:04:48 | DEBUG | #17 exporting to image
+11:05:19 | DEBUG | #17 exporting layers 30.9s done
+11:05:19 | DEBUG | #17 pushing layers
+11:05:19 | DEBUG | #17 exporting config sha256:a95edc87833155a77539018bafdc66d00197b8f4422519da6197b35553e81f16 0.0s done
+11:05:19 | DEBUG | #17 exporting manifest sha256:9330bb9a79a791e2ca6ed405d5e152d685cc906c91bcb630b8160528cc5951cb done
+11:05:19 | DEBUG | #17 exporting to image
+11:05:19 | DEBUG | #18 DONE 0.0s
+11:05:19 | DEBUG | #17 ...
+11:05:20 | DEBUG | #17 31.25 unknown: unknown error
+11:05:20 | DEBUG | #17 31.38 retrying in 1s
+11:05:20 | DEBUG | #17 31.38 unknown: unknown error
+11:05:20 | DEBUG | #17 31.35 retrying in 1s
+11:05:20 | DEBUG | #17 31.35 unknown: unknown error
+11:05:20 | DEBUG | #17 31.34 retrying in 1s
+11:05:20 | DEBUG | #17 31.34 unknown: unknown error
+11:05:20 | DEBUG | #17 31.30 retrying in 1s
+11:05:20 | DEBUG | #17 31.30 unknown: unknown error
+11:05:20 | DEBUG | #17 31.28 retrying in 1s
+11:05:20 | DEBUG | #17 31.28 unknown: unknown error
+11:05:20 | DEBUG | #17 31.27 retrying in 1s
+11:05:20 | DEBUG | #17 31.27 unknown: unknown error
+11:05:20 | DEBUG | #17 31.25 retrying in 1s
+11:05:20 | DEBUG | #17 31.41 retrying in 1s
+11:05:20 | DEBUG | #17 31.41 unknown: unknown error
+11:05:20 | DEBUG | #17 exporting to image
+11:05:20 | DEBUG | #19 DONE 0.0s
+11:05:20 | DEBUG | #17 ...
+11:05:20 | DEBUG | #20 DONE 0.0s
+11:05:20 | DEBUG | #17 ...
+11:05:20 | DEBUG | #17 exporting to image
+11:05:20 | DEBUG | #17 32.02 retrying in 1s
+11:05:20 | DEBUG | #17 32.02 unknown: unknown error
+11:05:21 | DEBUG | #17 32.24 retrying in 1s
+11:05:21 | DEBUG | #17 32.24 unknown: unknown error
+11:05:21 | DEBUG | #17 32.12 retrying in 1s
+11:05:21 | DEBUG | #17 32.12 unknown: unknown error
+11:05:21 | DEBUG | #17 32.10 retrying in 1s
+11:05:21 | DEBUG | #17 32.10 unknown: unknown error
+11:05:21 | DEBUG | #17 32.10 retrying in 1s
+11:05:21 | DEBUG | #17 32.10 unknown: unknown error
+11:05:21 | DEBUG | #17 32.03 retrying in 1s
+11:05:21 | DEBUG | #17 32.03 unknown: unknown error
+11:05:21 | DEBUG | #17 32.39 unknown: unknown error
+11:05:21 | DEBUG | #17 32.32 retrying in 1s
+11:05:21 | DEBUG | #17 32.32 unknown: unknown error
+11:05:21 | DEBUG | #17 32.39 retrying in 2s
+11:05:21 | DEBUG | #17 32.70 unknown: unknown error
+11:05:21 | DEBUG | #17 32.70 retrying in 2s
+11:05:21 | DEBUG | #17 32.86 retrying in 2s
+11:05:21 | DEBUG | #17 32.86 unknown: unknown error
+11:05:21 | DEBUG | #17 32.79 unknown: unknown error
+11:05:21 | DEBUG | #17 32.78 retrying in 2s
+11:05:21 | DEBUG | #17 32.79 retrying in 2s
+11:05:21 | DEBUG | #17 32.78 unknown: unknown error
+11:05:21 | DEBUG | #17 32.99 retrying in 2s
+11:05:21 | DEBUG | #17 32.99 unknown: unknown error
+11:05:21 | DEBUG | #17 32.91 retrying in 2s
+11:05:21 | DEBUG | #17 32.91 unknown: unknown error
+11:05:21 | DEBUG | #17 32.87 retrying in 2s
+11:05:21 | DEBUG | #17 32.87 unknown: unknown error
+11:05:21 | DEBUG | #17 33.14 retrying in 2s
+11:05:21 | DEBUG | #17 33.14 unknown: unknown error
+11:05:22 | DEBUG | #17 33.30 retrying in 2s
+11:05:22 | DEBUG | #17 33.30 unknown: unknown error
+11:05:22 | DEBUG | #17 33.24 retrying in 2s
+11:05:22 | DEBUG | #17 33.24 unknown: unknown error
+11:05:22 | DEBUG | #17 33.22 retrying in 2s
+11:05:22 | DEBUG | #17 33.22 unknown: unknown error
+11:05:22 | DEBUG | #17 33.18 retrying in 2s
+11:05:22 | DEBUG | #17 33.18 unknown: unknown error
+11:05:22 | DEBUG | #17 33.43 retrying in 2s
+11:05:22 | DEBUG | #17 33.43 unknown: unknown error
+11:05:22 | DEBUG | #17 33.35 retrying in 2s
+11:05:22 | DEBUG | #17 33.35 unknown: unknown error
+11:05:23 | DEBUG | #17 34.45 retrying in 4s
+11:05:23 | DEBUG | #17 34.45 unknown: unknown error
+11:05:23 | DEBUG | #17 34.77 retrying in 4s
+11:05:23 | DEBUG | #17 34.77 unknown: unknown error
+11:05:23 | DEBUG | #17 34.94 retrying in 4s
+11:05:23 | DEBUG | #17 34.94 unknown: unknown error
+11:05:23 | DEBUG | #17 34.82 retrying in 4s
+11:05:23 | DEBUG | #17 34.82 unknown: unknown error
+11:05:23 | DEBUG | #17 35.11 retrying in 4s
+11:05:23 | DEBUG | #17 35.11 unknown: unknown error
+11:05:23 | DEBUG | #17 35.01 retrying in 4s
+11:05:23 | DEBUG | #17 35.01 unknown: unknown error
+11:05:23 | DEBUG | #17 35.00 retrying in 4s
+11:05:23 | DEBUG | #17 35.00 unknown: unknown error
+11:05:23 | DEBUG | #17 34.97 retrying in 4s
+11:05:23 | DEBUG | #17 34.97 unknown: unknown error
+11:05:24 | DEBUG | #17 35.20 retrying in 4s
+11:05:24 | DEBUG | #17 35.20 unknown: unknown error
+11:05:24 | DEBUG | #17 35.35 retrying in 4s
+11:05:24 | DEBUG | #17 35.35 unknown: unknown error
+11:05:24 | DEBUG | #17 35.58 retrying in 4s
+11:05:24 | DEBUG | #17 35.58 unknown: unknown error
+11:05:24 | DEBUG | #17 35.44 retrying in 4s
+11:05:24 | DEBUG | #17 35.44 unknown: unknown error
+11:05:24 | DEBUG | #17 35.40 retrying in 4s
+11:05:24 | DEBUG | #17 35.40 unknown: unknown error
+11:05:24 | DEBUG | #17 35.39 retrying in 4s
+11:05:24 | DEBUG | #17 35.39 unknown: unknown error
+11:05:24 | DEBUG | #17 35.65 retrying in 4s
+11:05:24 | DEBUG | #17 35.65 unknown: unknown error
+11:05:27 | DEBUG | #17 38.50 unknown: unknown error
+11:05:28 | DEBUG | #17 pushing layers 8.7s done
+11:05:28 | DEBUG | ------
+11:05:28 | DEBUG | 38.50 unknown: unknown error
+11:05:28 | DEBUG | 35.65 retrying in 4s
+11:05:28 | DEBUG | 35.65 unknown: unknown error
+11:05:28 | DEBUG | 35.58 retrying in 4s
+11:05:28 | DEBUG | 35.58 unknown: unknown error
+11:05:28 | DEBUG | 35.44 retrying in 4s
+11:05:28 | DEBUG | 35.44 unknown: unknown error
+11:05:28 | DEBUG | > exporting to image:
+11:05:28 | DEBUG | ------
+11:05:28 | DEBUG | ------
+11:05:28 | DEBUG | ------
+11:05:28 | DEBUG | status code: 403, request id: tx000001494e0cf22133f98-00691d7a47-401336361-ru-1, host id:
+11:05:28 | DEBUG | status code: 403, request id: tx000001494e0cf22133f98-00691d7a47-401336361-ru-1, host id:
+11:05:28 | INFO | Build failed
+11:05:50 | DEBUG | Cloning into '/workspace'...
+11:05:53 | DEBUG | HEAD is now at e58ed9d Saved progress at the end of the loop
+11:05:53 | DEBUG | Turn off this advice by setting config variable advice.detachedHead to false
+11:05:53 | DEBUG | git switch -
+11:05:53 | DEBUG | Or undo this operation with:
+11:05:53 | DEBUG | git switch -c <new-branch-name>
+11:05:53 | DEBUG | do so (now or later) by using -c with the switch command. Example:
+11:05:53 | DEBUG | If you want to create a new branch to retain commits you create, you may
+11:05:53 | DEBUG | state without impacting any branches by switching back to a branch.
+11:05:53 | DEBUG | changes and commit them, and you can discard any commits you make in this
+11:05:53 | DEBUG | You are in 'detached HEAD' state. You can look around, make experimental
+11:05:53 | DEBUG | Note: switching to 'e58ed9d7aadbc28ca2c10053acc9de7d45434eca'.
+11:05:55 | DEBUG | #1 DONE 0.0s
+11:05:55 | DEBUG | #1 WARN: NoEmptyContinuation: Empty continuation line (line 49)
+11:05:55 | DEBUG | #1 transferring dockerfile: 1.64kB done
+11:05:55 | DEBUG | #1 [internal] load build definition from Dockerfile
+11:05:55 | INFO | Build started
+11:05:55 | DEBUG | #2 DONE 0.6s
+11:05:55 | DEBUG | #2 [internal] load metadata for docker.io/library/node:22-slim
+11:05:56 | DEBUG | #6 DONE 0.0s
+11:05:56 | DEBUG | #5 DONE 0.0s
+11:05:56 | DEBUG | #5 resolve docker.io/library/node:22-slim@sha256:330fc735268c38d88788c3469a8dff2d0ad834af58569a42c61c47e4578d953b 0.0s done
+11:05:56 | DEBUG | #5 [ 1/10] FROM docker.io/library/node:22-slim@sha256:330fc735268c38d88788c3469a8dff2d0ad834af58569a42c61c47e4578d953b
+11:05:56 | DEBUG | #4 DONE 0.0s
+11:05:56 | DEBUG | #4 [internal] load build context
+11:05:56 | DEBUG | #3 DONE 0.0s
+11:05:56 | DEBUG | #3 transferring context: 2B done
+11:05:56 | DEBUG | #3 [internal] load .dockerignore
+11:05:56 | DEBUG | #4 [internal] load build context
+11:05:57 | DEBUG | #14 [ 8/10] COPY --chown=app:app . .
+11:05:57 | DEBUG | #13 CACHED
+11:05:57 | DEBUG | #13 [ 7/10] COPY package.json pnpm-lock.yaml* package-lock.json* pnpm-workspace.yaml* ./
+11:05:57 | DEBUG | #12 CACHED
+11:05:57 | DEBUG | #12 [ 5/10] RUN groupadd --gid 2000 app && useradd --uid 2000 --gid 2000 -m -s /bin/bash app
+11:05:57 | DEBUG | #11 CACHED
+11:05:57 | DEBUG | #11 [ 4/10] RUN npm install -g pm2
+11:05:57 | DEBUG | #10 CACHED
+11:05:57 | DEBUG | #10 [ 3/10] RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends     curl     && rm -rf /var/lib/apt/lists/*
+11:05:57 | DEBUG | #9 CACHED
+11:05:57 | DEBUG | #9 [ 2/10] RUN corepack enable
+11:05:57 | DEBUG | #8 CACHED
+11:05:57 | DEBUG | #8 [ 6/10] WORKDIR /app
+11:05:57 | DEBUG | #4 DONE 1.4s
+11:05:57 | DEBUG | #4 transferring context: 104.16MB 1.4s done
+11:05:58 | DEBUG | #14 DONE 0.5s
+11:05:58 | DEBUG | #15 0.131 Detected npm project
+11:05:58 | DEBUG | #15 [ 9/10] RUN if [ -f pnpm-lock.yaml ]; then       echo "Detected pnpm workspace";       corepack use pnpm && pnpm install --frozen-lockfile --prod;     elif [ -f package-lock.json ]; then       echo "Detected npm project";       npm ci --only=production;     else       echo "No lockfile, fallback to basic install";       npm install;     fi
+11:05:58 | DEBUG | #15 0.342 npm warn config only Use `--omit=dev` to omit dev dependencies from the install.
+11:06:05 | DEBUG | #15 7.592 npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+11:06:06 | DEBUG | #15 8.294 npm warn deprecated @types/axios@0.14.4: This is a stub types definition. axios provides its own type definitions, so you do not need this installed.
+11:06:08 | DEBUG | #15 10.49 npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+11:06:09 | DEBUG | #15 10.53 npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+11:06:19 | DEBUG | #15 20.88   run `npm fund` for details
+11:06:19 | DEBUG | #15 20.88 110 packages are looking for funding
+11:06:19 | DEBUG | #15 20.88
+11:06:19 | DEBUG | #15 20.88 added 708 packages, and audited 709 packages in 21s
+11:06:19 | DEBUG | #15 20.88
+11:06:19 | DEBUG | #15 20.93 Run `npm audit` for details.
+11:06:19 | DEBUG | #15 20.93
+11:06:19 | DEBUG | #15 20.93 a different dependency.
+11:06:19 | DEBUG | #15 20.93 Some issues need review, and may require choosing
+11:06:19 | DEBUG | #15 20.93
+11:06:19 | DEBUG | #15 20.93   npm audit fix --force
+11:06:19 | DEBUG | #15 20.93 To address all issues possible (including breaking changes), run:
+11:06:19 | DEBUG | #15 20.93
+11:06:19 | DEBUG | #15 20.93   npm audit fix
+11:06:19 | DEBUG | #15 20.93 To address issues that do not require attention, run:
+11:06:19 | DEBUG | #15 20.93
+11:06:19 | DEBUG | #15 20.93 15 vulnerabilities (3 low, 8 moderate, 4 high)
+11:06:19 | DEBUG | #15 20.93
+11:06:19 | DEBUG | #15 DONE 21.4s
+11:06:19 | DEBUG | #16 [10/10] RUN npm i & npm run build
+11:06:20 | DEBUG | #16 0.542
+11:06:20 | DEBUG | #16 0.542 > vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+11:06:20 | DEBUG | #16 0.542 > rest-express@1.0.0 build
+11:06:20 | DEBUG | #16 0.542
+11:06:20 | DEBUG | #16 0.855 [36mvite v5.4.19 [32mbuilding for production...[36m[39m
+11:06:20 | DEBUG | #16 0.922 transforming...
+11:06:20 | DEBUG | #16 1.265   Why you should do it regularly: https://github.com/browserslist/update-db#readme
+11:06:20 | DEBUG | #16 1.265   npx update-browserslist-db@latest
+11:06:20 | DEBUG | #16 1.265 Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+11:06:22 | DEBUG | #16 2.534   run `npm fund` for details
+11:06:22 | DEBUG | #16 2.534 110 packages are looking for funding
+11:06:22 | DEBUG | #16 2.534
+11:06:22 | DEBUG | #16 2.534 up to date, audited 709 packages in 2s
+11:06:22 | DEBUG | #16 2.534
+11:06:22 | DEBUG | #16 2.590 Run `npm audit` for details.
+11:06:22 | DEBUG | #16 2.590
+11:06:22 | DEBUG | #16 2.590 a different dependency.
+11:06:22 | DEBUG | #16 2.590 Some issues need review, and may require choosing
+11:06:22 | DEBUG | #16 2.590
+11:06:22 | DEBUG | #16 2.590   npm audit fix --force
+11:06:22 | DEBUG | #16 2.590 To address all issues possible (including breaking changes), run:
+11:06:22 | DEBUG | #16 2.590
+11:06:22 | DEBUG | #16 2.590   npm audit fix
+11:06:22 | DEBUG | #16 2.590 To address issues that do not require attention, run:
+11:06:22 | DEBUG | #16 2.590
+11:06:22 | DEBUG | #16 2.590 15 vulnerabilities (3 low, 8 moderate, 4 high)
+11:06:22 | DEBUG | #16 2.590
+11:06:28 | DEBUG | #16 9.222 [32m✓[39m 2572 modules transformed.
+11:06:29 | DEBUG | #16 10.01 rendering chunks...
+11:06:29 | DEBUG | #16 10.18 ⚡ Done in 21ms
+11:06:29 | DEBUG | #16 10.18
+11:06:29 | DEBUG | #16 10.18   dist/index.js  218.5kb
+11:06:29 | DEBUG | #16 10.18
+11:06:29 | DEBUG | #16 10.08 [32m✓ built in 9.20s[39m
+11:06:29 | DEBUG | #16 10.08 [2m../dist/public/[22m[2massets/[22m[36mindex-DDXA1CtZ.js                       [39m[1m[33m1,059.63 kB[39m[22m[2m │ gzip: 296.10 kB[22m
+11:06:29 | DEBUG | #16 10.08 [2m../dist/public/[22m[2massets/[22m[35mindex-D5IyoDUV.css                      [39m[1m[2m   80.51 kB[22m[1m[22m[2m │ gzip:  13.54 kB[22m
+11:06:29 | DEBUG | #16 10.08 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+11:06:29 | DEBUG | #16 10.08 - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+11:06:29 | DEBUG | #16 10.08 - Using dynamic import() to code-split the application
+11:06:29 | DEBUG | #16 10.08 (!) Some chunks are larger than 500 kB after minification. Consider:
+11:06:29 | DEBUG | #16 10.08 [33m
+11:06:29 | DEBUG | #16 10.08 [2m../dist/public/[22m[2massets/[22m[32mkavarademo-CYrsrcTH.webm                [39m[1m[2m1,770.20 kB[22m[1m[22m
+11:06:29 | DEBUG | #16 10.08 [2m../dist/public/[22m[2massets/[22m[32mimage 855_1762420246746-BQrf7cg7.png    [39m[1m[2m  113.46 kB[22m[1m[22m
+11:06:29 | DEBUG | #16 10.08 [2m../dist/public/[22m[2massets/[22m[32mGroup 1 (4)_1762503053535-ClF7g6yj.png  [39m[1m[2m    4.62 kB[22m[1m[22m
+11:06:29 | DEBUG | #16 10.08 [2m../dist/public/[22m[32mindex.html                                     [39m[1m[2m    1.03 kB[22m[1m[22m[2m │ gzip:   0.61 kB[22m
+11:06:29 | DEBUG | #16 10.04 computing gzip size...
+11:06:30 | DEBUG | #16 DONE 10.5s
+11:06:30 | DEBUG | #17 exporting layers
+11:06:30 | DEBUG | #17 exporting to image
+11:06:59 | DEBUG | #17 exporting layers 28.9s done
+11:06:59 | DEBUG | #17 pushing layers
+11:06:59 | DEBUG | #17 exporting config sha256:f7b730bcaac3274942b771b1a9ce19b62b693d57d70d47df9a3b13a914539ce3 done
+11:06:59 | DEBUG | #17 exporting manifest sha256:c75eae0afdc1920458ca0ebc0c98d8ae8550e37d4b41786955ced4f0d267dee3 done
+11:06:59 | DEBUG | #17 exporting to image
+11:06:59 | DEBUG | #18 DONE 0.0s
+11:06:59 | DEBUG | #17 ...
+11:06:59 | DEBUG | #17 ...
+11:06:59 | DEBUG | #17 exporting to image
+11:06:59 | DEBUG | #19 DONE 0.0s
+11:06:59 | DEBUG | #17 29.56 retrying in 1s
+11:06:59 | DEBUG | #17 29.56 unknown: unknown error
+11:06:59 | DEBUG | #17 29.68 retrying in 1s
+11:06:59 | DEBUG | #17 29.68 unknown: unknown error
+11:06:59 | DEBUG | #17 29.64 retrying in 1s
+11:06:59 | DEBUG | #17 29.64 unknown: unknown error
+11:06:59 | DEBUG | #17 29.80 retrying in 1s
+11:06:59 | DEBUG | #17 29.80 unknown: unknown error
+11:06:59 | DEBUG | #17 29.75 retrying in 1s
+11:06:59 | DEBUG | #17 29.75 unknown: unknown error
+11:07:00 | DEBUG | #17 29.83 retrying in 1s
+11:07:00 | DEBUG | #17 29.83 unknown: unknown error
+11:07:00 | DEBUG | #17 29.81 retrying in 1s
+11:07:00 | DEBUG | #17 29.81 unknown: unknown error
+11:07:00 | DEBUG | #17 29.93 retrying in 1s
+11:07:00 | DEBUG | #17 29.93 unknown: unknown error
+11:07:00 | DEBUG | #17 29.85 retrying in 1s
+11:07:00 | DEBUG | #17 29.85 unknown: unknown error
+11:07:00 | DEBUG | #17 29.84 retrying in 1s
+11:07:00 | DEBUG | #17 29.84 unknown: unknown error
+11:07:00 | DEBUG | #17 30.05 retrying in 1s
+11:07:00 | DEBUG | #17 30.05 unknown: unknown error
+11:07:00 | DEBUG | #17 30.01 retrying in 1s
+11:07:00 | DEBUG | #17 30.01 unknown: unknown error
+11:07:00 | DEBUG | #17 30.00 retrying in 1s
+11:07:00 | DEBUG | #17 30.00 unknown: unknown error
+11:07:00 | DEBUG | #17 29.99 retrying in 1s
+11:07:00 | DEBUG | #17 29.99 unknown: unknown error
+11:07:00 | DEBUG | #17 29.97 retrying in 1s
+11:07:00 | DEBUG | #17 29.97 unknown: unknown error
+11:07:00 | DEBUG | #17 30.63 retrying in 2s
+11:07:00 | DEBUG | #17 30.63 unknown: unknown error
+11:07:00 | DEBUG | #17 30.75 retrying in 2s
+11:07:00 | DEBUG | #17 30.75 unknown: unknown error
+11:07:01 | DEBUG | #17 30.88 retrying in 2s
+11:07:01 | DEBUG | #17 30.88 unknown: unknown error
+11:07:01 | DEBUG | #17 30.89 retrying in 2s
+11:07:01 | DEBUG | #17 30.89 unknown: unknown error
+11:07:01 | DEBUG | #17 30.99 retrying in 2s
+11:07:01 | DEBUG | #17 30.99 unknown: unknown error
+11:07:01 | DEBUG | #17 31.12 retrying in 2s
+11:07:01 | DEBUG | #17 31.12 unknown: unknown error
+11:07:01 | DEBUG | #17 31.09 retrying in 2s
+11:07:01 | DEBUG | #17 31.09 unknown: unknown error
+11:07:01 | DEBUG | #17 31.07 retrying in 2s
+11:07:01 | DEBUG | #17 31.07 unknown: unknown error
+11:07:01 | DEBUG | #17 31.30 retrying in 2s
+11:07:01 | DEBUG | #17 31.30 unknown: unknown error
+11:07:01 | DEBUG | #17 31.22 retrying in 2s
+11:07:01 | DEBUG | #17 31.22 unknown: unknown error
+11:07:01 | DEBUG | #17 31.20 retrying in 2s
+11:07:01 | DEBUG | #17 31.20 unknown: unknown error
+11:07:01 | DEBUG | #17 31.47 retrying in 2s
+11:07:01 | DEBUG | #17 31.47 unknown: unknown error
+11:07:01 | DEBUG | #17 31.39 retrying in 2s
+11:07:01 | DEBUG | #17 31.39 unknown: unknown error
+11:07:01 | DEBUG | #17 31.37 retrying in 2s
+11:07:01 | DEBUG | #17 31.37 unknown: unknown error
+11:07:01 | DEBUG | #17 31.48 retrying in 2s
+11:07:01 | DEBUG | #17 31.48 unknown: unknown error
+11:07:02 | DEBUG | #17 32.66 unknown: unknown error
+11:07:02 | DEBUG | #17 32.66 retrying in 4s
+11:07:02 | DEBUG | #17 32.85 unknown: unknown error
+11:07:02 | DEBUG | #17 32.85 retrying in 4s
+11:07:03 | DEBUG | #17 33.06 retrying in 4s
+11:07:03 | DEBUG | #17 33.06 unknown: unknown error
+11:07:03 | DEBUG | #17 33.25 retrying in 4s
+11:07:03 | DEBUG | #17 33.25 unknown: unknown error
+11:07:03 | DEBUG | #17 33.16 retrying in 4s
+11:07:03 | DEBUG | #17 33.16 unknown: unknown error
+11:07:03 | DEBUG | #17 33.39 retrying in 4s
+11:07:03 | DEBUG | #17 33.39 unknown: unknown error
+11:07:03 | DEBUG | #17 33.29 retrying in 4s
+11:07:03 | DEBUG | #17 33.29 unknown: unknown error
+11:07:03 | DEBUG | #17 33.29 retrying in 4s
+11:07:03 | DEBUG | #17 33.29 unknown: unknown error
+11:07:03 | DEBUG | #17 33.53 retrying in 4s
+11:07:03 | DEBUG | #17 33.53 unknown: unknown error
+11:07:03 | DEBUG | #17 33.43 retrying in 4s
+11:07:03 | DEBUG | #17 33.43 unknown: unknown error
+11:07:03 | DEBUG | #17 33.39 retrying in 4s
+11:07:03 | DEBUG | #17 33.39 unknown: unknown error
+11:07:03 | DEBUG | #17 33.57 unknown: unknown error
+11:07:03 | DEBUG | #17 33.56 retrying in 4s
+11:07:03 | DEBUG | #17 33.72 retrying in 4s
+11:07:03 | DEBUG | #17 33.72 unknown: unknown error
+11:07:03 | DEBUG | #17 33.58 retrying in 4s
+11:07:03 | DEBUG | #17 33.58 unknown: unknown error
+11:07:03 | DEBUG | #17 33.57 retrying in 4s
+11:07:03 | DEBUG | #17 33.56 unknown: unknown error
+11:07:06 | DEBUG | #17 36.75 unknown: unknown error
+11:07:07 | DEBUG | #17 pushing layers 8.8s done
+11:07:07 | DEBUG | ------
+11:07:07 | DEBUG | 36.75 unknown: unknown error
+11:07:07 | DEBUG | 33.72 retrying in 4s
+11:07:07 | DEBUG | 33.72 unknown: unknown error
+11:07:07 | DEBUG | 33.58 retrying in 4s
+11:07:07 | DEBUG | 33.58 unknown: unknown error
+11:07:07 | DEBUG | 33.57 retrying in 4s
+11:07:07 | DEBUG | 33.57 unknown: unknown error
+11:07:07 | DEBUG | > exporting to image:
+11:07:07 | DEBUG | ------
+11:07:07 | DEBUG | ------
+11:07:07 | DEBUG | ------
+11:07:07 | DEBUG | status code: 403, request id: tx00000737f25b873100f8b-00691d7aaa-401336139-ru-1, host id:
+11:07:07 | DEBUG | status code: 403, request id: tx00000737f25b873100f8b-00691d7aaa-401336139-ru-1, host id:
+11:07:07 | INFO | Build failed
