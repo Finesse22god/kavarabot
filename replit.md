@@ -18,7 +18,7 @@ The user interface is optimized for Telegram WebApp compatibility, featuring sim
 - **Authentication**: Telegram WebApp authentication (`initDataUnsafe`) using Telegram user ID for identification and a stateless session management approach.
 - **File Storage**: Timeweb S3-compatible object storage for all product and box images, with secure upload validation using AWS SDK v3 and `multer`. Base64 image protection is implemented across all layers.
 - **Payment**: YooKassa integration with webhook verification for automatic status updates and Telegram Mini App redirection. Payment pages open within Telegram's built-in browser using `WebApp.openLink()` with `try_instant_view`.
-- **Admin Panel**: A web-based panel for comprehensive order, user, product, and inventory management, including loyalty statistics, analytics, and quiz settings.
+- **Admin Panel**: A web-based panel for comprehensive order, user, product, and inventory management, including loyalty statistics, analytics, and quiz settings. Boxes support up to 10 products (increased from 6).
 - **Referral System**: Client-based referral program using personalized promo codes, awarding loyalty points to owners upon successful payment confirmation.
 - **Inventory Management**: Comprehensive, size-specific inventory tracking system for products and boxes, with visual indicators for stock levels in the admin panel.
 - **Performance**: Implemented image lazy loading, React Query caching (`staleTime: 5 minutes`, `gcTime: 10 minutes`), smart image loading for carousels, and background placeholders for smoother visual transitions.
