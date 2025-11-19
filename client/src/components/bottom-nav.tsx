@@ -31,7 +31,7 @@ export default function BottomNav() {
   const bgClass = shouldShowBlackBg ? "bg-black" : "";
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 w-full py-3 z-[100] pb-safe ${bgClass}`}>
+    <div className={`fixed bottom-0 left-0 right-0 w-full py-5 z-[100] pb-safe ${bgClass}`}>
       <div className="flex items-center justify-center gap-16">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
