@@ -1201,9 +1201,9 @@ router.post("/api/admin/boxes", verifyAdminToken, async (req, res) => {
       return res.status(400).json({ error: "Name and price are required" });
     }
 
-    // Validate products if provided (max 6 products)
-    if (createData.productIds && createData.productIds.length > 6) {
-      return res.status(400).json({ error: "Box can contain maximum 6 products" });
+    // Validate products if provided (max 10 products)
+    if (createData.productIds && createData.productIds.length > 10) {
+      return res.status(400).json({ error: "Box can contain maximum 10 products" });
     }
 
     // Выполняем создание бокса и добавление продуктов в транзакции
@@ -1272,6 +1272,11 @@ router.put("/api/admin/boxes/:id", verifyAdminToken, async (req, res) => {
       availableTopSizes: updateData.availableTopSizes,
       availableBottomSizes: updateData.availableBottomSizes,
     };
+
+    // Validate products if provided (max 10 products)
+    if (updateData.productIds && updateData.productIds.length > 10) {
+      return res.status(400).json({ error: "Box can contain maximum 10 products" });
+    }
 
     const updatedBox = await storage.updateBox(id, boxUpdateData);
     if (!updatedBox) {
