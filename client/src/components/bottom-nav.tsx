@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { User, Info } from "lucide-react";
 import kavaraLogo from "@assets/Vector (2)_1762347061448.png";
+import { useTelegram } from "@/hooks/use-telegram";
 
 const menuItems = [
   { path: "/info", icon: Info, label: "INFO", isLogo: false },
@@ -10,6 +11,7 @@ const menuItems = [
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
+  const { hapticFeedback } = useTelegram();
 
   // Черный фон для каталога, боксов, товаров, корзины, избранного, профиля, инфо и оформления заказа
   const shouldShowBlackBg = 
@@ -42,7 +44,10 @@ export default function BottomNav() {
           return (
             <button
               key={item.path}
-              onClick={() => setLocation(item.path)}
+              onClick={() => {
+                hapticFeedback.impact('light');
+                setLocation(item.path);
+              }}
               className={`flex flex-col items-center space-y-1 px-1 py-1 transition-colors relative ${
                 isActive 
                   ? "text-white" 

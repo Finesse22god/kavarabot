@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -62,9 +62,32 @@ function Router() {
 
 function App() {
   const [location, navigate] = useLocation();
-  const { isInTelegram, webApp } = useTelegram();
+  const { isInTelegram, webApp, hapticFeedback } = useTelegram();
   const isAdminPage = location.startsWith('/admin');
   const isHomePage = location === '/';
+
+  const handleBackButton = useCallback(() => {
+    hapticFeedback.impact('light');
+    navigate('/');
+  }, [navigate, hapticFeedback]);
+
+  useEffect(() => {
+    if (!webApp || isAdminPage) return;
+    
+    const version = parseFloat(webApp.version || '0');
+    if (version < 6.1) return;
+
+    if (isHomePage) {
+      webApp.BackButton.hide();
+    } else {
+      webApp.BackButton.show();
+      webApp.BackButton.onClick(handleBackButton);
+    }
+
+    return () => {
+      webApp.BackButton.offClick(handleBackButton);
+    };
+  }, [webApp, isHomePage, isAdminPage, handleBackButton]);
 
   // Handle startapp parameter from Telegram deep links
   useEffect(() => {
