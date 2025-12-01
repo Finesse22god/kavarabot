@@ -51,7 +51,7 @@ export default function Info() {
           <Accordion type="single" collapsible className="space-y-2">
             {faqData.map((item, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left">
+                <AccordionTrigger className="text-left" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                   {item.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600">
