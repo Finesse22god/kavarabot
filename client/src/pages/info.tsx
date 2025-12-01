@@ -32,7 +32,7 @@ export default function Info() {
 
   return (
     <div className="min-h-screen overflow-y-auto bg-black pb-40 font-jetbrains">
-      <div className="p-4 bg-black text-white">
+      <div className="p-4 bg-black text-white pt-safe">
         <div className="flex items-center space-x-3">
           <div className="text-2xl">ℹ️</div>
           <div>
