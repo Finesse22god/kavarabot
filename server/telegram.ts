@@ -387,9 +387,7 @@ function getWebAppUrl(): string {
 }
 
 function getBotUsername(): string {
-  // Extract username from bot token if needed
-  // For now, return placeholder - will be updated when we get bot info
-  return "kavara_style_bot";
+  return process.env.TELEGRAM_BOT_USERNAME || "kavaraappbot";
 }
 
 // Admin notification function

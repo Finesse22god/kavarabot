@@ -1863,7 +1863,7 @@ async function sendBroadcastMessage(telegramId: string, broadcast: Broadcast): P
     return { success: false, error: 'Bot token not configured' };
   }
   
-  const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavarabot';
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
   
   // Build inline keyboard from buttons
   let inlineKeyboard: any[] = [];
