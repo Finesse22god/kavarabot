@@ -36,6 +36,20 @@ declare global {
         viewportStableHeight: number;
         headerColor: string;
         backgroundColor: string;
+        safeAreaInset?: {
+          top: number;
+          bottom: number;
+          left: number;
+          right: number;
+        };
+        contentSafeAreaInset?: {
+          top: number;
+          bottom: number;
+          left: number;
+          right: number;
+        };
+        onEvent(eventType: string, callback: () => void): void;
+        offEvent(eventType: string, callback: () => void): void;
         BackButton: {
           isVisible: boolean;
           show(): void;
@@ -218,6 +232,26 @@ export function useTelegram(): UseTelegramReturn {
         document.documentElement.style.setProperty('--tg-theme-link-color', tg.themeParams.link_color || '#2481cc');
         document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#2481cc');
         document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.themeParams.button_text_color || '#ffffff');
+
+        // Apply safe area insets for Telegram UI elements
+        const applySafeArea = () => {
+          const safeTop = tg.safeAreaInset?.top || 0;
+          const contentTop = tg.contentSafeAreaInset?.top || 0;
+          const totalTop = Math.max(safeTop + contentTop, 60);
+          
+          const safeBottom = tg.safeAreaInset?.bottom || 0;
+          const contentBottom = tg.contentSafeAreaInset?.bottom || 0;
+          const totalBottom = safeBottom + contentBottom;
+          
+          document.documentElement.style.setProperty('--tg-safe-area-top', `${totalTop}px`);
+          document.documentElement.style.setProperty('--tg-safe-area-bottom', `${totalBottom}px`);
+        };
+        
+        applySafeArea();
+        
+        // Listen for safe area changes
+        tg.onEvent('safeAreaChanged', applySafeArea);
+        tg.onEvent('contentSafeAreaChanged', applySafeArea);
 
       } else {
         // Not in Telegram environment

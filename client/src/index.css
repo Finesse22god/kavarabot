@@ -94,17 +94,21 @@
     overflow-y: auto;
   }
 
+  :root {
+    --tg-safe-area-top: 60px;
+    --tg-safe-area-bottom: 0px;
+  }
+
   body {
     @apply font-sans antialiased bg-black text-foreground;
-    padding-top: env(safe-area-inset-top, 0px);
   }
   
   .pt-safe {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--tg-safe-area-top, 60px);
   }
   
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: var(--tg-safe-area-bottom, 0px);
   }
 
   .screen {
