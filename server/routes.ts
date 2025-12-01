@@ -1633,6 +1633,299 @@ router.get('/api/admin/users/search', verifyAdminToken, async (req, res) => {
   }
 });
 
+// ==================== BROADCAST ROUTES ====================
+import { Broadcast, BroadcastButton } from "./entities/Broadcast";
+
+// Get all broadcasts
+router.get('/api/admin/broadcasts', verifyAdminToken, async (req, res) => {
+  try {
+    const broadcastRepo = AppDataSource.getRepository(Broadcast);
+    const broadcasts = await broadcastRepo.find({
+      order: { createdAt: 'DESC' }
+    });
+    res.json(broadcasts);
+  } catch (error) {
+    console.error('Error fetching broadcasts:', error);
+    res.status(500).json({ error: 'Failed to fetch broadcasts' });
+  }
+});
+
+// Create broadcast
+router.post('/api/admin/broadcasts', verifyAdminToken, async (req, res) => {
+  try {
+    const { title, message, imageUrl, buttons } = req.body;
+    
+    if (!title || !message) {
+      return res.status(400).json({ error: 'Title and message are required' });
+    }
+    
+    const broadcastRepo = AppDataSource.getRepository(Broadcast);
+    const broadcast = broadcastRepo.create({
+      title,
+      message,
+      imageUrl: imageUrl || null,
+      buttons: buttons || [],
+      status: 'draft'
+    });
+    
+    await broadcastRepo.save(broadcast);
+    res.json(broadcast);
+  } catch (error) {
+    console.error('Error creating broadcast:', error);
+    res.status(500).json({ error: 'Failed to create broadcast' });
+  }
+});
+
+// Update broadcast
+router.put('/api/admin/broadcasts/:id', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, message, imageUrl, buttons } = req.body;
+    
+    const broadcastRepo = AppDataSource.getRepository(Broadcast);
+    const broadcast = await broadcastRepo.findOne({ where: { id } });
+    
+    if (!broadcast) {
+      return res.status(404).json({ error: 'Broadcast not found' });
+    }
+    
+    if (broadcast.status !== 'draft') {
+      return res.status(400).json({ error: 'Cannot edit sent broadcast' });
+    }
+    
+    broadcast.title = title || broadcast.title;
+    broadcast.message = message || broadcast.message;
+    broadcast.imageUrl = imageUrl !== undefined ? imageUrl : broadcast.imageUrl;
+    broadcast.buttons = buttons || broadcast.buttons;
+    
+    await broadcastRepo.save(broadcast);
+    res.json(broadcast);
+  } catch (error) {
+    console.error('Error updating broadcast:', error);
+    res.status(500).json({ error: 'Failed to update broadcast' });
+  }
+});
+
+// Delete broadcast
+router.delete('/api/admin/broadcasts/:id', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const broadcastRepo = AppDataSource.getRepository(Broadcast);
+    const broadcast = await broadcastRepo.findOne({ where: { id } });
+    
+    if (!broadcast) {
+      return res.status(404).json({ error: 'Broadcast not found' });
+    }
+    
+    await broadcastRepo.remove(broadcast);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting broadcast:', error);
+    res.status(500).json({ error: 'Failed to delete broadcast' });
+  }
+});
+
+// Send broadcast to all users
+router.post('/api/admin/broadcasts/:id/send', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const broadcastRepo = AppDataSource.getRepository(Broadcast);
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    
+    const broadcast = await broadcastRepo.findOne({ where: { id } });
+    
+    if (!broadcast) {
+      return res.status(404).json({ error: 'Broadcast not found' });
+    }
+    
+    if (broadcast.status === 'sending') {
+      return res.status(400).json({ error: 'Broadcast is already being sent' });
+    }
+    
+    // Get all users with Telegram ID
+    const users = await userRepo.find({
+      where: {},
+      select: ['telegramId']
+    });
+    
+    const telegramIds = users
+      .filter(u => u.telegramId)
+      .map(u => u.telegramId) as string[];
+    
+    if (telegramIds.length === 0) {
+      return res.status(400).json({ error: 'No users to send broadcast to' });
+    }
+    
+    // Update broadcast status
+    broadcast.status = 'sending';
+    broadcast.totalRecipients = telegramIds.length;
+    broadcast.sentCount = 0;
+    broadcast.failedCount = 0;
+    await broadcastRepo.save(broadcast);
+    
+    // Send in background
+    sendBroadcastToUsers(broadcast, telegramIds).catch(console.error);
+    
+    res.json({ 
+      success: true, 
+      message: `Sending to ${telegramIds.length} users`,
+      totalRecipients: telegramIds.length
+    });
+  } catch (error) {
+    console.error('Error sending broadcast:', error);
+    res.status(500).json({ error: 'Failed to send broadcast' });
+  }
+});
+
+// Preview broadcast (send to admin)
+router.post('/api/admin/broadcasts/:id/preview', verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { telegramId } = req.body;
+    
+    if (!telegramId) {
+      return res.status(400).json({ error: 'Telegram ID is required for preview' });
+    }
+    
+    const broadcastRepo = AppDataSource.getRepository(Broadcast);
+    const broadcast = await broadcastRepo.findOne({ where: { id } });
+    
+    if (!broadcast) {
+      return res.status(404).json({ error: 'Broadcast not found' });
+    }
+    
+    // Send preview to admin
+    const result = await sendBroadcastMessage(telegramId, broadcast);
+    
+    if (result.success) {
+      res.json({ success: true, message: 'Preview sent' });
+    } else {
+      res.status(500).json({ error: result.error || 'Failed to send preview' });
+    }
+  } catch (error) {
+    console.error('Error sending preview:', error);
+    res.status(500).json({ error: 'Failed to send preview' });
+  }
+});
+
+// Helper function to send broadcast to all users
+async function sendBroadcastToUsers(broadcast: Broadcast, telegramIds: string[]) {
+  const broadcastRepo = AppDataSource.getRepository(Broadcast);
+  let sentCount = 0;
+  let failedCount = 0;
+  
+  // Send messages with rate limiting (20 messages per second max for Telegram)
+  for (let i = 0; i < telegramIds.length; i++) {
+    const telegramId = telegramIds[i];
+    
+    try {
+      const result = await sendBroadcastMessage(telegramId, broadcast);
+      
+      if (result.success) {
+        sentCount++;
+      } else {
+        failedCount++;
+      }
+      
+      // Update progress every 10 messages
+      if ((i + 1) % 10 === 0 || i === telegramIds.length - 1) {
+        broadcast.sentCount = sentCount;
+        broadcast.failedCount = failedCount;
+        await broadcastRepo.save(broadcast);
+      }
+      
+      // Rate limiting: max 30 messages per second
+      if ((i + 1) % 30 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } catch (error) {
+      console.error(`Error sending to ${telegramId}:`, error);
+      failedCount++;
+    }
+  }
+  
+  // Update final status
+  broadcast.sentCount = sentCount;
+  broadcast.failedCount = failedCount;
+  broadcast.status = failedCount === telegramIds.length ? 'failed' : 'sent';
+  broadcast.sentAt = new Date();
+  await broadcastRepo.save(broadcast);
+  
+  console.log(`Broadcast "${broadcast.title}" completed: ${sentCount} sent, ${failedCount} failed`);
+}
+
+// Helper function to send a single broadcast message
+async function sendBroadcastMessage(telegramId: string, broadcast: Broadcast): Promise<{ success: boolean; error?: string }> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) {
+    return { success: false, error: 'Bot token not configured' };
+  }
+  
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavarabot';
+  
+  // Build inline keyboard from buttons
+  let inlineKeyboard: any[] = [];
+  if (broadcast.buttons && broadcast.buttons.length > 0) {
+    inlineKeyboard = broadcast.buttons.map((btn: BroadcastButton) => [{
+      text: btn.label,
+      url: `https://t.me/${botUsername}?startapp=${btn.startAppParam}`
+    }]);
+  }
+  
+  try {
+    let response;
+    
+    if (broadcast.imageUrl) {
+      // Send photo with caption
+      const payload: any = {
+        chat_id: telegramId,
+        photo: broadcast.imageUrl,
+        caption: broadcast.message,
+        parse_mode: 'HTML'
+      };
+      
+      if (inlineKeyboard.length > 0) {
+        payload.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+      }
+      
+      response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      // Send text message
+      const payload: any = {
+        chat_id: telegramId,
+        text: broadcast.message,
+        parse_mode: 'HTML'
+      };
+      
+      if (inlineKeyboard.length > 0) {
+        payload.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+      }
+      
+      response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+    
+    const result = await response.json();
+    
+    if (result.ok) {
+      return { success: true };
+    } else {
+      return { success: false, error: result.description };
+    }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+}
+
 // Payment routes
 router.post("/api/create-payment-intent", async (req, res) => {
   try {

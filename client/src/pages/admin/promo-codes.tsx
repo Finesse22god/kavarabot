@@ -91,7 +91,7 @@ export default function PromoCodes({ onBack }: { onBack: () => void }) {
   });
 
   const { data: usageStats, isLoading: isLoadingUsage } = useQuery<PromoCodeUsage[]>({
-    queryKey: ["/api/admin/promo-codes", selectedPromoCode?.id, "usage"],
+    queryKey: [`/api/admin/promo-codes/${selectedPromoCode?.id}/usage`],
     enabled: !!selectedPromoCode,
     retry: false,
   });

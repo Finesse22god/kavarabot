@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock, Settings } from "lucide-react";
+import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock, Settings, Megaphone } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import OrderDetails from "./order-details";
@@ -18,6 +18,7 @@ import EditBoxForm from "./edit-box-form";
 import QuizSettings from "./quiz-settings";
 import Analytics from "./analytics";
 import InventoryManagement from "./inventory-management";
+import Broadcasts from "./broadcasts";
 import type { Box, Product } from "@shared/schema";
 
 interface Order {
@@ -112,6 +113,7 @@ export default function AdminDashboard() {
   const [showQuizSettings, setShowQuizSettings] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
+  const [showBroadcasts, setShowBroadcasts] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedBoxes, setSelectedBoxes] = useState<string[]>([]);
@@ -460,6 +462,11 @@ export default function AdminDashboard() {
   // Show inventory management
   if (showInventory) {
     return <InventoryManagement onBack={() => setShowInventory(false)} />;
+  }
+
+  // Show broadcasts management
+  if (showBroadcasts) {
+    return <Broadcasts onBack={() => setShowBroadcasts(false)} />;
   }
 
   const stats = {
@@ -1184,6 +1191,16 @@ export default function AdminDashboard() {
                       >
                         <Settings className="h-6 w-6" />
                         Настройки квиза
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => setShowBroadcasts(true)}
+                        data-testid="button-broadcasts"
+                      >
+                        <Megaphone className="h-6 w-6" />
+                        Рассылки
                       </Button>
                       
                       <Button
