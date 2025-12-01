@@ -1,12 +1,16 @@
+import { useState } from "react";
 import { HelpCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Info() {
+  const [showSizeChart, setShowSizeChart] = useState(false);
+
   const faqData = [
     {
-      question: "Как работает подбор боксов?",
-      answer: "Наши стилисты анализируют ваши ответы в анкете о размерах, целях тренировок и бюджете, чтобы подобрать идеальный комплект спортивной одежды."
+      question: "Как оформить заказ?",
+      answer: "Выберите товар или бокс в каталоге, укажите размер, добавьте в корзину и перейдите к оформлению. Заполните данные для доставки и оплатите заказ онлайн."
     },
     {
       question: "Можно ли вернуть или обменять товар?",
@@ -14,15 +18,15 @@ export default function Info() {
     },
     {
       question: "Какие способы доставки доступны?",
-      answer: "Мы предлагаем доставку курьером по Москве (300₽), СДЭК по России (от 250₽) и самовывоз (бесплатно)."
+      answer: "Мы предлагаем доставку курьером по Москве и доставку СДЭК по всей России."
     },
     {
-      question: "Как часто выходят новые боксы?",
-      answer: "Новые коллекции выходят ежемесячно. Подпишитесь на уведомления, чтобы не пропустить!"
+      question: "Как подобрать размер одежды?",
+      answer: "size_chart_link"
     },
     {
-      question: "Можно ли изменить состав бокса?",
-      answer: "Готовые боксы имеют фиксированный состав, но вы можете пройти персональный опрос для индивидуального подбора."
+      question: "В какой срок поступят средства после возврата товара?",
+      answer: "Возврат средств осуществляется в течение 10 дней с момента получения соответствующего запроса, оформленного по правилам интернет-магазина."
     }
   ];
 
@@ -51,12 +55,78 @@ export default function Info() {
                   {item.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600">
-                  {item.answer}
+                  {item.answer === "size_chart_link" ? (
+                    <div>
+                      <p className="mb-2">Измерьте свои параметры и сравните с нашей размерной сеткой для точного подбора.</p>
+                      <button 
+                        onClick={() => setShowSizeChart(true)}
+                        className="text-primary underline font-medium"
+                        data-testid="link-size-chart"
+                      >
+                        Открыть размерную сетку
+                      </button>
+                    </div>
+                  ) : (
+                    item.answer
+                  )}
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
         </div>
+
+        <Dialog open={showSizeChart} onOpenChange={setShowSizeChart}>
+          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Размерная сетка</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold mb-2">Женская одежда</h4>
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2">Размер</th>
+                      <th className="border p-2">Грудь</th>
+                      <th className="border p-2">Талия</th>
+                      <th className="border p-2">Бедра</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td className="border p-2 text-center">XS</td><td className="border p-2 text-center">82-86</td><td className="border p-2 text-center">62-66</td><td className="border p-2 text-center">88-92</td></tr>
+                    <tr><td className="border p-2 text-center">S</td><td className="border p-2 text-center">86-90</td><td className="border p-2 text-center">66-70</td><td className="border p-2 text-center">92-96</td></tr>
+                    <tr><td className="border p-2 text-center">M</td><td className="border p-2 text-center">90-94</td><td className="border p-2 text-center">70-74</td><td className="border p-2 text-center">96-100</td></tr>
+                    <tr><td className="border p-2 text-center">L</td><td className="border p-2 text-center">94-98</td><td className="border p-2 text-center">74-78</td><td className="border p-2 text-center">100-104</td></tr>
+                    <tr><td className="border p-2 text-center">XL</td><td className="border p-2 text-center">98-102</td><td className="border p-2 text-center">78-82</td><td className="border p-2 text-center">104-108</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold mb-2">Мужская одежда</h4>
+                <table className="w-full text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border p-2">Размер</th>
+                      <th className="border p-2">Грудь</th>
+                      <th className="border p-2">Талия</th>
+                      <th className="border p-2">Бедра</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td className="border p-2 text-center">S</td><td className="border p-2 text-center">92-96</td><td className="border p-2 text-center">76-80</td><td className="border p-2 text-center">94-98</td></tr>
+                    <tr><td className="border p-2 text-center">M</td><td className="border p-2 text-center">96-100</td><td className="border p-2 text-center">80-84</td><td className="border p-2 text-center">98-102</td></tr>
+                    <tr><td className="border p-2 text-center">L</td><td className="border p-2 text-center">100-104</td><td className="border p-2 text-center">84-88</td><td className="border p-2 text-center">102-106</td></tr>
+                    <tr><td className="border p-2 text-center">XL</td><td className="border p-2 text-center">104-108</td><td className="border p-2 text-center">88-92</td><td className="border p-2 text-center">106-110</td></tr>
+                    <tr><td className="border p-2 text-center">XXL</td><td className="border p-2 text-center">108-112</td><td className="border p-2 text-center">92-96</td><td className="border p-2 text-center">110-114</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <p className="text-xs text-gray-500">* Размеры указаны в сантиметрах</p>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="bg-white rounded-xl shadow-lg p-6">
           <div className="flex items-center space-x-3 mb-4">
