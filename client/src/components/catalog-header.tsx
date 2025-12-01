@@ -35,7 +35,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
   };
 
   return (
-    <div className="bg-black text-white py-4 px-4 sticky top-0 z-50 pt-safe">
+    <div className="bg-black text-white pb-4 px-4 sticky top-0 z-50 pt-safe">
       {/* Logo */}
       <div className="text-center mb-4">
         <img 

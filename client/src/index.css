@@ -106,14 +106,6 @@
   .font-jetbrains {
     font-family: 'JetBrains Mono', monospace;
   }
-  
-  .pt-safe {
-    padding-top: var(--tg-safe-area-top, 60px);
-  }
-  
-  .pb-safe {
-    padding-bottom: var(--tg-safe-area-bottom, 0px);
-  }
 
   .screen {
     @apply transition-all duration-300;
@@ -200,5 +192,15 @@
 
   .kavara-button-outline {
     @apply border-2 border-black text-black font-semibold tracking-wide uppercase hover:bg-black hover:text-white transition-colors;
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: var(--tg-safe-area-top, 60px) !important;
+  }
+  
+  .pb-safe {
+    padding-bottom: var(--tg-safe-area-bottom, 0px) !important;
   }
 }
