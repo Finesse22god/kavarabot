@@ -176,7 +176,7 @@ export default function Profile() {
   // Check authentication
   if (!isInTelegram || !user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <div className="min-h-screen bg-black flex items-center justify-center p-6 font-jetbrains">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-4">Доступ запрещен</h1>
           <p className="text-gray-400 mb-6">
@@ -380,7 +380,7 @@ export default function Profile() {
   // Order Details Component
   const OrderDetails = ({ order, onBack }: { order: any; onBack: () => void }) => {
     return (
-      <div className="min-h-screen bg-black pb-20">
+      <div className="min-h-screen bg-black pb-20 font-jetbrains">
         <div className="p-4 bg-black text-white">
           <div className="flex items-center space-x-3">
             <Button
@@ -491,7 +491,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-black pb-20">
+    <div className="min-h-screen overflow-y-auto bg-black pb-20 font-jetbrains">
       <div className="p-4 bg-black text-white">
         <div className="flex items-center space-x-3">
           <div className="text-2xl">👤</div>

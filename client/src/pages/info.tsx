@@ -31,7 +31,7 @@ export default function Info() {
   ];
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-black pb-40">
+    <div className="min-h-screen overflow-y-auto bg-black pb-40 font-jetbrains">
       <div className="p-4 bg-black text-white">
         <div className="flex items-center space-x-3">
           <div className="text-2xl">ℹ️</div>
@@ -51,7 +51,7 @@ export default function Info() {
           <Accordion type="single" collapsible className="space-y-2">
             {faqData.map((item, index) => (
               <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+                <AccordionTrigger className="text-left">
                   {item.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-600">

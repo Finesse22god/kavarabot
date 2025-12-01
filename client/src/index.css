@@ -102,6 +102,10 @@
   body {
     @apply font-sans antialiased bg-black text-foreground;
   }
+
+  .font-jetbrains {
+    font-family: 'JetBrains Mono', monospace;
+  }
   
   .pt-safe {
     padding-top: var(--tg-safe-area-top, 60px);
