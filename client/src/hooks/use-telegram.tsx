@@ -82,6 +82,9 @@ declare global {
         expand(): void;
         close(): void;
         ready(): void;
+        requestFullscreen?(): void;
+        exitFullscreen?(): void;
+        isFullscreen?: boolean;
         sendData(data: string): void;
         openLink(url: string, options?: { try_instant_view?: boolean }): void;
         openTelegramLink(url: string): void;
@@ -156,6 +159,15 @@ export function useTelegram(): UseTelegramReturn {
         // Initialize the app
         tg.ready();
         tg.expand();
+        
+        // Request fullscreen mode (available in Bot API 8.0+)
+        if (typeof tg.requestFullscreen === 'function') {
+          try {
+            tg.requestFullscreen();
+          } catch (e) {
+            console.log('Fullscreen not available');
+          }
+        }
 
         // Set user data and create in database
         if (tg.initDataUnsafe?.user) {
