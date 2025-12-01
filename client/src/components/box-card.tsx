@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCart, ChevronDown, ChevronUp, X } from "lucide-react";
 import type { Box } from "@shared/schema";
 import { useLocation } from "wouter";
+import { useTelegram } from "@/hooks/use-telegram";
 import {
   Dialog,
   DialogContent,
@@ -28,11 +29,12 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   const [selectedTopSize, setSelectedTopSize] = useState<string>("");
   const [selectedBottomSize, setSelectedBottomSize] = useState<string>("");
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
+  const { hapticFeedback } = useTelegram();
 
-  // Все боксы черные
   const isWhiteVariant = false;
 
   const handleToggleExpand = () => {
+    hapticFeedback.impact('light');
     if (onToggleExpand) {
       onToggleExpand();
     }
@@ -40,18 +42,21 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    hapticFeedback.impact('medium');
     
-    // Проверяем что выбраны ОБА размера если они доступны
     if (availableTopSizes.length > 0 && !selectedTopSize) {
+      hapticFeedback.notification('warning');
       alert('Пожалуйста, выберите размер ВЕРХ');
       return;
     }
     
     if (availableBottomSizes.length > 0 && !selectedBottomSize) {
+      hapticFeedback.notification('warning');
       alert('Пожалуйста, выберите размер НИЗ');
       return;
     }
     
+    hapticFeedback.notification('success');
     if (onAddToCart) {
       const sizes = {
         top: selectedTopSize,
@@ -72,16 +77,19 @@ export default function BoxCard({ box, onSelect, onNotify, onAddToCart, variant 
   
   const handleTopSizeClick = (e: React.MouseEvent, size: string) => {
     e.stopPropagation();
+    hapticFeedback.selection();
     setSelectedTopSize(size);
   };
 
   const handleBottomSizeClick = (e: React.MouseEvent, size: string) => {
     e.stopPropagation();
+    hapticFeedback.selection();
     setSelectedBottomSize(size);
   };
 
   const handleProductClick = (e: React.MouseEvent, product: any) => {
     e.stopPropagation();
+    hapticFeedback.impact('light');
     setLocation(`/product/${product.id}?from=boxes`);
   };
 

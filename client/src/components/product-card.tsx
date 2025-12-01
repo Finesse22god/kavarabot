@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { Eye, ShoppingCart } from "lucide-react";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { useTelegram } from "@/hooks/use-telegram";
 import type { Product } from "@shared/schema";
 
 interface ProductCardProps {
@@ -24,6 +25,7 @@ export default function ProductCard({
   const [, setLocation] = useLocation();
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [showSizes, setShowSizes] = useState(false);
+  const { hapticFeedback } = useTelegram();
 
   let parsedSizes = product.sizes;
   if (typeof product.sizes === 'string') {
@@ -38,12 +40,14 @@ export default function ProductCard({
 
   const handleCardClick = () => {
     if (!isComingSoon) {
+      hapticFeedback.impact('light');
       setLocation(`/product/${product.id}`);
     }
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    hapticFeedback.impact('medium');
     if (hasSizes && !selectedSize) {
       setShowSizes(true);
       return;
@@ -55,6 +59,7 @@ export default function ProductCard({
 
   const handleSizeSelect = (e: React.MouseEvent, size: string) => {
     e.stopPropagation();
+    hapticFeedback.selection();
     setSelectedSize(size);
     setShowSizes(false);
     if (onAddToCart) {

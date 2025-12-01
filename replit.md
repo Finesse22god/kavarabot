@@ -11,6 +11,13 @@ Preferred communication style: Simple, everyday language.
 ### UI/UX Decisions
 The user interface is optimized for Telegram WebApp compatibility, featuring simplified product cards in the catalog and detailed product pages with tabs for size selection and collapsible descriptions. A consistent image-first card layout is used across products and boxes, with a photo carousel for multiple product images. The navigation includes an INFO page, Home, and Profile. The Profile tab is streamlined to "Данные", "Заказы", and "Избранное", with orders displayed inline. The bottom navigation menu (INFO/ГЛАВНАЯ/ПРОФИЛЬ) is hidden on the home page for a cleaner, immersive experience, but remains visible on all other pages.
 
+### Telegram Mini App Integration
+- **BackButton**: Automatic show/hide based on navigation (hidden on home page, visible on other pages). Requires Telegram Web App API version >= 6.1.
+- **Haptic Feedback**: Integrated across all interactive elements - 'light' for navigation, 'selection' for size choices, 'medium' for primary actions like "Add to Cart".
+- **Full-screen Mode**: App expands to full screen automatically on load.
+- **Safe Area Handling**: Uses `env(safe-area-inset-*)` CSS variables with `.pt-safe` and `.pb-safe` utility classes for proper display on devices with notches/status bars.
+- **Video Autoplay**: Hero video uses `useRef` and `useEffect` for programmatic playback with fallback touch/click handlers.
+
 ### Technical Implementation
 - **Frontend**: React 18 with TypeScript, Wouter for routing, Radix UI with shadcn/ui for components, Tailwind CSS for styling, TanStack Query for server state, and Vite for building.
 - **Backend**: Node.js with Express.js.

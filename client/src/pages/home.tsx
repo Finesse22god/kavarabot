@@ -1,17 +1,34 @@
 import { useLocation } from "wouter";
 import { useTelegram } from "../hooks/use-telegram";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import heroVideo from "@assets/kavarademo.webm";
 import logoSrc from "@assets/Vector (3)_1763029030356.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  const { user, isInTelegram } = useTelegram();
+  const { user, isInTelegram, hapticFeedback } = useTelegram();
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [selectedSection, setSelectedSection] = useState<'catalog' | 'boxes' | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.play().catch(() => {
+        const handleInteraction = () => {
+          video.play();
+          document.removeEventListener('touchstart', handleInteraction);
+          document.removeEventListener('click', handleInteraction);
+        };
+        document.addEventListener('touchstart', handleInteraction);
+        document.addEventListener('click', handleInteraction);
+      });
+    }
+  }, []);
 
   const handleMenuOption = (path: string, section: 'catalog' | 'boxes') => {
+    hapticFeedback.impact('medium');
     setSelectedSection(section);
     setTimeout(() => {
       setLocation(path);
@@ -67,13 +84,15 @@ export default function Home() {
   }
 
   return (
-    <div className="fixed inset-0 bg-black overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black overflow-hidden flex flex-col pt-safe">
       {/* Video Background */}
       <video
+        ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
+        webkit-playsinline="true"
         className="fixed top-0 left-0 w-full h-full object-cover"
       >
         <source src={heroVideo} type="video/webm" />

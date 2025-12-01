@@ -9,9 +9,8 @@ interface CatalogHeaderProps {
 
 export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
   const [, setLocation] = useLocation();
-  const { user: telegramUser } = useTelegram();
+  const { user: telegramUser, hapticFeedback } = useTelegram();
 
-  // Get database user by telegram ID
   const { data: dbUser } = useQuery<{ id: string; telegramId: string }>({
     queryKey: [`/api/users/telegram/${telegramUser?.id}`],
     enabled: !!telegramUser?.id,
@@ -25,8 +24,18 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
   const cartItemCount =
     cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
 
+  const handleTabSwitch = (tab: "catalog" | "boxes") => {
+    hapticFeedback.impact('light');
+    setLocation(`/${tab}`);
+  };
+
+  const handleCartClick = () => {
+    hapticFeedback.impact('light');
+    setLocation("/cart");
+  };
+
   return (
-    <div className="bg-black text-white py-4 px-4 sticky top-0 z-50">
+    <div className="bg-black text-white py-4 px-4 sticky top-0 z-50 pt-safe">
       {/* Logo */}
       <div className="text-center mb-4">
         <img 
@@ -42,7 +51,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
         {/* Tabs Container */}
         <div className="flex-1 flex items-center border-2 border-white rounded-full overflow-hidden h-[30px]">
           <button
-            onClick={() => setLocation("/catalog")}
+            onClick={() => handleTabSwitch("catalog")}
             className={`flex-1 px-6 text-xs font-bold tracking-wide transition-colors h-full flex items-center justify-center ${
               activeTab === "catalog"
                 ? "bg-white text-black"
@@ -53,7 +62,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
             КАТАЛОГ
           </button>
           <button
-            onClick={() => setLocation("/boxes")}
+            onClick={() => handleTabSwitch("boxes")}
             className={`flex-1 px-6 text-xs font-bold tracking-wide transition-colors h-full flex items-center justify-center ${
               activeTab === "boxes"
                 ? "bg-white text-black"
@@ -67,7 +76,7 @@ export default function CatalogHeader({ activeTab }: CatalogHeaderProps) {
 
         {/* Cart Button */}
         <button
-          onClick={() => setLocation("/cart")}
+          onClick={handleCartClick}
           className="border-2 border-white rounded-full hover:bg-white/10 transition-colors relative h-[30px] px-6 flex items-center justify-center text-white text-xs font-bold tracking-wide"
           data-testid="button-cart"
         >

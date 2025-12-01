@@ -1,19 +1,17 @@
 import { useLocation } from "wouter";
-import { User, Info } from "lucide-react";
 import kavaraLogo from "@assets/Vector (2)_1762347061448.png";
 import { useTelegram } from "@/hooks/use-telegram";
 
 const menuItems = [
-  { path: "/info", icon: Info, label: "INFO", isLogo: false },
-  { path: "/", icon: null, label: "ГЛАВНАЯ", isLogo: true },
-  { path: "/profile", icon: User, label: "ПРОФИЛЬ", isLogo: false },
+  { path: "/info", label: "INFO" },
+  { path: "/", label: "ГЛАВНАЯ", isLogo: true },
+  { path: "/profile", label: "ПРОФИЛЬ" },
 ];
 
 export default function BottomNav() {
   const [location, setLocation] = useLocation();
   const { hapticFeedback } = useTelegram();
 
-  // Черный фон для каталога, боксов, товаров, корзины, избранного, профиля, инфо и оформления заказа
   const shouldShowBlackBg = 
     location === "/catalog" || 
     location.startsWith("/catalog") ||
@@ -33,13 +31,11 @@ export default function BottomNav() {
   const bgClass = shouldShowBlackBg ? "bg-black" : "";
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 w-full py-5 z-[100] pb-safe ${bgClass}`}>
-      <div className="flex items-center justify-center gap-16">
+    <div className={`fixed bottom-0 left-0 right-0 w-full py-4 z-[100] pb-safe ${bgClass}`}>
+      <div className="flex items-center justify-center">
         {menuItems.map((item) => {
           const isActive = location === item.path || 
             (item.path !== "/" && location.startsWith(item.path));
-
-          const IconComponent = item.icon;
 
           return (
             <button
@@ -48,7 +44,7 @@ export default function BottomNav() {
                 hapticFeedback.impact('light');
                 setLocation(item.path);
               }}
-              className={`flex flex-col items-center space-y-1 px-1 py-1 transition-colors relative ${
+              className={`flex items-center justify-center w-24 h-10 transition-colors ${
                 isActive 
                   ? "text-white" 
                   : "text-white/70 hover:text-white"
@@ -56,13 +52,11 @@ export default function BottomNav() {
               data-testid={`button-nav-${item.path === "/" ? "home" : item.path === "/info" ? "info" : "profile"}`}
             >
               {item.isLogo ? (
-                <div className="relative">
-                  <img 
-                    src={kavaraLogo} 
-                    alt="KAVARA Logo" 
-                    className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
-                  />
-                </div>
+                <img 
+                  src={kavaraLogo} 
+                  alt="KAVARA Logo" 
+                  className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
+                />
               ) : (
                 <span className={`text-xs font-bold tracking-wide ${
                   isActive ? "text-white" : "text-white/70"
