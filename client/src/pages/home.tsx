@@ -111,7 +111,7 @@ export default function Home() {
 
         {/* Main Actions - Centered */}
         <div className="flex justify-center w-full px-4">
-          <div className="relative border border-white/80 rounded-full h-[50px] flex items-center w-full max-w-[300px]">
+          <div className="relative border border-white/80 rounded-full h-[50px] flex items-center w-full max-w-[240px]">
             <div className="flex items-center justify-between w-full px-4">
               {/* Catalog Section - Left */}
               <button
