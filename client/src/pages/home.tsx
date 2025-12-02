@@ -113,9 +113,9 @@ export default function Home() {
         </div>
 
         {/* Main Actions - Centered */}
-        <div className="w-full max-w-[320px] px-4">
-          <div className="relative w-full border border-white/80 rounded-full py-3 px-2">
-            <div className="flex items-center justify-between">
+        <div className="flex justify-center w-full px-4">
+          <div className="relative border border-white/80 rounded-full h-[40px] flex items-center" style={{ width: '200px' }}>
+            <div className="flex items-center justify-between w-full px-4">
               {/* Catalog Section - Left */}
               <button
                 onClick={() => handleMenuOption("/catalog", 'catalog')}
