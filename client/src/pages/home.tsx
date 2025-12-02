@@ -102,7 +102,7 @@ export default function Home() {
       <div className="fixed top-0 left-0 w-full h-full bg-black/40" />
       {/* Hero Section */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-center px-4 sm:px-6">
-        <div className="mb-4 flex flex-col items-center">
+        <div className="mb-16 sm:mb-20 flex flex-col items-center">
           <h1 className="sm:text-5xl md:text-6xl font-bold text-white mb-2 tracking-widest drop-shadow-lg text-[60px]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             KAVARA BOX
           </h1>
