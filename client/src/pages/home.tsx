@@ -96,10 +96,8 @@ export default function Home() {
       >
         <source src={heroVideo} type="video/webm" />
       </video>
-
       {/* Dark Overlay for text readability */}
       <div className="fixed top-0 left-0 w-full h-full bg-black/40" />
-
       {/* Hero Section */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-center px-4 sm:px-6">
         <div className="mb-16 sm:mb-20">
@@ -109,7 +107,7 @@ export default function Home() {
           <p className="text-sm sm:text-base text-white font-normal tracking-wide drop-shadow-md">
             ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ
           </p>
-          <p className="text-sm sm:text-base text-white font-normal tracking-wide drop-shadow-md">
+          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[12px]">
             ТРЕНИРОВОК
           </p>
         </div>
