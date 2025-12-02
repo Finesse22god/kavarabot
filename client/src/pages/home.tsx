@@ -150,14 +150,14 @@ export default function Home() {
 
             {/* Center Arrows - Swipeable */}
             <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 cursor-pointer"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 cursor-pointer h-full"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               data-testid="swipe-indicator"
             >
-              <span className="text-white text-xl font-light">&lt;</span>
-              <span className="text-white text-xl font-light">&gt;</span>
+              <span className="text-white text-xl font-light leading-none">&lt;</span>
+              <span className="text-white text-xl font-light leading-none">&gt;</span>
             </div>
 
             {/* Boxes Section - Right */}
