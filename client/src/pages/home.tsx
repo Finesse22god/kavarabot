@@ -148,15 +148,16 @@ export default function Home() {
               КАТАЛОГ
             </button>
 
-            {/* Center Icon - Swipeable */}
+            {/* Center Arrows - Swipeable */}
             <div
-              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-14 h-14 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-all duration-300 bg-white`}
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 cursor-pointer"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               data-testid="swipe-indicator"
             >
-              <img src={logoSrc} alt="KAVARA" className="w-[24px] h-[19px]" />
+              <span className="text-white text-xl font-light">&lt;</span>
+              <span className="text-white text-xl font-light">&gt;</span>
             </div>
 
             {/* Boxes Section - Right */}
