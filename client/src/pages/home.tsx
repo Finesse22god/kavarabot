@@ -100,7 +100,7 @@ export default function Home() {
       <div className="fixed top-0 left-0 w-full h-full bg-black/40" />
       {/* Hero Section */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-center px-4 sm:px-6">
-        <div className="mb-16 sm:mb-20">
+        <div className="mb-16 sm:mb-20 flex flex-col items-center">
           <h1 className="sm:text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight drop-shadow-lg text-[52px]">
             KAVARA BOX
           </h1>
@@ -114,7 +114,7 @@ export default function Home() {
 
         {/* Main Actions - Centered */}
         <div className="flex justify-center w-full px-4">
-          <div className="relative border border-white/80 rounded-full h-[40px] flex items-center" style={{ width: '350px' }}>
+          <div className="relative border border-white/80 rounded-full h-[50px] flex items-center w-full max-w-[300px]">
             <div className="flex items-center justify-between w-full px-4">
               {/* Catalog Section - Left */}
               <button
