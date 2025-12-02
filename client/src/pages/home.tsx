@@ -113,58 +113,40 @@ export default function Home() {
         </div>
 
         {/* Main Actions - Centered */}
-        <div className="w-full max-w-md px-4">
-        <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
-          {/* Animated White Background - Left (Catalog) */}
-          <div 
-            className={`absolute top-1.5 bottom-1.5 left-1.5 bg-white transition-all duration-300 ease-out rounded-full ${
-              selectedSection === 'catalog' 
-                ? 'right-[calc(50%-28px)] opacity-100' 
-                : 'right-[50%] opacity-0'
-            }`}
-          />
+        <div className="w-full max-w-[320px] px-4">
+          <div className="relative w-full border border-white/80 rounded-full py-3 px-2">
+            <div className="flex items-center justify-between">
+              {/* Catalog Section - Left */}
+              <button
+                onClick={() => handleMenuOption("/catalog", 'catalog')}
+                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px]"
+                data-testid="button-catalog"
+              >
+                КАТАЛОГ
+              </button>
 
-          {/* Animated White Background - Right (Boxes) */}
-          <div 
-            className={`absolute top-1.5 bottom-1.5 right-1.5 bg-white transition-all duration-300 ease-out rounded-full ${
-              selectedSection === 'boxes' 
-                ? 'left-[calc(50%-28px)] opacity-100' 
-                : 'left-[50%] opacity-0'
-            }`}
-          />
+              {/* Center Arrows */}
+              <div
+                className="flex items-center justify-center gap-3 text-white/90 text-sm font-light px-2"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                data-testid="swipe-indicator"
+              >
+                <span>&lt;</span>
+                <span>&gt;</span>
+              </div>
 
-          <div className="relative flex items-center justify-between h-16">
-            {/* Catalog Section - Left */}
-            <button
-              onClick={() => handleMenuOption("/catalog", 'catalog')}
-              className="flex-1 h-full flex items-center justify-center font-semibold tracking-wide transition-colors duration-300 text-white text-[12px]"
-              data-testid="button-catalog"
-            >
-              КАТАЛОГ
-            </button>
-
-            {/* Center Arrows */}
-            <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[55%] flex items-center justify-center gap-6 text-white text-base font-semibold"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              data-testid="swipe-indicator"
-            >
-              <span>&lt;</span>
-              <span>&gt;</span>
+              {/* Boxes Section - Right */}
+              <button
+                onClick={() => handleMenuOption("/boxes", 'boxes')}
+                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px]"
+                data-testid="button-boxes"
+              >
+                БОКСЫ
+              </button>
             </div>
-
-            {/* Boxes Section - Right */}
-            <button
-              onClick={() => handleMenuOption("/boxes", 'boxes')}
-              className="flex-1 h-full flex items-center justify-center font-semibold tracking-wide transition-colors duration-300 text-white text-[12px]"
-              data-testid="button-boxes"
-            >
-              БОКСЫ
-            </button>
           </div>
-        </div>
         </div>
       </div>
     </div>
