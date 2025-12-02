@@ -149,14 +149,14 @@ export default function Home() {
 
             {/* Center Arrows */}
             <div
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-6 text-white text-xl font-light"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[55%] flex items-center justify-center gap-6 text-white text-base font-semibold"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               data-testid="swipe-indicator"
             >
-              <span className="opacity-70">&lt;</span>
-              <span className="opacity-70">&gt;</span>
+              <span>&lt;</span>
+              <span>&gt;</span>
             </div>
 
             {/* Boxes Section - Right */}
