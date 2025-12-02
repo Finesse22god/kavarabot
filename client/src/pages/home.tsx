@@ -106,9 +106,7 @@ export default function Home() {
           <h1 className="sm:text-5xl md:text-6xl font-bold text-white mb-2 tracking-widest drop-shadow-lg text-[60px]" style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
             KAVARA BOX
           </h1>
-          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[13px]">
-            ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ
-          </p>
+          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[12px]">ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ ТРЕНИРОВОК</p>
           <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[13px]">
             ТРЕНИРОВОК
           </p>
