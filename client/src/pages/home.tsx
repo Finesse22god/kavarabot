@@ -137,9 +137,7 @@ export default function Home() {
             {/* Catalog Section - Left */}
             <button
               onClick={() => handleMenuOption("/catalog", 'catalog')}
-              className={`flex-1 h-full flex items-center justify-center font-semibold text-base tracking-wide transition-colors duration-300 ${
-                selectedSection === 'catalog' ? 'text-black' : 'text-white'
-              }`}
+              className="flex-1 h-full flex items-center justify-center font-semibold tracking-wide transition-colors duration-300 text-white text-[12px]"
               data-testid="button-catalog"
             >
               КАТАЛОГ
