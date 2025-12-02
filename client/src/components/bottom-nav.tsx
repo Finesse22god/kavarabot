@@ -34,7 +34,7 @@ export default function BottomNav() {
   const isHomePage = location === "/";
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 w-full py-4 z-[100] pb-safe ${bgClass}`}>
+    <div className={`fixed bottom-0 left-0 right-0 w-full py-6 z-[100] pb-safe ${bgClass}`}>
       <div className={`flex items-center justify-center ${isHomePage ? "gap-12" : "gap-4"}`}>
         {menuItems.map((item) => {
           const isActive = location === item.path || 
