@@ -106,7 +106,7 @@ export default function Home() {
           <h1 className="sm:text-5xl md:text-6xl font-bold text-white mb-2 tracking-tight drop-shadow-lg text-[52px]">
             KAVARA BOX
           </h1>
-          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[12px]">
+          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[13px]">
             ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ
           </p>
           <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[13px]">
