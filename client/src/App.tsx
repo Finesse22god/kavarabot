@@ -146,7 +146,7 @@ function App() {
         <div className={isAdminPage ? "w-full min-h-screen bg-gray-50 font-inter" : "telegram-app font-inter"}>
           <Toaster />
           <Router />
-          {!isAdminPage && !isHomePage && <BottomNav />}
+          {!isAdminPage && <BottomNav />}
         </div>
       </TooltipProvider>
     </QueryClientProvider>
