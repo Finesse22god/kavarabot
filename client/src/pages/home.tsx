@@ -114,7 +114,7 @@ export default function Home() {
 
         {/* Main Actions - Centered */}
         <div className="flex justify-center w-full px-4">
-          <div className="relative border border-white/80 rounded-full h-[40px] flex items-center" style={{ width: '200px' }}>
+          <div className="relative border border-white/80 rounded-full h-[40px] flex items-center" style={{ width: '400px' }}>
             <div className="flex items-center justify-between w-full px-4">
               {/* Catalog Section - Left */}
               <button
