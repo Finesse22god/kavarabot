@@ -107,9 +107,6 @@ export default function Home() {
             KAVARA BOX
           </h1>
           <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[12px]">ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ ТРЕНИРОВОК</p>
-          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[13px]">
-            ТРЕНИРОВОК
-          </p>
         </div>
 
         {/* Main Actions - Centered */}
