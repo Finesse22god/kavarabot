@@ -2,6 +2,8 @@ import { useLocation } from "wouter";
 import kavaraLogo from "@assets/Vector (2)_1762347061448.png";
 import { useTelegram } from "@/hooks/use-telegram";
 
+import Vector__2_ from "@assets/Vector (2).png";
+
 const menuItems = [
   { path: "/info", label: "INFO" },
   { path: "/", label: "ГЛАВНАЯ", isLogo: true },
@@ -53,7 +55,7 @@ export default function BottomNav() {
             >
               {item.isLogo ? (
                 <img 
-                  src={kavaraLogo} 
+                  src={Vector__2_} 
                   alt="KAVARA Logo" 
                   className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
                 />
