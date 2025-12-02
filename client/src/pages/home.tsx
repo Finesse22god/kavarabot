@@ -117,39 +117,60 @@ export default function Home() {
 
         {/* Main Actions - Centered */}
         <div className="w-full max-w-md px-4">
-          <div className="relative w-full border border-white/40 rounded-full bg-black/20 backdrop-blur-sm">
-            <div className="relative flex items-center justify-between h-14 px-2">
-              {/* Catalog Section - Left */}
-              <button
-                onClick={() => handleMenuOption("/catalog", 'catalog')}
-                className="flex-1 h-full flex items-center justify-center text-white font-medium text-sm tracking-wider"
-                data-testid="button-catalog"
-              >
-                КАТАЛОГ
-              </button>
+        <div className="relative w-full border-2 border-white rounded-full overflow-hidden shadow-xl">
+          {/* Animated White Background - Left (Catalog) */}
+          <div 
+            className={`absolute top-1.5 bottom-1.5 left-1.5 bg-white transition-all duration-300 ease-out rounded-full ${
+              selectedSection === 'catalog' 
+                ? 'right-[calc(50%-28px)] opacity-100' 
+                : 'right-[50%] opacity-0'
+            }`}
+          />
 
-              {/* Center Arrows - Swipeable */}
-              <div
-                className="flex items-center justify-center gap-3 px-4"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                data-testid="swipe-indicator"
-              >
-                <span className="text-white/60 text-lg leading-none">&lt;</span>
-                <span className="text-white/60 text-lg leading-none">&gt;</span>
-              </div>
+          {/* Animated White Background - Right (Boxes) */}
+          <div 
+            className={`absolute top-1.5 bottom-1.5 right-1.5 bg-white transition-all duration-300 ease-out rounded-full ${
+              selectedSection === 'boxes' 
+                ? 'left-[calc(50%-28px)] opacity-100' 
+                : 'left-[50%] opacity-0'
+            }`}
+          />
 
-              {/* Boxes Section - Right */}
-              <button
-                onClick={() => handleMenuOption("/boxes", 'boxes')}
-                className="flex-1 h-full flex items-center justify-center text-white font-medium text-sm tracking-wider"
-                data-testid="button-boxes"
-              >
-                БОКСЫ
-              </button>
+          <div className="relative flex items-center justify-between h-16">
+            {/* Catalog Section - Left */}
+            <button
+              onClick={() => handleMenuOption("/catalog", 'catalog')}
+              className={`flex-1 h-full flex items-center justify-center font-semibold text-base tracking-wide transition-colors duration-300 ${
+                selectedSection === 'catalog' ? 'text-black' : 'text-white'
+              }`}
+              data-testid="button-catalog"
+            >
+              КАТАЛОГ
+            </button>
+
+            {/* Center Icon - Swipeable */}
+            <div
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full w-14 h-14 flex items-center justify-center shadow-lg cursor-pointer hover:scale-110 transition-all duration-300 bg-white`}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              data-testid="swipe-indicator"
+            >
+              <img src={logoSrc} alt="KAVARA" className="w-[24px] h-[19px]" />
             </div>
+
+            {/* Boxes Section - Right */}
+            <button
+              onClick={() => handleMenuOption("/boxes", 'boxes')}
+              className={`flex-1 h-full flex items-center justify-center font-semibold text-base tracking-wide transition-colors duration-300 ${
+                selectedSection === 'boxes' ? 'text-black' : 'text-white'
+              }`}
+              data-testid="button-boxes"
+            >
+              БОКСЫ
+            </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
