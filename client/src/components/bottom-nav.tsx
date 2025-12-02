@@ -34,7 +34,7 @@ export default function BottomNav() {
   const isHomePage = location === "/";
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 w-full pt-4 z-[100] ${bgClass}`} style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+    <div className={`fixed bottom-0 left-0 right-0 w-full pt-4 z-[100] ${bgClass}`} style={{ paddingBottom: isHomePage ? 'calc(32px + env(safe-area-inset-bottom, 0px))' : 'calc(16px + env(safe-area-inset-bottom, 0px))' }}>
       <div className={`flex items-center justify-center ${isHomePage ? "gap-12" : "gap-4"}`}>
         {menuItems.map((item) => {
           const isActive = location === item.path || 
