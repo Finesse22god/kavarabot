@@ -109,7 +109,7 @@ export default function Home() {
           <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[12px]">
             ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ
           </p>
-          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[12px]">
+          <p className="sm:text-base text-white font-normal tracking-wide drop-shadow-md text-[13px]">
             ТРЕНИРОВОК
           </p>
         </div>
