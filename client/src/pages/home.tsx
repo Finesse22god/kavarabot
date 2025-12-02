@@ -96,8 +96,10 @@ export default function Home() {
       >
         <source src={heroVideo} type="video/webm" />
       </video>
+
       {/* Dark Overlay for text readability */}
       <div className="fixed top-0 left-0 w-full h-full bg-black/40" />
+
       {/* Hero Section */}
       <div className="relative z-10 flex-1 flex flex-col justify-center items-center text-center px-4 sm:px-6">
         <div className="mb-16 sm:mb-20">
@@ -153,7 +155,7 @@ export default function Home() {
               onTouchEnd={handleTouchEnd}
               data-testid="swipe-indicator"
             >
-              <span className="opacity-70"><  </span>
+              <span className="opacity-70">&lt;</span>
               <span className="opacity-70">&gt;</span>
             </div>
 
