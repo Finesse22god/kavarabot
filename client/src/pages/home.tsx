@@ -2,6 +2,8 @@ import { useLocation } from "wouter";
 import { useTelegram } from "../hooks/use-telegram";
 import { useState, useRef, useEffect } from "react";
 import heroVideo from "@assets/kavarademo.webm";
+import arrowLeft from "@assets/Rectangle_1539_1764675275625.png";
+import arrowRight from "@assets/d5aacb29-e723-4656-9c06-ab1e385ac0b2_1764675280619.png";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -127,14 +129,14 @@ export default function Home() {
 
               {/* Center Arrows */}
               <div
-                className="flex items-center justify-center gap-3 text-white/90 text-sm font-light px-2"
+                className="flex items-center justify-center gap-4 px-2"
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 data-testid="swipe-indicator"
               >
-                <span>&lt;</span>
-                <span>&gt;</span>
+                <img src={arrowLeft} alt="<" className="w-3 h-3 object-contain" />
+                <img src={arrowRight} alt=">" className="w-3 h-3 object-contain" />
               </div>
 
               {/* Boxes Section - Right */}
