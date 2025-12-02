@@ -31,10 +31,11 @@ export default function BottomNav() {
     location === "/order" ||
     location.startsWith("/order");
   const bgClass = shouldShowBlackBg ? "bg-black" : "";
+  const isHomePage = location === "/";
 
   return (
     <div className={`fixed bottom-0 left-0 right-0 w-full py-4 z-[100] pb-safe ${bgClass}`}>
-      <div className="flex items-center justify-center">
+      <div className={`flex items-center justify-center ${isHomePage ? "gap-12" : "gap-4"}`}>
         {menuItems.map((item) => {
           const isActive = location === item.path || 
             (item.path !== "/" && location.startsWith(item.path));
@@ -46,7 +47,7 @@ export default function BottomNav() {
                 hapticFeedback.impact('light');
                 setLocation(item.path);
               }}
-              className={`flex items-center justify-center w-24 h-10 transition-colors ${
+              className={`flex items-center justify-center ${isHomePage ? "w-28" : "w-24"} h-10 transition-colors ${
                 isActive 
                   ? "text-white" 
                   : "text-white/70 hover:text-white"
@@ -57,7 +58,8 @@ export default function BottomNav() {
                 <img 
                   src={Vector__2_} 
                   alt="KAVARA Logo" 
-                  className={`w-6 h-6 object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
+                  className={`object-contain ${isActive ? "opacity-100" : "opacity-70"}`}
+                  style={{ width: '48px', height: '36px' }}
                 />
               ) : (
                 <span className={`text-xs font-bold tracking-wide ${
