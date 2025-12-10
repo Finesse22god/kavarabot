@@ -106,7 +106,7 @@ export default function Home() {
           <h1 className="font-bold text-white mb-0 tracking-wide md:tracking-wider drop-shadow-lg whitespace-nowrap text-[43px] md:text-[60px]" style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}>
             KAVARA BOX
           </h1>
-          <p className="text-white font-normal tracking-wide drop-shadow-md text-[12px] md:text-[14px] -mt-3 whitespace-nowrap">ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ ТРЕНИРОВОК</p>
+          <p className="text-white font-normal tracking-[0.35em] md:tracking-[0.4em] drop-shadow-md text-[12px] md:text-[14px] -mt-3 whitespace-nowrap">ГОТОВЫЙ НАБОР ДЛЯ ТВОИХ ТРЕНИРОВОК</p>
         </div>
 
         {/* Main Actions - Centered */}
