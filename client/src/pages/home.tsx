@@ -115,8 +115,10 @@ export default function Home() {
             {/* Ripple animation from center */}
             {selectedSection && (
               <div 
-                className="absolute inset-0 bg-white/60 rounded-full"
+                className="absolute top-0 bottom-0 w-1/2 bg-white/60 rounded-full"
                 style={{
+                  left: selectedSection === 'catalog' ? '0' : '50%',
+                  transformOrigin: selectedSection === 'catalog' ? 'right center' : 'left center',
                   animation: `expandTo${selectedSection === 'catalog' ? 'Left' : 'Right'} 0.3s ease-out forwards`
                 }}
               />
