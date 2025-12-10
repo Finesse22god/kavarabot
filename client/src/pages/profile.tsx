@@ -17,6 +17,7 @@ import { useUserFavorites } from "@/hooks/use-favorites";
 import BoxCard from "@/components/box-card";
 import ProductCard from "@/components/product-card";
 import type { QuizResponse } from "@shared/schema";
+import profileIcon from "@assets/Vector_(2)_1765379766323.png";
 
 export default function Profile() {
   const { user, isInTelegram } = useTelegram();
@@ -494,7 +495,7 @@ export default function Profile() {
     <div className="min-h-screen overflow-y-auto bg-black pb-20 font-jetbrains">
       <div className="p-4 bg-black text-white pt-safe">
         <div className="flex items-center space-x-3">
-          <div className="text-2xl">👤</div>
+          <img src={profileIcon} alt="Profile" className="w-6 h-6 object-contain" />
           <div>
             <h2 className="font-semibold">Профиль</h2>
           </div>
