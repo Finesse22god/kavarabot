@@ -116,7 +116,7 @@ export default function Home() {
               {/* Catalog Section - Left */}
               <button
                 onClick={() => handleMenuOption("/catalog", 'catalog')}
-                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px]"
+                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px] active:bg-white/20 active:scale-95 transition-all duration-150 rounded-full py-2"
                 data-testid="button-catalog"
               >
                 КАТАЛОГ
@@ -137,7 +137,7 @@ export default function Home() {
               {/* Boxes Section - Right */}
               <button
                 onClick={() => handleMenuOption("/boxes", 'boxes')}
-                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px]"
+                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px] active:bg-white/20 active:scale-95 transition-all duration-150 rounded-full py-2"
                 data-testid="button-boxes"
               >
                 БОКСЫ
