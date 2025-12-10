@@ -206,3 +206,25 @@
     padding-bottom: var(--tg-safe-area-bottom, 0px) !important;
   }
 }
+
+@keyframes expandToLeft {
+  0% {
+    transform: scaleX(0);
+    transform-origin: center;
+  }
+  100% {
+    transform: scaleX(1);
+    transform-origin: center;
+  }
+}
+
+@keyframes expandToRight {
+  0% {
+    transform: scaleX(0);
+    transform-origin: center;
+  }
+  100% {
+    transform: scaleX(1);
+    transform-origin: center;
+  }
+}

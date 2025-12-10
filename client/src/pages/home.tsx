@@ -111,12 +111,21 @@ export default function Home() {
 
         {/* Main Actions - Centered */}
         <div className="flex justify-center w-full px-4">
-          <div className="relative border border-white/80 rounded-full h-[50px] flex items-center w-full max-w-[240px] md:max-w-[340px]">
-            <div className="flex items-center justify-between w-full px-4">
+          <div className="relative border border-white/80 rounded-full h-[50px] flex items-center w-full max-w-[240px] md:max-w-[340px] overflow-hidden">
+            {/* Ripple animation from center */}
+            {selectedSection && (
+              <div 
+                className="absolute inset-0 bg-white/60 rounded-full"
+                style={{
+                  animation: `expandTo${selectedSection === 'catalog' ? 'Left' : 'Right'} 0.3s ease-out forwards`
+                }}
+              />
+            )}
+            <div className="flex items-center justify-between w-full px-4 relative z-10">
               {/* Catalog Section - Left */}
               <button
                 onClick={() => handleMenuOption("/catalog", 'catalog')}
-                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px] active:bg-white/50 active:scale-90 transition-all duration-100 rounded-full py-2"
+                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px] rounded-full py-2"
                 data-testid="button-catalog"
               >
                 КАТАЛОГ
@@ -137,7 +146,7 @@ export default function Home() {
               {/* Boxes Section - Right */}
               <button
                 onClick={() => handleMenuOption("/boxes", 'boxes')}
-                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px] active:bg-white/50 active:scale-90 transition-all duration-100 rounded-full py-2"
+                className="flex-1 flex items-center justify-center font-medium tracking-wider text-white text-[13px] rounded-full py-2"
                 data-testid="button-boxes"
               >
                 БОКСЫ
