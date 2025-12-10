@@ -282,7 +282,21 @@ export default function Cart() {
                           <div>
                             <h3 className="font-semibold text-lg">{currentItem.name}</h3>
                             {item.selectedSize && (
-                              <p className="text-sm text-gray-600">Размер: {item.selectedSize}</p>
+                              <p className="text-sm text-gray-600">
+                                Размер: {(() => {
+                                  try {
+                                    const sizes = typeof item.selectedSize === 'string' 
+                                      ? JSON.parse(item.selectedSize) 
+                                      : item.selectedSize;
+                                    if (sizes && typeof sizes === 'object') {
+                                      return `Верх: ${sizes.top || '-'}, Низ: ${sizes.bottom || '-'}`;
+                                    }
+                                    return item.selectedSize;
+                                  } catch {
+                                    return item.selectedSize;
+                                  }
+                                })()}
+                              </p>
                             )}
                           </div>
                           <div className="text-xl font-bold" data-testid={`text-price-${item.id}`}>
