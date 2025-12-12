@@ -686,10 +686,31 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
             try {
               const cartItems = JSON.parse(fullOrder.cartItems);
               for (const item of cartItems) {
-                itemsList += `• ${item.name || 'Товар'}`;
+                // Get item name from nested product/box object or direct name
+                const itemName = item.itemType === 'product' 
+                  ? (item.product?.name || item.name || 'Товар')
+                  : item.itemType === 'box'
+                  ? (item.box?.name || item.name || 'Бокс')
+                  : (item.name || 'Товар');
+                
+                itemsList += `• ${itemName}`;
+                
+                // Handle size - can be string or object for boxes
                 if (item.selectedSize) {
-                  itemsList += ` (Размер: ${item.selectedSize})`;
+                  try {
+                    const sizeData = typeof item.selectedSize === 'string' 
+                      ? JSON.parse(item.selectedSize) 
+                      : item.selectedSize;
+                    if (sizeData && typeof sizeData === 'object' && (sizeData.top || sizeData.bottom)) {
+                      itemsList += ` (Верх: ${sizeData.top || '-'}, Низ: ${sizeData.bottom || '-'})`;
+                    } else {
+                      itemsList += ` (Размер: ${item.selectedSize})`;
+                    }
+                  } catch {
+                    itemsList += ` (Размер: ${item.selectedSize})`;
+                  }
                 }
+                
                 if (item.quantity && item.quantity > 1) {
                   itemsList += ` x${item.quantity}`;
                 }

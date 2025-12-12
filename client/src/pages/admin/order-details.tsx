@@ -144,27 +144,65 @@ function AdminOrderItems({ order }: { order: Order }) {
           <p className="text-sm font-medium text-gray-700">
             Товары из корзины ({cartItems.length}):
           </p>
-          {cartItems.map((item: any, index: number) => (
-            <div key={index} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-gray-400" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-medium">{item.name || `Товар ${index + 1}`}</h4>
-                {item.description && (
-                  <p className="text-gray-600 text-sm">{item.description}</p>
-                )}
-                <div className="flex items-center justify-between mt-1">
-                  <span className="text-sm text-gray-500">
-                    Количество: {item.quantity || 1}
-                  </span>
-                  <span className="font-medium text-sm">
-                    {item.price ? `${item.price}₽` : ''}
-                  </span>
+          {cartItems.map((item: any, index: number) => {
+            // Extract item data from nested structure
+            const itemData = item.itemType === 'product' 
+              ? item.product 
+              : item.itemType === 'box' 
+              ? item.box 
+              : item;
+            
+            const itemName = itemData?.name || item.name || `Товар ${index + 1}`;
+            const itemPrice = itemData?.price || item.price;
+            const itemImage = itemData?.imageUrl || item.imageUrl;
+            const itemDescription = itemData?.description || item.description;
+            
+            // Format size display
+            let sizeDisplay = '';
+            if (item.selectedSize) {
+              try {
+                const sizeData = typeof item.selectedSize === 'string' 
+                  ? JSON.parse(item.selectedSize) 
+                  : item.selectedSize;
+                if (sizeData && typeof sizeData === 'object' && (sizeData.top || sizeData.bottom)) {
+                  sizeDisplay = `Верх: ${sizeData.top || '-'}, Низ: ${sizeData.bottom || '-'}`;
+                } else {
+                  sizeDisplay = item.selectedSize;
+                }
+              } catch {
+                sizeDisplay = item.selectedSize;
+              }
+            }
+            
+            return (
+              <div key={index} className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                  {itemImage ? (
+                    <img src={itemImage} alt={itemName} className="w-full h-full object-cover" />
+                  ) : (
+                    <Package className="w-6 h-6 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium">{itemName}</h4>
+                  {itemDescription && (
+                    <p className="text-gray-600 text-sm line-clamp-1">{itemDescription}</p>
+                  )}
+                  {sizeDisplay && (
+                    <p className="text-sm text-blue-600 mt-1">Размер: {sizeDisplay}</p>
+                  )}
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-sm text-gray-500">
+                      Количество: {item.quantity || 1}
+                    </span>
+                    <span className="font-medium text-sm">
+                      {itemPrice ? `${Number(itemPrice).toLocaleString('ru-RU')}₽` : ''}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
