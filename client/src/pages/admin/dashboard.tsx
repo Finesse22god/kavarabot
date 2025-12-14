@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock, Settings, Megaphone } from "lucide-react";
+import { LogOut, Package, Users, ShoppingCart, BarChart3, Eye, Edit, Gift, Trash2, CheckSquare, Square, Clock, Settings, Megaphone, Bell } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import OrderDetails from "./order-details";
@@ -115,6 +115,7 @@ export default function AdminDashboard() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [showBroadcasts, setShowBroadcasts] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [selectedBoxes, setSelectedBoxes] = useState<string[]>([]);
@@ -466,6 +467,10 @@ export default function AdminDashboard() {
   }
 
   // Show broadcasts management
+  if (showNotifications) {
+    return <NotificationsTab adminToken={localStorage.getItem('adminToken') || ''} onBack={() => setShowNotifications(false)} />;
+  }
+
   if (showBroadcasts) {
     return <Broadcasts onBack={() => setShowBroadcasts(false)} />;
   }
@@ -626,13 +631,12 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="orders">Заказы</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
               <TabsTrigger value="products">Товары</TabsTrigger>
               <TabsTrigger value="boxes">Боксы</TabsTrigger>
               <TabsTrigger value="inventory">Остатки</TabsTrigger>
-              <TabsTrigger value="notifications">Уведомления</TabsTrigger>
               <TabsTrigger value="management">Управление</TabsTrigger>
             </TabsList>
 
@@ -1153,11 +1157,6 @@ export default function AdminDashboard() {
               </Card>
             </TabsContent>
 
-            {/* Notifications Tab */}
-            <TabsContent value="notifications">
-              <NotificationsTab adminToken={localStorage.getItem('adminToken') || ''} />
-            </TabsContent>
-
             {/* Management Tab */}
             <TabsContent value="management">
               <div className="grid gap-6">
@@ -1208,6 +1207,16 @@ export default function AdminDashboard() {
                       >
                         <Megaphone className="h-6 w-6" />
                         Рассылки
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        className="h-20 flex flex-col gap-2"
+                        onClick={() => setShowNotifications(true)}
+                        data-testid="button-notifications"
+                      >
+                        <Bell className="h-6 w-6" />
+                        Уведомления
                       </Button>
                       
                       <Button

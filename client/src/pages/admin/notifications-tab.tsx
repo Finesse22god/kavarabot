@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ShoppingCart, CreditCard, Send, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Bell, ShoppingCart, CreditCard, Send, Clock, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -22,9 +22,10 @@ interface ReminderSetting {
 
 interface NotificationsTabProps {
   adminToken: string;
+  onBack?: () => void;
 }
 
-export function NotificationsTab({ adminToken }: NotificationsTabProps) {
+export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<ReminderSetting>>({});
@@ -141,6 +142,12 @@ export function NotificationsTab({ adminToken }: NotificationsTabProps) {
 
   return (
     <div className="space-y-6">
+      {onBack && (
+        <Button variant="outline" onClick={onBack} className="mb-4">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Назад
+        </Button>
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
