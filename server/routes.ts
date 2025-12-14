@@ -2864,6 +2864,87 @@ router.post("/api/admin/trigger-reminders", verifyAdminToken, async (req, res) =
   }
 });
 
+// Test reminder buttons by sending to a specific username
+router.post("/api/admin/test-reminder-buttons", verifyAdminToken, async (req, res) => {
+  try {
+    const { username } = req.body;
+    
+    if (!username) {
+      return res.status(400).json({ error: "Username обязателен" });
+    }
+    
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      return res.status(500).json({ error: "Токен бота не настроен" });
+    }
+    
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
+    
+    // First, we need to get chat_id by username
+    // Unfortunately, Telegram API doesn't allow direct username lookup
+    // We need to find user in our database
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const user = await userRepo.findOne({ 
+      where: { username: username.toLowerCase() } 
+    });
+    
+    if (!user || !user.telegramId) {
+      return res.status(404).json({ 
+        error: `Пользователь @${username} не найден в базе данных. Убедитесь, что пользователь заходил в бот.` 
+      });
+    }
+    
+    // Send abandoned cart test message
+    const abandonedCartResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: user.telegramId,
+        text: `🧪 <b>ТЕСТОВОЕ СООБЩЕНИЕ</b>\n\n🛒 Привет! Ты оставил товары в корзине. Не забудь оформить заказ!`,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🛒 Перейти в корзину", url: `https://t.me/${botUsername}?startapp=cart` }
+          ]]
+        }
+      })
+    });
+    
+    if (!abandonedCartResponse.ok) {
+      const error = await abandonedCartResponse.json();
+      console.error("Failed to send cart test:", error);
+      return res.status(500).json({ error: "Не удалось отправить тест брошенной корзины" });
+    }
+    
+    // Send unpaid order test message
+    const unpaidOrderResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: user.telegramId,
+        text: `🧪 <b>ТЕСТОВОЕ СООБЩЕНИЕ</b>\n\n💳 Твой заказ ждёт оплаты! Осталось только нажать кнопку Оплатить.\n\nЗаказ №TEST-12345`,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "💳 Оплатить заказ", url: `https://t.me/${botUsername}?startapp=profile` }
+          ]]
+        }
+      })
+    });
+    
+    if (!unpaidOrderResponse.ok) {
+      const error = await unpaidOrderResponse.json();
+      console.error("Failed to send order test:", error);
+      return res.status(500).json({ error: "Не удалось отправить тест неоплаченного заказа" });
+    }
+    
+    res.json({ success: true, message: "Тестовые сообщения отправлены" });
+  } catch (error) {
+    console.error("Error sending test reminder buttons:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Process reminders function
 async function processReminders() {
   const settingsRepo = AppDataSource.getRepository(ReminderSettings);

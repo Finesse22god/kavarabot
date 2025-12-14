@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ShoppingCart, CreditCard, Send, Clock, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Bell, ShoppingCart, CreditCard, Send, Clock, CheckCircle, AlertCircle, ArrowLeft, TestTube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -29,6 +30,8 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<ReminderSetting>>({});
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const [testUsername, setTestUsername] = useState("");
 
   const { data: settings, isLoading } = useQuery<ReminderSetting[]>({
     queryKey: ['/api/admin/reminder-settings'],
@@ -87,6 +90,39 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
       toast({ 
         title: "Проверка выполнена",
         description: `Отправлено напоминаний: ${data.sentCount}`
+      });
+    }
+  });
+
+  const testMutation = useMutation({
+    mutationFn: async (username: string) => {
+      const response = await fetch('/api/admin/test-reminder-buttons', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ username: username.replace('@', '') })
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to send test messages');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setTestDialogOpen(false);
+      setTestUsername("");
+      toast({ 
+        title: "Тестовые сообщения отправлены",
+        description: "Проверьте Telegram"
+      });
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Ошибка",
+        description: error.message,
+        variant: "destructive"
       });
     }
   });
@@ -195,7 +231,14 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
             </Card>
           </div>
 
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end gap-2 mb-4">
+            <Button 
+              onClick={() => setTestDialogOpen(true)}
+              variant="outline"
+            >
+              <TestTube className="h-4 w-4 mr-2" />
+              Тест кнопок
+            </Button>
             <Button 
               onClick={() => triggerMutation.mutate()}
               disabled={triggerMutation.isPending}
@@ -205,6 +248,42 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
               Проверить сейчас
             </Button>
           </div>
+
+          <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Тестирование кнопок уведомлений</DialogTitle>
+                <DialogDescription>
+                  Введите @username в Telegram для отправки тестовых сообщений с кнопками
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Input
+                  placeholder="@username"
+                  value={testUsername}
+                  onChange={(e) => setTestUsername(e.target.value)}
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  Будет отправлено 2 тестовых сообщения:
+                </p>
+                <ul className="text-sm text-gray-500 mt-1 list-disc list-inside">
+                  <li>Брошенная корзина (с кнопкой "В корзину")</li>
+                  <li>Неоплаченный заказ (с кнопкой "Оплатить")</li>
+                </ul>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setTestDialogOpen(false)}>
+                  Отмена
+                </Button>
+                <Button 
+                  onClick={() => testMutation.mutate(testUsername)}
+                  disabled={!testUsername.trim() || testMutation.isPending}
+                >
+                  {testMutation.isPending ? "Отправка..." : "Отправить тест"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <div className="space-y-4">
             {settings?.map((setting) => {
