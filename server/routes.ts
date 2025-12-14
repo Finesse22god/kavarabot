@@ -2971,46 +2971,59 @@ async function processReminders() {
         .getRawMany();
       
       for (const cart of abandonedCarts) {
-        // Check if already sent reminder
-        const alreadySent = await remindersRepo.findOne({
-          where: { userId: cart.userId, type: "abandoned_cart" }
+        // Check reminder history for this user
+        const sentReminders = await remindersRepo.find({
+          where: { userId: cart.userId, type: "abandoned_cart" },
+          order: { sentAt: "DESC" }
         });
         
-        if (!alreadySent) {
-          const user = await userRepo.findOne({ where: { id: cart.userId } });
-          if (user?.telegramId) {
-            // Send Telegram message
-            try {
-              const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
-              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  chat_id: user.telegramId,
-                  text: setting.messageTemplate,
-                  parse_mode: 'HTML',
-                  reply_markup: {
-                    inline_keyboard: [[
-                      { text: "🛒 Перейти в корзину", url: `https://t.me/${botUsername}?startapp=cart` }
-                    ]]
-                  }
-                })
-              });
-              
-              // Record sent reminder
-              const reminder = remindersRepo.create({
-                userId: cart.userId,
-                type: "abandoned_cart"
-              });
-              await remindersRepo.save(reminder);
-              
-              setting.sentCount++;
-              await settingsRepo.save(setting);
-              sentCount++;
-              results.push(`Sent abandoned cart reminder to ${user.username || user.telegramId}`);
-            } catch (e) {
-              console.error("Failed to send reminder:", e);
-            }
+        // Check if max reminders reached
+        if (sentReminders.length >= setting.maxReminders) {
+          continue;
+        }
+        
+        // Check minimum interval since last reminder
+        if (sentReminders.length > 0) {
+          const lastSent = new Date(sentReminders[0].sentAt).getTime();
+          const minInterval = setting.minIntervalHours * 60 * 60 * 1000;
+          if (Date.now() - lastSent < minInterval) {
+            continue;
+          }
+        }
+        
+        const user = await userRepo.findOne({ where: { id: cart.userId } });
+        if (user?.telegramId) {
+          // Send Telegram message
+          try {
+            const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
+            await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                chat_id: user.telegramId,
+                text: setting.messageTemplate,
+                parse_mode: 'HTML',
+                reply_markup: {
+                  inline_keyboard: [[
+                    { text: "🛒 Перейти в корзину", url: `https://t.me/${botUsername}?startapp=cart` }
+                  ]]
+                }
+              })
+            });
+            
+            // Record sent reminder
+            const reminder = remindersRepo.create({
+              userId: cart.userId,
+              type: "abandoned_cart"
+            });
+            await remindersRepo.save(reminder);
+            
+            setting.sentCount++;
+            await settingsRepo.save(setting);
+            sentCount++;
+            results.push(`Sent abandoned cart reminder to ${user.username || user.telegramId}`);
+          } catch (e) {
+            console.error("Failed to send reminder:", e);
           }
         }
       }
@@ -3024,48 +3037,61 @@ async function processReminders() {
       
       for (const order of unpaidOrders) {
         const orderTime = new Date(order.createdAt).getTime();
-        if (orderTime < cutoffTime.getTime()) {
-          // Check if already sent reminder for this order
-          const alreadySent = await remindersRepo.findOne({
-            where: { orderId: order.id, type: "unpaid_order" }
+        if (orderTime < cutoffTime.getTime() && order.userId) {
+          // Check reminder history for this order
+          const sentReminders = await remindersRepo.find({
+            where: { orderId: order.id, type: "unpaid_order" },
+            order: { sentAt: "DESC" }
           });
           
-          if (!alreadySent && order.userId) {
-            const user = await userRepo.findOne({ where: { id: order.userId } });
-            if (user?.telegramId) {
-              const message = setting.messageTemplate.replace("{orderNumber}", order.orderNumber);
+          // Check if max reminders reached
+          if (sentReminders.length >= setting.maxReminders) {
+            continue;
+          }
+          
+          // Check minimum interval since last reminder
+          if (sentReminders.length > 0) {
+            const lastSent = new Date(sentReminders[0].sentAt).getTime();
+            const minInterval = setting.minIntervalHours * 60 * 60 * 1000;
+            if (Date.now() - lastSent < minInterval) {
+              continue;
+            }
+          }
+          
+          const user = await userRepo.findOne({ where: { id: order.userId } });
+          if (user?.telegramId) {
+            const message = setting.messageTemplate.replace("{orderNumber}", order.orderNumber);
+            
+            try {
+              const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
+              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: user.telegramId,
+                  text: `${message}\n\nЗаказ №${order.orderNumber}`,
+                  parse_mode: 'HTML',
+                  reply_markup: {
+                    inline_keyboard: [[
+                      { text: "💳 Оплатить заказ", url: `https://t.me/${botUsername}?startapp=profile` }
+                    ]]
+                  }
+                })
+              });
               
-              try {
-                const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
-                await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    chat_id: user.telegramId,
-                    text: `${message}\n\nЗаказ №${order.orderNumber}`,
-                    parse_mode: 'HTML',
-                    reply_markup: {
-                      inline_keyboard: [[
-                        { text: "💳 Оплатить заказ", url: `https://t.me/${botUsername}?startapp=profile` }
-                      ]]
-                    }
-                  })
-                });
-                
-                const reminder = remindersRepo.create({
-                  userId: order.userId,
-                  type: "unpaid_order",
-                  orderId: order.id
-                });
-                await remindersRepo.save(reminder);
-                
-                setting.sentCount++;
-                await settingsRepo.save(setting);
-                sentCount++;
-                results.push(`Sent unpaid order reminder for #${order.orderNumber} to ${user.username || user.telegramId}`);
-              } catch (e) {
-                console.error("Failed to send reminder:", e);
-              }
+              const reminder = remindersRepo.create({
+                userId: order.userId,
+                type: "unpaid_order",
+                orderId: order.id
+              });
+              await remindersRepo.save(reminder);
+              
+              setting.sentCount++;
+              await settingsRepo.save(setting);
+              sentCount++;
+              results.push(`Sent unpaid order reminder for #${order.orderNumber} to ${user.username || user.telegramId}`);
+            } catch (e) {
+              console.error("Failed to send reminder:", e);
             }
           }
         }

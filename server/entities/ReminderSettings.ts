@@ -23,6 +23,12 @@ export class ReminderSettings {
   @Column({ type: "integer", default: 0 })
   convertedCount!: number;
 
+  @Column({ type: "integer", default: 3 })
+  maxReminders!: number; // Maximum reminders per user/order
+
+  @Column({ type: "integer", default: 24 })
+  minIntervalHours!: number; // Minimum hours between reminders
+
   @CreateDateColumn()
   createdAt!: Date;
 

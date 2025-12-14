@@ -19,6 +19,8 @@ interface ReminderSetting {
   messageTemplate: string;
   sentCount: number;
   convertedCount: number;
+  maxReminders: number;
+  minIntervalHours: number;
 }
 
 interface NotificationsTabProps {
@@ -138,7 +140,9 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
     setEditingId(setting.id);
     setEditForm({
       delayHours: setting.delayHours,
-      messageTemplate: setting.messageTemplate
+      messageTemplate: setting.messageTemplate,
+      maxReminders: setting.maxReminders,
+      minIntervalHours: setting.minIntervalHours
     });
   };
 
@@ -324,6 +328,30 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
                                   className="w-20"
                                 />
                               </div>
+                              <div className="flex items-center gap-2">
+                                <Bell className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">Макс. напоминаний:</span>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="10"
+                                  value={editForm.maxReminders}
+                                  onChange={(e) => setEditForm({ ...editForm, maxReminders: parseInt(e.target.value) })}
+                                  className="w-20"
+                                />
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm">Интервал между (ч):</span>
+                                <Input
+                                  type="number"
+                                  min="1"
+                                  max="168"
+                                  value={editForm.minIntervalHours}
+                                  onChange={(e) => setEditForm({ ...editForm, minIntervalHours: parseInt(e.target.value) })}
+                                  className="w-20"
+                                />
+                              </div>
                               <div>
                                 <p className="text-sm mb-1">Текст сообщения:</p>
                                 <Textarea
@@ -343,9 +371,19 @@ export function NotificationsTab({ adminToken, onBack }: NotificationsTabProps) 
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Clock className="h-4 w-4" />
-                                Отправка через {setting.delayHours} ч.
+                              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  Через {setting.delayHours} ч.
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Bell className="h-4 w-4" />
+                                  Макс. {setting.maxReminders} раз
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  Интервал {setting.minIntervalHours} ч.
+                                </div>
                               </div>
                               <p className="text-sm bg-gray-50 p-2 rounded">{setting.messageTemplate}</p>
                               <div className="flex gap-4 text-sm text-gray-500">
