@@ -2900,7 +2900,7 @@ async function processReminders() {
           if (user?.telegramId) {
             // Send Telegram message
             try {
-              const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'KavaraBot';
+              const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
               await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2955,7 +2955,7 @@ async function processReminders() {
               const message = setting.messageTemplate.replace("{orderNumber}", order.orderNumber);
               
               try {
-                const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'KavaraBot';
+                const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'kavaraappbot';
                 await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
