@@ -3,6 +3,7 @@ import multer from "multer";
 import path from "path";
 import { promises as fs } from "fs";
 import { fileTypeFromFile, fileTypeFromBuffer } from "file-type";
+import * as XLSX from "xlsx";
 import { AppDataSource } from "./database";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
@@ -1399,6 +1400,120 @@ router.get("/api/admin/products", verifyAdminToken, async (req, res) => {
   } catch (error) {
     console.error("Error fetching products:", error);
     res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+// Multer для Excel файлов
+const excelUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "application/vnd.ms-excel"
+    ];
+    if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.xlsx') || file.originalname.endsWith('.xls')) {
+      cb(null, true);
+    } else {
+      cb(new Error("Недопустимый тип файла. Разрешены: .xlsx, .xls"));
+    }
+  },
+});
+
+// Импорт остатков из Excel
+router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не загружен" });
+    }
+
+    const { sheetName, productColumn, sizeColumn, quantityColumn } = req.body;
+    const productCol = productColumn || 'C';
+    const sizeCol = sizeColumn || 'F';
+    const qtyCol = quantityColumn || 'G';
+
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    
+    // Найти лист по имени или использовать первый
+    let sheet;
+    if (sheetName && workbook.SheetNames.includes(sheetName)) {
+      sheet = workbook.Sheets[sheetName];
+    } else {
+      // Попробуем найти лист с "остатк" в названии
+      const foundSheet = workbook.SheetNames.find(name => 
+        name.toLowerCase().includes('остатк') || name.toLowerCase().includes('актуальн')
+      );
+      sheet = workbook.Sheets[foundSheet || workbook.SheetNames[0]];
+    }
+
+    if (!sheet) {
+      return res.status(400).json({ error: "Лист не найден" });
+    }
+
+    // Парсим данные из Excel
+    const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+    const inventoryUpdates: { productName: string; size: string; quantity: number }[] = [];
+
+    for (let row = range.s.r + 1; row <= range.e.r; row++) {
+      const productCell = sheet[`${productCol}${row + 1}`];
+      const sizeCell = sheet[`${sizeCol}${row + 1}`];
+      const qtyCell = sheet[`${qtyCol}${row + 1}`];
+
+      if (productCell && sizeCell && qtyCell) {
+        const productName = String(productCell.v || '').trim();
+        const size = String(sizeCell.v || '').trim().toUpperCase();
+        const quantity = parseInt(String(qtyCell.v || '0')) || 0;
+
+        if (productName && size && quantity >= 0) {
+          inventoryUpdates.push({ productName, size, quantity });
+        }
+      }
+    }
+
+    // Получаем все товары
+    const products = await storage.getAllProducts();
+    let updated = 0;
+    let notFound: string[] = [];
+
+    // Группируем обновления по товарам
+    const updatesByProduct = new Map<string, Record<string, number>>();
+    
+    for (const update of inventoryUpdates) {
+      // Ищем товар по частичному совпадению названия
+      const product = products.find(p => 
+        p.name.toLowerCase().includes(update.productName.toLowerCase()) ||
+        update.productName.toLowerCase().includes(p.name.toLowerCase())
+      );
+
+      if (product) {
+        if (!updatesByProduct.has(product.id)) {
+          updatesByProduct.set(product.id, { ...(product.inventory || {}) });
+        }
+        const inventory = updatesByProduct.get(product.id)!;
+        inventory[update.size] = update.quantity;
+      } else {
+        if (!notFound.includes(update.productName)) {
+          notFound.push(update.productName);
+        }
+      }
+    }
+
+    // Применяем обновления
+    for (const [productId, inventory] of updatesByProduct) {
+      await storage.updateProduct(productId, { inventory });
+      updated++;
+    }
+
+    res.json({
+      success: true,
+      message: `Обновлено ${updated} товаров`,
+      updated,
+      totalRows: inventoryUpdates.length,
+      notFound: notFound.slice(0, 10)
+    });
+  } catch (error) {
+    console.error("Error importing inventory:", error);
+    res.status(500).json({ error: "Ошибка при импорте остатков" });
   }
 });
 

@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Box as BoxIcon, Edit, Save, X, AlertCircle } from "lucide-react";
+import { Package, Box as BoxIcon, Edit, Save, X, AlertCircle, Upload } from "lucide-react";
 import type { Product, Box } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -25,6 +25,66 @@ export default function InventoryManagement({ onBack }: { onBack: () => void }) 
   const [editInventory, setEditInventory] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<"all" | "product" | "box">("all");
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportExcel = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('productColumn', 'C');
+      formData.append('sizeColumn', 'F');
+      formData.append('quantityColumn', 'G');
+
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/admin/import-inventory', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/boxes"] });
+        toast({
+          title: "Остатки импортированы",
+          description: `Обновлено ${result.updated} товаров из ${result.totalRows} строк`,
+        });
+        if (result.notFound?.length > 0) {
+          toast({
+            title: "Не найдены товары",
+            description: result.notFound.slice(0, 5).join(', '),
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Ошибка импорта",
+          description: result.error || "Не удалось импортировать остатки",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при загрузке файла",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/admin/products"],
@@ -175,10 +235,33 @@ export default function InventoryManagement({ onBack }: { onBack: () => void }) 
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Управление остатками</CardTitle>
-            <CardDescription>
-              Отслеживание и управление остатками товаров и боксов по размерам
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-2xl">Управление остатками</CardTitle>
+                <CardDescription>
+                  Отслеживание и управление остатками товаров и боксов по размерам
+                </CardDescription>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImportExcel}
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  data-testid="input-import-excel"
+                />
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                  variant="outline"
+                  data-testid="button-import-excel"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {isImporting ? "Загрузка..." : "Импорт из Excel"}
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
