@@ -21,13 +21,15 @@ import { Cart } from "./entities/Cart";
 import { Product } from "./entities/Product";
 import { BoxProduct } from "./entities/BoxProduct";
 import { Broadcast } from "./entities/Broadcast";
+import { ReminderSettings } from "./entities/ReminderSettings";
+import { SentReminder } from "./entities/SentReminder";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
   url: process.env.DATABASE_URL,
   synchronize: true, // Only for development
   logging: true, // Enable logging for debugging
-  entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, PromoCodeUsage, Favorite, Cart, Product, BoxProduct, Broadcast],
+  entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, PromoCodeUsage, Favorite, Cart, Product, BoxProduct, Broadcast, ReminderSettings, SentReminder],
   ssl:
     process.env.NODE_ENV === "production"
       ? { rejectUnauthorized: false }

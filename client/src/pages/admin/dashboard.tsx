@@ -19,6 +19,7 @@ import QuizSettings from "./quiz-settings";
 import Analytics from "./analytics";
 import InventoryManagement from "./inventory-management";
 import Broadcasts from "./broadcasts";
+import { NotificationsTab } from "./notifications-tab";
 import type { Box, Product } from "@shared/schema";
 
 interface Order {
@@ -625,12 +626,13 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="orders">Заказы</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
               <TabsTrigger value="products">Товары</TabsTrigger>
               <TabsTrigger value="boxes">Боксы</TabsTrigger>
               <TabsTrigger value="inventory">Остатки</TabsTrigger>
+              <TabsTrigger value="notifications">Уведомления</TabsTrigger>
               <TabsTrigger value="management">Управление</TabsTrigger>
             </TabsList>
 
@@ -1149,6 +1151,11 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Notifications Tab */}
+            <TabsContent value="notifications">
+              <NotificationsTab adminToken={adminToken || ''} />
             </TabsContent>
 
             {/* Management Tab */}

@@ -22,6 +22,7 @@ import { PromoCode as PromoCodeEntity } from "./entities/PromoCode";
 import { PromoCodeUsage as PromoCodeUsageEntity } from "./entities/PromoCodeUsage";
 import { Trainer as TrainerEntity } from "./entities/Trainer";
 import { InventoryHistory } from "./entities/InventoryHistory";
+import { Cart as CartEntity } from "./entities/Cart";
 import { adjustInventory } from "./inventory-helpers";
 import type {
   User,
@@ -2586,5 +2587,251 @@ router.delete("/api/boxes/:boxId/products/:productId", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// ============= REMINDER SETTINGS ENDPOINTS =============
+import { ReminderSettings } from "./entities/ReminderSettings";
+import { SentReminder } from "./entities/SentReminder";
+
+// Get all reminder settings
+router.get("/api/admin/reminder-settings", verifyAdminToken, async (req, res) => {
+  try {
+    const repo = AppDataSource.getRepository(ReminderSettings);
+    let settings = await repo.find();
+    
+    // Create default settings if none exist
+    if (settings.length === 0) {
+      const defaults = [
+        {
+          type: "abandoned_cart",
+          enabled: false,
+          delayHours: 2,
+          messageTemplate: "Привет! Ты оставил товары в корзине. Не забудь оформить заказ! Переходи в приложение и заверши покупку.",
+          sentCount: 0,
+          convertedCount: 0
+        },
+        {
+          type: "unpaid_order",
+          enabled: false,
+          delayHours: 1,
+          messageTemplate: "Твой заказ ждёт оплаты! Осталось только нажать кнопку Оплатить. Не упусти свои товары!",
+          sentCount: 0,
+          convertedCount: 0
+        }
+      ];
+      
+      for (const def of defaults) {
+        const setting = repo.create(def);
+        await repo.save(setting);
+      }
+      
+      settings = await repo.find();
+    }
+    
+    res.json(settings);
+  } catch (error) {
+    console.error("Error fetching reminder settings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Update reminder setting
+router.put("/api/admin/reminder-settings/:id", verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { enabled, delayHours, messageTemplate } = req.body;
+    
+    const repo = AppDataSource.getRepository(ReminderSettings);
+    const setting = await repo.findOne({ where: { id } });
+    
+    if (!setting) {
+      return res.status(404).json({ error: "Setting not found" });
+    }
+    
+    if (typeof enabled === 'boolean') setting.enabled = enabled;
+    if (delayHours !== undefined) setting.delayHours = delayHours;
+    if (messageTemplate) setting.messageTemplate = messageTemplate;
+    
+    await repo.save(setting);
+    res.json(setting);
+  } catch (error) {
+    console.error("Error updating reminder setting:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Get reminder statistics
+router.get("/api/admin/reminder-stats", verifyAdminToken, async (req, res) => {
+  try {
+    const settingsRepo = AppDataSource.getRepository(ReminderSettings);
+    const remindersRepo = AppDataSource.getRepository(SentReminder);
+    
+    const settings = await settingsRepo.find();
+    const totalSent = await remindersRepo.count();
+    const totalConverted = await remindersRepo.count({ where: { converted: true } });
+    
+    // Get recent reminders
+    const recentReminders = await remindersRepo.find({
+      order: { sentAt: "DESC" },
+      take: 20,
+      relations: ["user"]
+    });
+    
+    res.json({
+      settings,
+      stats: {
+        totalSent,
+        totalConverted,
+        conversionRate: totalSent > 0 ? ((totalConverted / totalSent) * 100).toFixed(1) : 0
+      },
+      recentReminders
+    });
+  } catch (error) {
+    console.error("Error fetching reminder stats:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Manual trigger for testing reminders
+router.post("/api/admin/trigger-reminders", verifyAdminToken, async (req, res) => {
+  try {
+    const result = await processReminders();
+    res.json(result);
+  } catch (error) {
+    console.error("Error triggering reminders:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Process reminders function
+async function processReminders() {
+  const settingsRepo = AppDataSource.getRepository(ReminderSettings);
+  const remindersRepo = AppDataSource.getRepository(SentReminder);
+  const cartRepo = AppDataSource.getRepository(CartEntity);
+  const orderRepo = AppDataSource.getRepository(OrderEntity);
+  const userRepo = AppDataSource.getRepository(UserEntity);
+  
+  const settings = await settingsRepo.find({ where: { enabled: true } });
+  let sentCount = 0;
+  const results: string[] = [];
+  
+  for (const setting of settings) {
+    const cutoffTime = new Date(Date.now() - setting.delayHours * 60 * 60 * 1000);
+    
+    if (setting.type === "abandoned_cart") {
+      // Find users with items in cart older than delay
+      const abandonedCarts = await cartRepo
+        .createQueryBuilder("cart")
+        .select("cart.userId", "userId")
+        .addSelect("MIN(cart.createdAt)", "oldestItem")
+        .groupBy("cart.userId")
+        .having("MIN(cart.createdAt) < :cutoff", { cutoff: cutoffTime })
+        .getRawMany();
+      
+      for (const cart of abandonedCarts) {
+        // Check if already sent reminder
+        const alreadySent = await remindersRepo.findOne({
+          where: { userId: cart.userId, type: "abandoned_cart" }
+        });
+        
+        if (!alreadySent) {
+          const user = await userRepo.findOne({ where: { id: cart.userId } });
+          if (user?.telegramId) {
+            // Send Telegram message
+            try {
+              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  chat_id: user.telegramId,
+                  text: setting.messageTemplate,
+                  parse_mode: 'HTML'
+                })
+              });
+              
+              // Record sent reminder
+              const reminder = remindersRepo.create({
+                userId: cart.userId,
+                type: "abandoned_cart"
+              });
+              await remindersRepo.save(reminder);
+              
+              setting.sentCount++;
+              await settingsRepo.save(setting);
+              sentCount++;
+              results.push(`Sent abandoned cart reminder to ${user.username || user.telegramId}`);
+            } catch (e) {
+              console.error("Failed to send reminder:", e);
+            }
+          }
+        }
+      }
+    }
+    
+    if (setting.type === "unpaid_order") {
+      // Find unpaid orders older than delay
+      const unpaidOrders = await orderRepo.find({
+        where: { status: "pending" }
+      });
+      
+      for (const order of unpaidOrders) {
+        const orderTime = new Date(order.createdAt).getTime();
+        if (orderTime < cutoffTime.getTime()) {
+          // Check if already sent reminder for this order
+          const alreadySent = await remindersRepo.findOne({
+            where: { orderId: order.id, type: "unpaid_order" }
+          });
+          
+          if (!alreadySent && order.userId) {
+            const user = await userRepo.findOne({ where: { id: order.userId } });
+            if (user?.telegramId) {
+              const message = setting.messageTemplate.replace("{orderNumber}", order.orderNumber);
+              
+              try {
+                await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    chat_id: user.telegramId,
+                    text: `${message}\n\nЗаказ №${order.orderNumber}`,
+                    parse_mode: 'HTML'
+                  })
+                });
+                
+                const reminder = remindersRepo.create({
+                  userId: order.userId,
+                  type: "unpaid_order",
+                  orderId: order.id
+                });
+                await remindersRepo.save(reminder);
+                
+                setting.sentCount++;
+                await settingsRepo.save(setting);
+                sentCount++;
+                results.push(`Sent unpaid order reminder for #${order.orderNumber} to ${user.username || user.telegramId}`);
+              } catch (e) {
+                console.error("Failed to send reminder:", e);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return { sentCount, results };
+}
+
+// Start reminder check interval (every hour)
+setInterval(async () => {
+  try {
+    console.log("Running scheduled reminder check...");
+    const result = await processReminders();
+    if (result.sentCount > 0) {
+      console.log(`Sent ${result.sentCount} reminders`);
+    }
+  } catch (error) {
+    console.error("Error in scheduled reminder check:", error);
+  }
+}, 60 * 60 * 1000); // Every hour
 
 export default router;
