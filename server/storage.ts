@@ -72,6 +72,7 @@ export interface IStorage {
   updateOrderStatus(orderNumber: string, status: string): Promise<Order | null>;
   updateOrderStatusByPaymentId(paymentId: string, status: string): Promise<Order | null>;
   getOrderByNumber(orderNumber: string): Promise<Order | null>;
+  deleteOrder(id: string): Promise<boolean>;
 
   // Notifications
   createNotification(notification: CreateNotificationDto): Promise<Notification>;
@@ -503,6 +504,13 @@ export class DatabaseStorage implements IStorage {
     console.log(`Updating order ${order.orderNumber} status to ${status}`);
     order.status = status;
     return await this.orderRepository.save(order);
+  }
+
+  async deleteOrder(id: string): Promise<boolean> {
+    const order = await this.orderRepository.findOneBy({ id });
+    if (!order) return false;
+    await this.orderRepository.remove(order);
+    return true;
   }
 
   async getOrderByNumber(orderNumber: string): Promise<Order | null> {

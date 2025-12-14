@@ -1166,6 +1166,20 @@ router.get("/api/admin/orders", verifyAdminToken, async (req, res) => {
   }
 });
 
+router.delete("/api/admin/orders/:id", verifyAdminToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await storage.deleteOrder(id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    res.json({ success: true, message: "Order deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/api/admin/users", verifyAdminToken, async (req, res) => {
   try {
     const users = await storage.getAllUsers();

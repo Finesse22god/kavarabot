@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +123,48 @@ export default function AdminDashboard() {
   const [showMassActions, setShowMassActions] = useState(false);
   const [categoryFilterProducts, setCategoryFilterProducts] = useState<string>("all");
   const [searchQueryProducts, setSearchQueryProducts] = useState("");
+  const [deletingOrderId, setDeletingOrderId] = useState<string | null>(null);
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete order');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/orders'] });
+      toast({
+        title: "Заказ удален",
+        description: "Заказ успешно удален из системы"
+      });
+      setDeletingOrderId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить заказ",
+        variant: "destructive"
+      });
+      setDeletingOrderId(null);
+    }
+  });
+
+  const handleDeleteOrder = (orderId: string) => {
+    if (deletingOrderId === orderId) {
+      deleteOrderMutation.mutate(orderId);
+    } else {
+      setDeletingOrderId(orderId);
+      setTimeout(() => setDeletingOrderId(null), 3000);
+    }
+  };
 
   const handleImportCatalog = async () => {
     setIsImporting(true);
@@ -684,15 +727,27 @@ export default function AdminDashboard() {
                             </div>
                             <div className="text-right">
                               <p className="font-medium">{order.totalPrice.toLocaleString('ru-RU')}₽</p>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setSelectedOrder(order)}
-                                className="mt-2"
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                Детали
-                              </Button>
+                              <div className="flex gap-2 mt-2 justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedOrder(order)}
+                                  data-testid={`button-order-details-${order.id}`}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  Детали
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant={deletingOrderId === order.id ? "destructive" : "outline"}
+                                  onClick={() => handleDeleteOrder(order.id)}
+                                  disabled={deleteOrderMutation.isPending}
+                                  data-testid={`button-order-delete-${order.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  {deletingOrderId === order.id ? "Подтвердить" : "Удалить"}
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))
