@@ -63,83 +63,13 @@ function AdminOrderItems({ order }: { order: Order }) {
   // Parse cart items if available
   const cartItems = order.cartItems ? JSON.parse(order.cartItems) : null;
 
+  // If cartItems exist, show only them (cart order)
+  const hasCartItems = cartItems && cartItems.length > 0;
+
   return (
     <div className="space-y-4">
-      {/* Single Box Order */}
-      {box && (
-        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-            {box.imageUrl ? (
-              <img 
-                src={box.imageUrl} 
-                alt={box.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <ShoppingBag className="w-8 h-8 text-gray-400" />
-            )}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">{box.name}</h3>
-            <p className="text-gray-600 text-sm mt-1">{box.description}</p>
-            <div className="flex items-center justify-between mt-2">
-              <Badge variant="outline" className="text-xs">
-                Готовый бокс
-              </Badge>
-              <span className="font-medium">
-                {Number(box.price).toLocaleString('ru-RU')}₽
-              </span>
-            </div>
-            {order.selectedSize && (
-              <p className="text-sm text-gray-500 mt-1">
-                Размер: {order.selectedSize}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Single Product Order */}
-      {product && (
-        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
-            {product.imageUrl ? (
-              <img 
-                src={product.imageUrl} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <Package className="w-8 h-8 text-gray-400" />
-            )}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">{product.name}</h3>
-            <p className="text-gray-600 text-sm mt-1">{product.description}</p>
-            <div className="flex items-center justify-between mt-2">
-              <Badge variant="outline" className="text-xs">
-                Товар
-              </Badge>
-              <span className="font-medium">
-                {product.price.toLocaleString('ru-RU')}₽
-              </span>
-            </div>
-            {product.brand && (
-              <p className="text-sm text-gray-500">
-                Бренд: {product.brand}
-              </p>
-            )}
-            {product.color && (
-              <p className="text-sm text-gray-500">
-                Цвет: {product.color}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Cart Items */}
-      {cartItems && cartItems.length > 0 && (
+      {/* Cart Items - show first if available */}
+      {hasCartItems && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-700">
             Товары из корзины ({cartItems.length}):
@@ -206,8 +136,81 @@ function AdminOrderItems({ order }: { order: Order }) {
         </div>
       )}
 
+      {/* Single Box Order - only show if no cart items */}
+      {!hasCartItems && box && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+            {box.imageUrl ? (
+              <img 
+                src={box.imageUrl} 
+                alt={box.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ShoppingBag className="w-8 h-8 text-gray-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{box.name}</h3>
+            <p className="text-gray-600 text-sm mt-1">{box.description}</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Готовый бокс
+              </Badge>
+              <span className="font-medium">
+                {Number(box.price).toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+            {order.selectedSize && (
+              <p className="text-sm text-gray-500 mt-1">
+                Размер: {order.selectedSize}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Single Product Order - only show if no cart items */}
+      {!hasCartItems && product && (
+        <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+            {product.imageUrl ? (
+              <img 
+                src={product.imageUrl} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package className="w-8 h-8 text-gray-400" />
+            )}
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg">{product.name}</h3>
+            <p className="text-gray-600 text-sm mt-1">{product.description}</p>
+            <div className="flex items-center justify-between mt-2">
+              <Badge variant="outline" className="text-xs">
+                Товар
+              </Badge>
+              <span className="font-medium">
+                {product.price.toLocaleString('ru-RU')}₽
+              </span>
+            </div>
+            {product.brand && (
+              <p className="text-sm text-gray-500">
+                Бренд: {product.brand}
+              </p>
+            )}
+            {product.color && (
+              <p className="text-sm text-gray-500">
+                Цвет: {product.color}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Legacy items support */}
-      {!box && !product && (!cartItems || cartItems.length === 0) && order.items && order.items.length > 0 && (
+      {!hasCartItems && !box && !product && order.items && order.items.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-700">
             Товары в заказе ({order.items.length}):
@@ -232,7 +235,7 @@ function AdminOrderItems({ order }: { order: Order }) {
       )}
 
       {/* Legacy box name support */}
-      {!box && !product && (!cartItems || cartItems.length === 0) && (!order.items || order.items.length === 0) && order.boxName && (
+      {!hasCartItems && !box && !product && (!order.items || order.items.length === 0) && order.boxName && (
         <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
           <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
             <ShoppingBag className="w-8 h-8 text-gray-400" />
@@ -253,7 +256,7 @@ function AdminOrderItems({ order }: { order: Order }) {
       )}
 
       {/* No items found */}
-      {!box && !product && (!cartItems || cartItems.length === 0) && (!order.items || order.items.length === 0) && !order.boxName && (
+      {!hasCartItems && !box && !product && (!order.items || order.items.length === 0) && !order.boxName && (
         <div className="text-center py-8">
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-2">Информация о составе заказа недоступна</p>

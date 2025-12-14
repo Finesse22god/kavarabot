@@ -667,21 +667,8 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
           // Build items list with sizes
           let itemsList = '\n🛍️ <b>Товары:</b>\n';
           
-          if (fullOrder?.boxId && fullOrder.box) {
-            // Single box order
-            itemsList += `• ${fullOrder.box.name}`;
-            if (fullOrder.selectedSize) {
-              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
-            }
-            itemsList += '\n';
-          } else if (fullOrder?.productId && fullOrder.product) {
-            // Single product order
-            itemsList += `• ${fullOrder.product.name}`;
-            if (fullOrder.selectedSize) {
-              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
-            }
-            itemsList += '\n';
-          } else if (fullOrder?.cartItems) {
+          // Check cartItems FIRST - cart orders have multiple items
+          if (fullOrder?.cartItems) {
             // Cart order with multiple items
             try {
               const cartItems = JSON.parse(fullOrder.cartItems);
@@ -719,6 +706,20 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
             } catch (e) {
               itemsList += '• Детали товаров недоступны\n';
             }
+          } else if (fullOrder?.boxId && fullOrder.box) {
+            // Single box order (no cart)
+            itemsList += `• ${fullOrder.box.name}`;
+            if (fullOrder.selectedSize) {
+              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+            }
+            itemsList += '\n';
+          } else if (fullOrder?.productId && fullOrder.product) {
+            // Single product order (no cart)
+            itemsList += `• ${fullOrder.product.name}`;
+            if (fullOrder.selectedSize) {
+              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+            }
+            itemsList += '\n';
           }
           
           // Build comprehensive admin notification with all order details
