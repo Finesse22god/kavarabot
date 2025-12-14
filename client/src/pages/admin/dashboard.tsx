@@ -1155,7 +1155,7 @@ export default function AdminDashboard() {
 
             {/* Notifications Tab */}
             <TabsContent value="notifications">
-              <NotificationsTab adminToken={adminToken || ''} />
+              <NotificationsTab adminToken={localStorage.getItem('adminToken') || ''} />
             </TabsContent>
 
             {/* Management Tab */}
