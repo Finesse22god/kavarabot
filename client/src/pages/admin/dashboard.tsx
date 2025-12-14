@@ -631,13 +631,13 @@ export default function AdminDashboard() {
 
           {/* Main Content */}
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="orders">Заказы</TabsTrigger>
-              <TabsTrigger value="users">Пользователи</TabsTrigger>
-              <TabsTrigger value="products">Товары</TabsTrigger>
-              <TabsTrigger value="boxes">Боксы</TabsTrigger>
-              <TabsTrigger value="inventory">Остатки</TabsTrigger>
-              <TabsTrigger value="management">Управление</TabsTrigger>
+            <TabsList className="flex w-full overflow-x-auto h-auto p-1 gap-1">
+              <TabsTrigger value="orders" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3">Заказы</TabsTrigger>
+              <TabsTrigger value="users" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3">Пользователи</TabsTrigger>
+              <TabsTrigger value="products" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3">Товары</TabsTrigger>
+              <TabsTrigger value="boxes" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3">Боксы</TabsTrigger>
+              <TabsTrigger value="inventory" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3">Остатки</TabsTrigger>
+              <TabsTrigger value="management" className="flex-shrink-0 text-xs sm:text-sm px-2 sm:px-3">Управление</TabsTrigger>
             </TabsList>
 
             {/* Orders Tab */}
