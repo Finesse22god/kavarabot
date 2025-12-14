@@ -38,6 +38,25 @@ export default function ProductCard({
   
   const hasSizes = parsedSizes && Array.isArray(parsedSizes) && parsedSizes.length > 0;
 
+  // Проверка наличия на складе
+  const inventory = product.inventory as Record<string, number> | null | undefined;
+  
+  // Получить доступные размеры (с остатком > 0)
+  const getAvailableSizes = () => {
+    if (!hasSizes || !parsedSizes) return [];
+    if (!inventory) return parsedSizes; // Если инвентарь не настроен, все размеры доступны
+    return parsedSizes.filter((size: string) => (inventory[size] || 0) > 0);
+  };
+  
+  const availableSizes = getAvailableSizes();
+  const hasAvailableStock = availableSizes.length > 0;
+  
+  // Проверка доступности конкретного размера
+  const isSizeAvailable = (size: string) => {
+    if (!inventory) return true; // Если инвентарь не настроен, размер доступен
+    return (inventory[size] || 0) > 0;
+  };
+
   const handleCardClick = () => {
     if (!isComingSoon) {
       hapticFeedback.impact('light');
@@ -47,6 +66,12 @@ export default function ProductCard({
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Проверка наличия товара
+    if (!hasAvailableStock) {
+      return;
+    }
+    
     hapticFeedback.impact('medium');
     if (hasSizes && !selectedSize) {
       setShowSizes(true);
@@ -59,6 +84,12 @@ export default function ProductCard({
 
   const handleSizeSelect = (e: React.MouseEvent, size: string) => {
     e.stopPropagation();
+    
+    // Не позволять выбирать размер без остатка
+    if (!isSizeAvailable(size)) {
+      return;
+    }
+    
     hapticFeedback.selection();
     setSelectedSize(size);
     setShowSizes(false);
@@ -117,17 +148,28 @@ export default function ProductCard({
           <div className="mb-3 p-3 bg-gray-50 rounded-xl" onClick={(e) => e.stopPropagation()}>
             <p className="text-xs font-semibold text-gray-700 mb-2">ВЫБЕРИТЕ РАЗМЕР:</p>
             <div className="grid grid-cols-5 gap-2">
-              {parsedSizes.map((size: string) => (
-                <button
-                  key={size}
-                  onClick={(e) => handleSizeSelect(e, size)}
-                  className="border-2 border-gray-300 hover:border-black hover:bg-black hover:text-white rounded-lg py-2 text-sm font-bold transition-all"
-                  data-testid={`button-size-${size.toLowerCase()}-${product.id}`}
-                >
-                  {size}
-                </button>
-              ))}
+              {parsedSizes.map((size: string) => {
+                const available = isSizeAvailable(size);
+                return (
+                  <button
+                    key={size}
+                    onClick={(e) => handleSizeSelect(e, size)}
+                    disabled={!available}
+                    className={`border-2 rounded-lg py-2 text-sm font-bold transition-all ${
+                      available 
+                        ? "border-gray-300 hover:border-black hover:bg-black hover:text-white" 
+                        : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed line-through"
+                    }`}
+                    data-testid={`button-size-${size.toLowerCase()}-${product.id}`}
+                  >
+                    {size}
+                  </button>
+                );
+              })}
             </div>
+            {!hasAvailableStock && (
+              <p className="text-xs text-red-500 mt-2 text-center">Нет в наличии</p>
+            )}
           </div>
         )}
         
@@ -141,6 +183,17 @@ export default function ProductCard({
             data-testid={`button-notify-${product.id}`}
           >
             УВЕДОМИТЬ О ПОСТУПЛЕНИИ
+          </button>
+        ) : !hasAvailableStock ? (
+          <button 
+            className="w-full border-2 border-gray-300 text-gray-400 py-3 font-semibold tracking-wide cursor-not-allowed rounded-xl"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNotify?.(product);
+            }}
+            data-testid={`button-out-of-stock-${product.id}`}
+          >
+            НЕТ В НАЛИЧИИ
           </button>
         ) : (
           <div className="flex gap-2">

@@ -146,6 +146,31 @@ export default function ProductDetail() {
   
   const hasSizes = parsedSizes && Array.isArray(parsedSizes) && parsedSizes.length > 0;
 
+  // Проверка наличия на складе
+  const inventory = product.inventory as Record<string, number> | null | undefined;
+  
+  // Получить доступные размеры (с остатком > 0)
+  const getAvailableSizes = () => {
+    if (!hasSizes || !parsedSizes) return [];
+    if (!inventory) return parsedSizes; // Если инвентарь не настроен, все размеры доступны
+    return parsedSizes.filter((size: string) => (inventory[size] || 0) > 0);
+  };
+  
+  const availableSizes = getAvailableSizes();
+  const hasAvailableStock = availableSizes.length > 0;
+  
+  // Проверка доступности конкретного размера
+  const isSizeAvailable = (size: string) => {
+    if (!inventory) return true; // Если инвентарь не настроен, размер доступен
+    return (inventory[size] || 0) > 0;
+  };
+  
+  // Получить остаток для размера
+  const getSizeStock = (size: string) => {
+    if (!inventory) return null;
+    return inventory[size] || 0;
+  };
+
   return (
     <div className="min-h-screen bg-white pb-40">
       <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
@@ -285,29 +310,61 @@ export default function ProductDetail() {
               </Dialog>
             </div>
             
-            <Tabs value={selectedSize} onValueChange={setSelectedSize} className="w-full">
+            <Tabs value={selectedSize} onValueChange={(value) => {
+              if (isSizeAvailable(value)) {
+                setSelectedSize(value);
+              }
+            }} className="w-full">
               <TabsList className="grid w-full grid-cols-5 gap-2 bg-transparent h-auto p-0">
-                {parsedSizes?.map((size) => (
-                  <TabsTrigger 
-                    key={size} 
-                    value={size}
-                    className="border-2 border-gray-300 data-[state=active]:border-black data-[state=active]:bg-black data-[state=active]:text-white rounded-lg py-3 font-bold transition-all hover:border-gray-400"
-                    data-testid={`tab-size-${size.toLowerCase()}`}
-                  >
-                    {size}
-                  </TabsTrigger>
-                ))}
+                {parsedSizes?.map((size) => {
+                  const available = isSizeAvailable(size);
+                  const stock = getSizeStock(size);
+                  return (
+                    <TabsTrigger 
+                      key={size} 
+                      value={size}
+                      disabled={!available}
+                      className={`border-2 rounded-lg py-3 font-bold transition-all relative ${
+                        available 
+                          ? "border-gray-300 data-[state=active]:border-black data-[state=active]:bg-black data-[state=active]:text-white hover:border-gray-400"
+                          : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed line-through"
+                      }`}
+                      data-testid={`tab-size-${size.toLowerCase()}`}
+                    >
+                      {size}
+                      {stock !== null && stock > 0 && stock <= 3 && (
+                        <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] px-1 rounded-full">
+                          {stock}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
-              {parsedSizes?.map((size) => (
-                <TabsContent key={size} value={size} className="mt-3">
-                  <div className="text-sm text-green-600 font-medium bg-green-50 p-2 rounded-lg">
-                    ✓ Размер {size} выбран
-                  </div>
-                </TabsContent>
-              ))}
+              {parsedSizes?.map((size) => {
+                const available = isSizeAvailable(size);
+                const stock = getSizeStock(size);
+                return (
+                  <TabsContent key={size} value={size} className="mt-3">
+                    {available ? (
+                      <div className="text-sm text-green-600 font-medium bg-green-50 p-2 rounded-lg">
+                        ✓ Размер {size} выбран {stock !== null && stock <= 3 && `(осталось ${stock} шт.)`}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-red-600 font-medium bg-red-50 p-2 rounded-lg">
+                        ✗ Размер {size} нет в наличии
+                      </div>
+                    )}
+                  </TabsContent>
+                );
+              })}
             </Tabs>
             
-            {!selectedSize && (
+            {!hasAvailableStock ? (
+              <div className="text-sm text-red-600 mt-3 bg-red-50 p-2 rounded-lg">
+                ✗ Товар закончился во всех размерах
+              </div>
+            ) : !selectedSize && (
               <div className="text-sm text-orange-600 mt-3 bg-orange-50 p-2 rounded-lg">
                 ⚠️ Выберите размер для добавления в корзину
               </div>
@@ -359,7 +416,7 @@ export default function ProductDetail() {
         <div className="mt-6 mb-24">
           <Button
             onClick={handleAddToCart}
-            disabled={addToCartMutation.isPending || Boolean(hasSizes && !selectedSize)}
+            disabled={addToCartMutation.isPending || Boolean(hasSizes && !selectedSize) || !hasAvailableStock}
             className="w-full bg-black text-white hover:bg-gray-800 py-6 text-lg font-bold tracking-wide disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed rounded-xl transition-all"
             data-testid="button-add-to-cart"
           >
@@ -368,6 +425,10 @@ export default function ProductDetail() {
                 <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
                 <span>ДОБАВЛЯЕМ...</span>
               </div>
+            ) : !hasAvailableStock ? (
+              <div className="flex items-center justify-center space-x-2">
+                <span>НЕТ В НАЛИЧИИ</span>
+              </div>
             ) : (
               <div className="flex items-center justify-center space-x-2">
                 <ShoppingCart className="w-5 h-5" />
@@ -375,7 +436,7 @@ export default function ProductDetail() {
               </div>
             )}
           </Button>
-          {hasSizes && !selectedSize && (
+          {hasSizes && !selectedSize && hasAvailableStock && (
             <p className="text-xs text-center text-gray-500 mt-2">
               Сначала выберите размер выше
             </p>

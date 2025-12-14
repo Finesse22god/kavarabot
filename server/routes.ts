@@ -2510,6 +2510,39 @@ router.post("/api/cart", async (req, res) => {
       return res.status(400).json({ error: "Invalid user ID format" });
     }
 
+    // Проверка наличия товара на складе
+    const isProduct = itemType === "product" || await storage.getProduct(itemId);
+    if (isProduct) {
+      const product = await storage.getProduct(itemId);
+      if (product && product.inventory) {
+        const inventory = product.inventory as Record<string, number>;
+        const size = selectedSize || 'default';
+        const availableQty = inventory[size] || 0;
+        
+        if (availableQty < quantity) {
+          return res.status(400).json({ 
+            error: "Недостаточно товара на складе",
+            message: `Размер ${size} недоступен или закончился`
+          });
+        }
+      }
+    } else {
+      // Проверка для боксов
+      const box = await storage.getBox(itemId);
+      if (box && box.inventory) {
+        const inventory = box.inventory as Record<string, number>;
+        const size = selectedSize || 'default';
+        const availableQty = inventory[size] || 0;
+        
+        if (availableQty < quantity) {
+          return res.status(400).json({ 
+            error: "Недостаточно товара на складе",
+            message: `Размер ${size} недоступен или закончился`
+          });
+        }
+      }
+    }
+
     const cartItem = await storage.addToCart(actualUserId, itemId, quantity, selectedSize, itemType);
     res.json(cartItem);
   } catch (error) {
