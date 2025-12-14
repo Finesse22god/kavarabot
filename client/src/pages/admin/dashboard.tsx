@@ -518,20 +518,21 @@ export default function AdminDashboard() {
     return <Broadcasts onBack={() => setShowBroadcasts(false)} />;
   }
 
+  const paidOrdersList = orders?.filter(o => o.status === 'paid') || [];
   const stats = {
     totalOrders: orders?.length || 0,
     totalUsers: users?.length || 0,
-    totalRevenue: orders?.reduce((sum, order) => sum + order.totalPrice, 0) || 0,
+    totalRevenue: paidOrdersList.reduce((sum, order) => sum + order.totalPrice, 0),
     activeBoxes: boxes?.length || 0,
     totalProducts: products?.length || 0,
     totalProductsInBoxes: boxProductsStats?.totalProductsInBoxes || 0,
     // Новая расширенная аналитика
     todaysOrders: orders?.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString()).length || 0,
-    todaysRevenue: orders?.filter(o => o.status === 'paid' && new Date(o.createdAt).toDateString() === new Date().toDateString())
-      .reduce((sum, o) => sum + o.totalPrice, 0) || 0,
-    paidOrders: orders?.filter(o => o.status === 'paid').length || 0,
+    todaysRevenue: paidOrdersList.filter(o => new Date(o.createdAt).toDateString() === new Date().toDateString())
+      .reduce((sum, o) => sum + o.totalPrice, 0),
+    paidOrders: paidOrdersList.length,
     pendingOrders: orders?.filter(o => o.status === 'pending').length || 0,
-    averageOrderValue: orders?.length > 0 ? (orders?.reduce((sum, order) => sum + order.totalPrice, 0) / orders?.length) : 0
+    averageOrderValue: paidOrdersList.length > 0 ? (paidOrdersList.reduce((sum, order) => sum + order.totalPrice, 0) / paidOrdersList.length) : 0
   };
 
   return (
