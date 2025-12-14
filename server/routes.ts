@@ -2738,13 +2738,19 @@ async function processReminders() {
           if (user?.telegramId) {
             // Send Telegram message
             try {
+              const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'KavaraBot';
               await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   chat_id: user.telegramId,
                   text: setting.messageTemplate,
-                  parse_mode: 'HTML'
+                  parse_mode: 'HTML',
+                  reply_markup: {
+                    inline_keyboard: [[
+                      { text: "🛒 Перейти в корзину", url: `https://t.me/${botUsername}?startapp=cart` }
+                    ]]
+                  }
                 })
               });
               
@@ -2787,13 +2793,19 @@ async function processReminders() {
               const message = setting.messageTemplate.replace("{orderNumber}", order.orderNumber);
               
               try {
+                const botUsername = process.env.TELEGRAM_BOT_USERNAME || 'KavaraBot';
                 await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     chat_id: user.telegramId,
                     text: `${message}\n\nЗаказ №${order.orderNumber}`,
-                    parse_mode: 'HTML'
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                      inline_keyboard: [[
+                        { text: "💳 Оплатить заказ", url: `https://t.me/${botUsername}?startapp=profile` }
+                      ]]
+                    }
                   })
                 });
                 
