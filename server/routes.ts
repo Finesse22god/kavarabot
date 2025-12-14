@@ -1406,7 +1406,7 @@ router.get("/api/admin/products", verifyAdminToken, async (req, res) => {
 // Multer для Excel файлов
 const excelUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
