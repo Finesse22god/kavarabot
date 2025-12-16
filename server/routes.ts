@@ -570,6 +570,9 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
           // Also save the payment ID to the order
           await storage.updateOrderPaymentId(order.id, paymentId);
           
+          // Update status in RetailCRM (async, non-blocking)
+          updateOrderStatusInRetailCRMSafe(order.orderNumber, "paid");
+          
           // Award promo code owner points ONLY after successful payment
           if (order.promoCodeId && order.userId) {
             try {
@@ -1028,12 +1031,37 @@ router.post("/api/orders", async (req, res) => {
       return createdOrder;
     });
 
+    // Sync order to RetailCRM (async, don't wait for result)
+    syncOrderToRetailCRMSafe(order);
+
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);
     res.status(500).json({ error: error instanceof Error ? error.message : "Internal server error" });
   }
 });
+
+// Safe wrapper for RetailCRM sync (doesn't block order creation)
+// Note: These functions are defined at the end of the file after syncOrderToRetailCRM
+async function syncOrderToRetailCRMSafe(order: any) {
+  setTimeout(async () => {
+    try {
+      await syncOrderToRetailCRM(order);
+    } catch (error) {
+      console.error("[RetailCRM] Sync failed (non-blocking):", error);
+    }
+  }, 100);
+}
+
+async function updateOrderStatusInRetailCRMSafe(orderNumber: string, status: string) {
+  setTimeout(async () => {
+    try {
+      await updateOrderStatusInRetailCRM(orderNumber, status);
+    } catch (error) {
+      console.error("[RetailCRM] Status update failed (non-blocking):", error);
+    }
+  }, 100);
+}
 
 // Notifications
 router.post("/api/notifications", async (req, res) => {
@@ -3114,5 +3142,244 @@ setInterval(async () => {
     console.error("Error in scheduled reminder check:", error);
   }
 }, 60 * 60 * 1000); // Every hour
+
+// ============= RETAILCRM INTEGRATION =============
+import { RetailCRMSettings } from "./entities/RetailCRMSettings";
+import { retailCRM, mapKavaraOrderToRetailCRM, mapKavaraUserToRetailCRM } from "./retailcrm";
+
+// Initialize RetailCRM from database settings
+async function initRetailCRM() {
+  try {
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    let settings = await repo.findOne({ where: {} });
+    
+    if (!settings) {
+      settings = repo.create({
+        enabled: false,
+        syncedOrdersCount: 0,
+        syncedCustomersCount: 0,
+      });
+      await repo.save(settings);
+    }
+    
+    if (settings.enabled && settings.apiUrl && settings.apiKey) {
+      retailCRM.configure({
+        apiUrl: settings.apiUrl,
+        apiKey: settings.apiKey,
+        siteCode: settings.siteCode || undefined,
+      });
+      console.log("[RetailCRM] Integration initialized");
+    }
+  } catch (error) {
+    console.error("[RetailCRM] Failed to initialize:", error);
+  }
+}
+
+// Initialize after DB connection
+setTimeout(initRetailCRM, 3000);
+
+// Get RetailCRM settings
+router.get("/api/admin/retailcrm/settings", verifyAdminToken, async (req, res) => {
+  try {
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    let settings = await repo.findOne({ where: {} });
+    
+    if (!settings) {
+      settings = repo.create({
+        enabled: false,
+        syncedOrdersCount: 0,
+        syncedCustomersCount: 0,
+      });
+      await repo.save(settings);
+    }
+    
+    res.json({
+      enabled: settings.enabled,
+      apiUrl: settings.apiUrl || "",
+      siteCode: settings.siteCode || "",
+      hasApiKey: !!settings.apiKey,
+      syncedOrdersCount: settings.syncedOrdersCount,
+      syncedCustomersCount: settings.syncedCustomersCount,
+      lastSyncAt: settings.lastSyncAt,
+    });
+  } catch (error) {
+    console.error("Error fetching RetailCRM settings:", error);
+    res.status(500).json({ error: "Failed to fetch settings" });
+  }
+});
+
+// Update RetailCRM settings
+router.put("/api/admin/retailcrm/settings", verifyAdminToken, async (req, res) => {
+  try {
+    const { enabled, apiUrl, apiKey, siteCode } = req.body;
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    
+    let settings = await repo.findOne({ where: {} });
+    if (!settings) {
+      settings = repo.create({});
+    }
+    
+    if (enabled !== undefined) settings.enabled = enabled;
+    if (apiUrl !== undefined) settings.apiUrl = apiUrl;
+    if (apiKey !== undefined && apiKey !== "") settings.apiKey = apiKey;
+    if (siteCode !== undefined) settings.siteCode = siteCode;
+    
+    await repo.save(settings);
+    
+    if (settings.enabled && settings.apiUrl && settings.apiKey) {
+      retailCRM.configure({
+        apiUrl: settings.apiUrl,
+        apiKey: settings.apiKey,
+        siteCode: settings.siteCode || undefined,
+      });
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error updating RetailCRM settings:", error);
+    res.status(500).json({ error: "Failed to update settings" });
+  }
+});
+
+// Test RetailCRM connection
+router.post("/api/admin/retailcrm/test", verifyAdminToken, async (req, res) => {
+  try {
+    const { apiUrl, apiKey } = req.body;
+    
+    if (!apiUrl || !apiKey) {
+      return res.status(400).json({ error: "API URL and API Key required" });
+    }
+    
+    retailCRM.configure({ apiUrl, apiKey });
+    const result = await retailCRM.testConnection();
+    
+    res.json(result);
+  } catch (error) {
+    console.error("Error testing RetailCRM connection:", error);
+    res.status(500).json({ success: false, message: "Connection test failed" });
+  }
+});
+
+// Sync order to RetailCRM
+async function syncOrderToRetailCRM(order: any) {
+  try {
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await repo.findOne({ where: {} });
+    
+    if (!settings?.enabled || !retailCRM.isConfigured()) {
+      return;
+    }
+    
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const user = order.userId ? await userRepo.findOne({ where: { id: order.userId } }) : null;
+    
+    if (user) {
+      const retailCustomer = mapKavaraUserToRetailCRM(user);
+      await retailCRM.createOrUpdateCustomer(retailCustomer);
+      settings.syncedCustomersCount++;
+    }
+    
+    let items: any[] = [];
+    
+    if (order.cartItems && Array.isArray(order.cartItems)) {
+      items = order.cartItems.map((item: any) => ({
+        name: item.name || item.productName || "Товар",
+        price: item.price || 0,
+        quantity: item.quantity || 1,
+        size: item.size || item.selectedSize,
+      }));
+    } else if (order.box) {
+      items = [{
+        name: order.box.name,
+        price: order.box.price,
+        quantity: 1,
+      }];
+    } else if (order.product) {
+      items = [{
+        name: order.product.name,
+        price: order.product.price,
+        quantity: 1,
+        size: order.selectedSize,
+      }];
+    }
+    
+    const retailOrder = mapKavaraOrderToRetailCRM(order, user, items);
+    await retailCRM.createOrder(retailOrder);
+    
+    settings.syncedOrdersCount++;
+    settings.lastSyncAt = new Date();
+    await repo.save(settings);
+    
+    console.log(`[RetailCRM] Order ${order.orderNumber} synced successfully`);
+  } catch (error) {
+    console.error("[RetailCRM] Failed to sync order:", error);
+  }
+}
+
+// Update order status in RetailCRM
+async function updateOrderStatusInRetailCRM(orderNumber: string, status: string) {
+  try {
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await repo.findOne({ where: {} });
+    
+    if (!settings?.enabled || !retailCRM.isConfigured()) {
+      return;
+    }
+    
+    const retailStatus = status === "paid" ? "complete" : status === "cancelled" ? "cancel-other" : "new";
+    await retailCRM.updateOrderStatus(orderNumber, retailStatus);
+    
+    console.log(`[RetailCRM] Order ${orderNumber} status updated to ${retailStatus}`);
+  } catch (error) {
+    console.error("[RetailCRM] Failed to update order status:", error);
+  }
+}
+
+// Manual sync existing orders to RetailCRM
+router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, res) => {
+  try {
+    const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await settingsRepo.findOne({ where: {} });
+    
+    if (!settings?.enabled || !retailCRM.isConfigured()) {
+      return res.status(400).json({ error: "RetailCRM не настроен" });
+    }
+    
+    const orderRepo = AppDataSource.getRepository(OrderEntity);
+    const orders = await orderRepo.find({
+      relations: ["user", "box", "product"],
+      order: { createdAt: "DESC" },
+      take: 100,
+    });
+    
+    let synced = 0;
+    let failed = 0;
+    
+    for (const order of orders) {
+      try {
+        await syncOrderToRetailCRM(order);
+        synced++;
+      } catch (e) {
+        failed++;
+        console.error(`Failed to sync order ${order.orderNumber}:`, e);
+      }
+    }
+    
+    settings.lastSyncAt = new Date();
+    await settingsRepo.save(settings);
+    
+    res.json({ 
+      success: true, 
+      synced, 
+      failed,
+      message: `Синхронизировано ${synced} заказов` + (failed > 0 ? `, ошибок: ${failed}` : "")
+    });
+  } catch (error) {
+    console.error("Error syncing orders:", error);
+    res.status(500).json({ error: "Sync failed" });
+  }
+});
+
+export { syncOrderToRetailCRM, updateOrderStatusInRetailCRM };
 
 export default router;
