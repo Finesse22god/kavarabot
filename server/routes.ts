@@ -3219,6 +3219,18 @@ router.put("/api/admin/retailcrm/settings", verifyAdminToken, async (req, res) =
       settings = repo.create({});
     }
     
+    // Validate required fields when enabling integration
+    if (enabled === true) {
+      const finalApiUrl = apiUrl || settings.apiUrl;
+      const finalApiKey = apiKey || settings.apiKey;
+      
+      if (!finalApiUrl || !finalApiKey) {
+        return res.status(400).json({ 
+          error: "API URL и API Key обязательны для включения интеграции" 
+        });
+      }
+    }
+    
     if (enabled !== undefined) settings.enabled = enabled;
     if (apiUrl !== undefined) settings.apiUrl = apiUrl;
     if (apiKey !== undefined && apiKey !== "") settings.apiKey = apiKey;
@@ -3244,13 +3256,19 @@ router.put("/api/admin/retailcrm/settings", verifyAdminToken, async (req, res) =
 // Test RetailCRM connection
 router.post("/api/admin/retailcrm/test", verifyAdminToken, async (req, res) => {
   try {
-    const { apiUrl, apiKey } = req.body;
+    // Use saved settings if no params provided
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await repo.findOne({ where: {} });
     
-    if (!apiUrl || !apiKey) {
-      return res.status(400).json({ error: "API URL and API Key required" });
+    if (!settings?.apiUrl || !settings?.apiKey) {
+      return res.status(400).json({ success: false, message: "API URL и API Key не настроены" });
     }
     
-    retailCRM.configure({ apiUrl, apiKey });
+    retailCRM.configure({ 
+      apiUrl: settings.apiUrl, 
+      apiKey: settings.apiKey,
+      siteCode: settings.siteCode || undefined
+    });
     const result = await retailCRM.testConnection();
     
     res.json(result);

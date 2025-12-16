@@ -1,0 +1,339 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+
+interface RetailCRMSettings {
+  enabled: boolean;
+  apiUrl: string;
+  hasApiKey: boolean;
+  siteCode: string;
+  syncedOrdersCount: number;
+  syncedCustomersCount: number;
+  lastSyncAt: string | null;
+}
+
+interface FormData {
+  isEnabled: boolean;
+  apiUrl: string;
+  apiKey: string;
+  siteCode: string;
+}
+
+interface RetailCRMSettingsProps {
+  adminToken: string;
+  onBack?: () => void;
+}
+
+export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps) {
+  const { toast } = useToast();
+  const [formData, setFormData] = useState<FormData>({
+    isEnabled: false,
+    apiUrl: '',
+    apiKey: '',
+    siteCode: ''
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const { data: settings, isLoading } = useQuery<RetailCRMSettings>({
+    queryKey: ['/api/admin/retailcrm/settings'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/retailcrm/settings', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error('Failed to fetch settings');
+      }
+      return response.json();
+    }
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      const response = await fetch('/api/admin/retailcrm/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          enabled: data.isEnabled,
+          apiUrl: data.apiUrl,
+          apiKey: data.apiKey,
+          siteCode: data.siteCode
+        })
+      });
+      if (!response.ok) throw new Error('Failed to save settings');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/retailcrm/settings'] });
+      toast({ title: "Настройки сохранены" });
+      setIsEditing(false);
+    },
+    onError: (error: Error) => {
+      toast({ 
+        title: "Ошибка сохранения", 
+        description: error.message || "Не удалось сохранить настройки",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const testConnection = async () => {
+    setIsTesting(true);
+    try {
+      const response = await fetch('/api/admin/retailcrm/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({})
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast({ title: "Подключение успешно", description: "RetailCRM API доступен" });
+      } else {
+        toast({ 
+          title: "Ошибка подключения", 
+          description: result.message || "Не удалось подключиться к RetailCRM",
+          variant: "destructive" 
+        });
+      }
+    } catch {
+      toast({ title: "Ошибка подключения", variant: "destructive" });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setFormData({
+      isEnabled: settings?.enabled ?? false,
+      apiUrl: settings?.apiUrl ?? '',
+      apiKey: '',
+      siteCode: settings?.siteCode ?? 'default'
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    saveMutation.mutate(formData);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6" data-testid="retailcrm-settings">
+      <div className="flex items-center gap-4">
+        {onBack && (
+          <Button variant="ghost" size="sm" onClick={onBack} data-testid="button-back">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Назад
+          </Button>
+        )}
+        <div>
+          <h2 className="text-2xl font-bold">RetailCRM</h2>
+          <p className="text-gray-500">Интеграция с RetailCRM для синхронизации заказов</p>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Settings className="h-5 w-5 text-blue-600" />
+              <div>
+                <CardTitle>Настройки интеграции</CardTitle>
+                <CardDescription>API ключ и URL для подключения к RetailCRM</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {settings?.enabled ? (
+                <Badge variant="default" className="bg-green-600">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Активно
+                </Badge>
+              ) : (
+                <Badge variant="secondary">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  Отключено
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {!isEditing ? (
+            <>
+              <div className="grid gap-4">
+                <div>
+                  <Label className="text-gray-500">API URL</Label>
+                  <p className="font-mono text-sm">{settings?.apiUrl || 'Не настроен'}</p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">API Key</Label>
+                  <p className="font-mono text-sm">
+                    {settings?.hasApiKey ? '••••••••••••' : 'Не настроен'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-gray-500">Код сайта</Label>
+                  <p className="font-mono text-sm">{settings?.siteCode || 'default'}</p>
+                </div>
+                {settings?.lastSyncAt && (
+                  <div>
+                    <Label className="text-gray-500">Последняя синхронизация</Label>
+                    <p className="text-sm">{new Date(settings.lastSyncAt).toLocaleString('ru-RU')}</p>
+                  </div>
+                )}
+                {(settings?.syncedOrdersCount || settings?.syncedCustomersCount) && (
+                  <div className="flex gap-4">
+                    <div>
+                      <Label className="text-gray-500">Синхр. заказов</Label>
+                      <p className="text-sm font-medium">{settings?.syncedOrdersCount || 0}</p>
+                    </div>
+                    <div>
+                      <Label className="text-gray-500">Синхр. клиентов</Label>
+                      <p className="text-sm font-medium">{settings?.syncedCustomersCount || 0}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button onClick={handleStartEdit} data-testid="button-edit-settings">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Редактировать
+                </Button>
+                {settings?.apiUrl && settings?.hasApiKey && (
+                  <Button 
+                    variant="outline" 
+                    onClick={testConnection}
+                    disabled={isTesting}
+                    data-testid="button-test-connection"
+                  >
+                    {isTesting ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <TestTube className="h-4 w-4 mr-2" />
+                    )}
+                    Проверить подключение
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="enabled">Включить интеграцию</Label>
+                  <Switch
+                    id="enabled"
+                    checked={formData.isEnabled ?? false}
+                    onCheckedChange={(checked) => setFormData({ ...formData, isEnabled: checked })}
+                    data-testid="switch-enabled"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="apiUrl">API URL</Label>
+                  <Input
+                    id="apiUrl"
+                    placeholder="https://your-store.retailcrm.ru"
+                    value={formData.apiUrl ?? ''}
+                    onChange={(e) => setFormData({ ...formData, apiUrl: e.target.value })}
+                    data-testid="input-api-url"
+                  />
+                  <p className="text-xs text-gray-500">URL вашего RetailCRM (без /api/v5)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="apiKey">API Key</Label>
+                  <Input
+                    id="apiKey"
+                    type="password"
+                    placeholder="Введите API ключ"
+                    value={formData.apiKey ?? ''}
+                    onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                    data-testid="input-api-key"
+                  />
+                  <p className="text-xs text-gray-500">API ключ из настроек RetailCRM</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="siteCode">Код сайта</Label>
+                  <Input
+                    id="siteCode"
+                    placeholder="default"
+                    value={formData.siteCode ?? ''}
+                    onChange={(e) => setFormData({ ...formData, siteCode: e.target.value })}
+                    data-testid="input-site-code"
+                  />
+                  <p className="text-xs text-gray-500">Код сайта/магазина в RetailCRM (если используется)</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleSave}
+                  disabled={saveMutation.isPending}
+                  data-testid="button-save-settings"
+                >
+                  {saveMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Сохранить
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  data-testid="button-cancel"
+                >
+                  Отмена
+                </Button>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Как это работает</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm text-gray-600">
+          <p>После настройки интеграции:</p>
+          <ul className="list-disc list-inside space-y-2">
+            <li>Новые заказы автоматически отправляются в RetailCRM</li>
+            <li>При оплате заказа статус обновляется в RetailCRM</li>
+            <li>Клиенты создаются/обновляются автоматически</li>
+          </ul>
+          <p className="text-amber-600">
+            Интеграция не блокирует работу магазина — если RetailCRM недоступен, заказы все равно создаются.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
