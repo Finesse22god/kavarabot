@@ -70,7 +70,11 @@ class RetailCRMService {
       throw new Error("RetailCRM not configured");
     }
 
-    const url = `${this.config.apiUrl}/api/v5/${endpoint}`;
+    // Clean up URL - remove trailing slash if present
+    const baseUrl = this.config.apiUrl.replace(/\/+$/, '');
+    const url = `${baseUrl}/api/v5/${endpoint}`;
+    console.log(`[RetailCRM] Request: ${method} ${url}`);
+    
     const headers: Record<string, string> = {
       "X-API-KEY": this.config.apiKey,
     };
@@ -93,12 +97,21 @@ class RetailCRMService {
       
       try {
         const response = await fetch(fullUrl, options);
-        const result = await response.json();
+        const text = await response.text();
+        console.log(`[RetailCRM] Response status: ${response.status}`);
+        
+        // Check if response is HTML (error page)
+        if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+          console.error(`[RetailCRM] Received HTML instead of JSON. Check API URL.`);
+          throw new Error('Неверный API URL или API недоступен');
+        }
+        
+        const result = JSON.parse(text);
         if (!response.ok || !result.success) {
           console.error(`[RetailCRM] Error:`, result);
         }
         return result;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[RetailCRM] Request failed:`, error);
         throw error;
       }
@@ -121,12 +134,21 @@ class RetailCRMService {
 
       try {
         const response = await fetch(url, options);
-        const result = await response.json();
+        const text = await response.text();
+        console.log(`[RetailCRM] Response status: ${response.status}`);
+        
+        // Check if response is HTML (error page)
+        if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+          console.error(`[RetailCRM] Received HTML instead of JSON. Check API URL.`);
+          throw new Error('Неверный API URL или API недоступен');
+        }
+        
+        const result = JSON.parse(text);
         if (!response.ok || !result.success) {
           console.error(`[RetailCRM] Error:`, result);
         }
         return result;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[RetailCRM] Request failed:`, error);
         throw error;
       }
