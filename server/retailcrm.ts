@@ -75,14 +75,14 @@ class RetailCRMService {
     const url = `${baseUrl}/api/v5/${endpoint}`;
     console.log(`[RetailCRM] Request: ${method} ${url}`);
     
-    const headers: Record<string, string> = {
-      "X-API-KEY": this.config.apiKey,
-    };
+    const headers: Record<string, string> = {};
 
     let options: any = { method, headers };
 
     if (method === "GET") {
       const params = new URLSearchParams();
+      // Add API key as query parameter (RetailCRM requirement)
+      params.append("apiKey", this.config.apiKey);
       if (data) {
         for (const [key, value] of Object.entries(data)) {
           if (typeof value === "object") {
@@ -92,7 +92,7 @@ class RetailCRMService {
           }
         }
       }
-      const fullUrl = params.toString() ? `${url}?${params}` : url;
+      const fullUrl = `${url}?${params}`;
       options = { method, headers };
       
       try {
@@ -118,6 +118,8 @@ class RetailCRMService {
     } else {
       headers["Content-Type"] = "application/x-www-form-urlencoded";
       const formData = new URLSearchParams();
+      // Add API key as form parameter (RetailCRM requirement)
+      formData.append("apiKey", this.config.apiKey);
       if (data) {
         for (const [key, value] of Object.entries(data)) {
           if (typeof value === "object") {
@@ -246,11 +248,13 @@ class RetailCRMService {
     }
 
     try {
-      const result = await this.request("GET", "credentials");
+      // Use api-versions endpoint for connection test (lightweight, always available)
+      const result = await this.request("GET", "api-versions");
       if (result.success) {
+        const versions = result.versions?.join(", ") || "v5";
         return { 
           success: true, 
-          message: `Подключено! Доступные разрешения: ${result.scopes?.join(", ") || "не указаны"}` 
+          message: `Подключено! Доступные версии API: ${versions}` 
         };
       } else {
         return { 
