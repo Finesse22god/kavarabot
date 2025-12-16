@@ -3253,6 +3253,58 @@ router.put("/api/admin/retailcrm/settings", verifyAdminToken, async (req, res) =
   }
 });
 
+// Sync all customers to RetailCRM
+router.post("/api/admin/retailcrm/sync-customers", verifyAdminToken, async (req, res) => {
+  try {
+    const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await settingsRepo.findOne({ where: {} });
+    
+    if (!settings?.enabled || !settings?.apiUrl || !settings?.apiKey) {
+      return res.status(400).json({ success: false, message: "RetailCRM не настроен или отключён" });
+    }
+    
+    retailCRM.configure({ 
+      apiUrl: settings.apiUrl, 
+      apiKey: settings.apiKey,
+      siteCode: settings.siteCode || undefined
+    });
+    
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const users = await userRepo.find();
+    
+    let synced = 0;
+    let errors = 0;
+    
+    for (const user of users) {
+      try {
+        const retailCustomer = mapKavaraUserToRetailCRM(user);
+        await retailCRM.createOrUpdateCustomer(retailCustomer);
+        synced++;
+      } catch (error) {
+        console.error(`[RetailCRM] Failed to sync user ${user.telegramId}:`, error);
+        errors++;
+      }
+    }
+    
+    // Update stats
+    settings.syncedCustomersCount = synced;
+    settings.lastSyncAt = new Date();
+    await settingsRepo.save(settings);
+    
+    console.log(`[RetailCRM] Customers sync complete: ${synced} synced, ${errors} errors`);
+    
+    res.json({ 
+      success: true, 
+      message: `Синхронизировано: ${synced} клиентов${errors > 0 ? `, ошибок: ${errors}` : ''}`,
+      synced,
+      errors
+    });
+  } catch (error) {
+    console.error("Error syncing customers to RetailCRM:", error);
+    res.status(500).json({ success: false, message: "Ошибка синхронизации клиентов" });
+  }
+});
+
 // Test RetailCRM connection
 router.post("/api/admin/retailcrm/test", verifyAdminToken, async (req, res) => {
   try {

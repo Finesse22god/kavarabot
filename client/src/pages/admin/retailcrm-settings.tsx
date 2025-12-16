@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -42,6 +42,7 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isSyncingCustomers, setIsSyncingCustomers] = useState(false);
 
   const { data: settings, isLoading } = useQuery<RetailCRMSettings>({
     queryKey: ['/api/admin/retailcrm/settings'],
@@ -116,6 +117,34 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
       toast({ title: "Ошибка подключения", variant: "destructive" });
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const syncCustomers = async () => {
+    setIsSyncingCustomers(true);
+    try {
+      const response = await fetch('/api/admin/retailcrm/sync-customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast({ title: "Синхронизация завершена", description: result.message });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/retailcrm/settings'] });
+      } else {
+        toast({ 
+          title: "Ошибка синхронизации", 
+          description: result.message || "Не удалось синхронизировать клиентов",
+          variant: "destructive" 
+        });
+      }
+    } catch {
+      toast({ title: "Ошибка синхронизации", variant: "destructive" });
+    } finally {
+      setIsSyncingCustomers(false);
     }
   };
 
@@ -225,19 +254,36 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
                   Редактировать
                 </Button>
                 {settings?.apiUrl && settings?.hasApiKey && (
-                  <Button 
-                    variant="outline" 
-                    onClick={testConnection}
-                    disabled={isTesting}
-                    data-testid="button-test-connection"
-                  >
-                    {isTesting ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <TestTube className="h-4 w-4 mr-2" />
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={testConnection}
+                      disabled={isTesting}
+                      data-testid="button-test-connection"
+                    >
+                      {isTesting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <TestTube className="h-4 w-4 mr-2" />
+                      )}
+                      Проверить подключение
+                    </Button>
+                    {settings?.enabled && (
+                      <Button 
+                        variant="outline" 
+                        onClick={syncCustomers}
+                        disabled={isSyncingCustomers}
+                        data-testid="button-sync-customers"
+                      >
+                        {isSyncingCustomers ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Users className="h-4 w-4 mr-2" />
+                        )}
+                        Синхр. клиентов
+                      </Button>
                     )}
-                    Проверить подключение
-                  </Button>
+                  </>
                 )}
               </div>
             </>
