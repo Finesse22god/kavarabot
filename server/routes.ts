@@ -3175,8 +3175,8 @@ async function initRetailCRM() {
   }
 }
 
-// Initialize after DB connection
-setTimeout(initRetailCRM, 3000);
+// Export for calling from database.ts after DB is initialized
+export { initRetailCRM };
 
 // Get RetailCRM settings
 router.get("/api/admin/retailcrm/settings", verifyAdminToken, async (req, res) => {

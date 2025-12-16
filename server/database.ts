@@ -68,6 +68,16 @@ export async function initializeDatabase() {
     seedDatabase().catch(error => {
       console.error("Database seeding failed (non-critical):", error);
     });
+    
+    // Initialize RetailCRM integration after DB is ready
+    setTimeout(async () => {
+      try {
+        const { initRetailCRM } = await import("./routes");
+        await initRetailCRM();
+      } catch (error) {
+        console.error("[RetailCRM] Failed to initialize:", error);
+      }
+    }, 1000);
   } catch (error) {
     console.error("Database connection failed:", error);
     throw error;

@@ -43,6 +43,7 @@ The user interface is optimized for Telegram WebApp compatibility, featuring sim
 - **Order Data Enhancement**: `telegramUsername` field added to orders schema.
 - **Analytics**: Improved revenue calculation (paid orders only) and accurate date filters.
 - **Profile Loyalty & Promo Code Display**: Enhanced user profile with loyalty stats, available points, total earned/spent, referral count, and owned promo code details with usage statistics.
+- **RetailCRM Integration**: Optional integration with RetailCRM for order synchronization. Configurable via admin panel with API URL, key, and site code. Orders are automatically synced on creation and status updated on payment. Non-blocking implementation ensures order flow is never disrupted by RetailCRM issues.
 
 ## External Dependencies
 
@@ -51,3 +52,4 @@ The user interface is optimized for Telegram WebApp compatibility, featuring sim
 - **UI Framework**: Radix UI
 - **Payment Processing**: YooKassa (ЮKassa)
 - **Object Storage**: Timeweb Cloud S3 Storage (S3-compatible API)
+- **CRM**: RetailCRM (optional, configurable via admin panel)
