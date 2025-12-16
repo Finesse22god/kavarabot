@@ -248,13 +248,13 @@ class RetailCRMService {
     }
 
     try {
-      // Use api-versions endpoint for connection test (lightweight, always available)
-      const result = await this.request("GET", "api-versions");
+      // Use reference/sites endpoint for connection test - always available and lightweight
+      const result = await this.request("GET", "reference/sites");
       if (result.success) {
-        const versions = result.versions?.join(", ") || "v5";
+        const siteCount = Object.keys(result.sites || {}).length;
         return { 
           success: true, 
-          message: `Подключено! Доступные версии API: ${versions}` 
+          message: `Подключено! Найдено магазинов: ${siteCount}` 
         };
       } else {
         return { 
