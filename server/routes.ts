@@ -3354,6 +3354,7 @@ router.post("/api/admin/retailcrm/sync-customers", verifyAdminToken, async (req,
     });
     
     const userRepo = AppDataSource.getRepository(UserEntity);
+    const orderRepo = AppDataSource.getRepository(OrderEntity);
     const users = await userRepo.find();
     
     let synced = 0;
@@ -3361,7 +3362,11 @@ router.post("/api/admin/retailcrm/sync-customers", verifyAdminToken, async (req,
     
     for (const user of users) {
       try {
-        const retailCustomer = mapKavaraUserToRetailCRM(user);
+        const lastOrder = await orderRepo.findOne({ 
+          where: { userId: user.id },
+          order: { createdAt: "DESC" }
+        });
+        const retailCustomer = mapKavaraUserToRetailCRM(user, lastOrder);
         await retailCRM.createOrUpdateCustomer(retailCustomer);
         synced++;
       } catch (error) {
@@ -3457,7 +3462,7 @@ async function syncOrderToRetailCRM(order: any) {
     const user = order.userId ? await userRepo.findOne({ where: { id: order.userId } }) : null;
     
     if (user) {
-      const retailCustomer = mapKavaraUserToRetailCRM(user);
+      const retailCustomer = mapKavaraUserToRetailCRM(user, order);
       await retailCRM.createOrUpdateCustomer(retailCustomer);
       settings.syncedCustomersCount = (settings.syncedCustomersCount || 0) + 1;
     }

@@ -278,37 +278,41 @@ export function mapKavaraOrderToRetailCRM(
   user: any,
   items: any[]
 ): RetailCRMOrder {
+  const nameParts = (order.customerName || '').trim().split(/\s+/);
+  const firstName = nameParts[0] || user?.firstName || "";
+  const lastName = nameParts.slice(1).join(" ") || user?.lastName || "";
+
   const retailOrder: RetailCRMOrder = {
     externalId: order.orderNumber,
     number: order.orderNumber,
-    firstName: order.customerName?.split(" ")[0] || user?.firstName || "",
-    lastName: order.customerName?.split(" ").slice(1).join(" ") || user?.lastName || "",
+    firstName,
+    lastName,
     phone: order.customerPhone,
     email: order.customerEmail,
     status: mapKavaraStatusToRetailCRM(order.status),
     orderType: "telegram-bot",
     orderMethod: "telegram",
+    customer: user?.telegramId ? { externalId: `tg_${user.telegramId}` } : undefined,
     items: items.map((item) => ({
       productName: item.name,
       initialPrice: item.price,
       quantity: item.quantity || 1,
       properties: item.size ? [{ name: "Размер", value: item.size }] : [],
     })),
+    delivery: {
+      code: order.deliveryMethod === "courier" ? "courier" : order.deliveryMethod === "cdek" ? "cdek" : "self-delivery",
+    },
     customFields: {
-      telegram_id: user?.telegramId,
-      telegram_username: user?.username,
+      telegram_id: user?.telegramId ? String(user.telegramId) : undefined,
+      telegram_username: user?.username ? `@${user.username}` : undefined,
     },
   };
-
-  if (user?.telegramId) {
-    retailOrder.customer = { externalId: `tg_${user.telegramId}` };
-  }
 
   if (order.totalPrice) {
     retailOrder.payments = [
       {
         type: order.paymentMethod === "card" ? "bank-card" : "cash",
-        status: order.status === "paid" ? "paid" : "not-paid",
+        status: order.status === "paid" || order.status === "completed" || order.status === "shipped" || order.status === "delivered" ? "paid" : "not-paid",
         amount: order.totalPrice,
       },
     ];
@@ -329,21 +333,20 @@ export function mapKavaraStatusToRetailCRM(kavaraStatus: string): string {
   return statusMap[kavaraStatus] || "new";
 }
 
-export function mapKavaraUserToRetailCRM(user: any): RetailCRMCustomer {
-  const firstName = user.firstName || (user.username ? `@${user.username}` : `TG_${user.telegramId}`);
-  const lastName = user.lastName || '';
+export function mapKavaraUserToRetailCRM(user: any, orderData?: any): RetailCRMCustomer {
+  const firstName = user.firstName || (orderData?.customerName?.split(/\s+/)[0]) || (user.username ? `@${user.username}` : `TG_${user.telegramId}`);
+  const lastName = user.lastName || (orderData?.customerName?.split(/\s+/).slice(1).join(" ")) || '';
 
-  const commentParts: string[] = [];
-  if (user.username) commentParts.push(`Telegram: @${user.username}`);
-  commentParts.push(`Telegram ID: ${user.telegramId}`);
-  if (user.loyaltyPoints) commentParts.push(`Баллы лояльности: ${user.loyaltyPoints}`);
+  const phone = user.phone || orderData?.customerPhone;
+  const email = orderData?.customerEmail;
 
   return {
     externalId: `tg_${user.telegramId}`,
     firstName,
     lastName,
     patronymic: user.username ? `@${user.username}` : undefined,
-    phones: user.phone ? [{ number: user.phone }] : undefined,
+    email: email || undefined,
+    phones: phone ? [{ number: phone }] : undefined,
     customFields: {
       telegram_id: String(user.telegramId),
       telegram_username: user.username ? `@${user.username}` : '',
