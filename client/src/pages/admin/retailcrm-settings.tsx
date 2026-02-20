@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users } from "lucide-react";
+import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -43,6 +43,7 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
   const [isEditing, setIsEditing] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isSyncingCustomers, setIsSyncingCustomers] = useState(false);
+  const [isSyncingOrders, setIsSyncingOrders] = useState(false);
 
   const { data: settings, isLoading } = useQuery<RetailCRMSettings>({
     queryKey: ['/api/admin/retailcrm/settings'],
@@ -145,6 +146,34 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
       toast({ title: "Ошибка синхронизации", variant: "destructive" });
     } finally {
       setIsSyncingCustomers(false);
+    }
+  };
+
+  const syncOrders = async () => {
+    setIsSyncingOrders(true);
+    try {
+      const response = await fetch('/api/admin/retailcrm/sync-orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast({ title: "Синхронизация завершена", description: result.message });
+        queryClient.invalidateQueries({ queryKey: ['/api/admin/retailcrm/settings'] });
+      } else {
+        toast({ 
+          title: "Ошибка синхронизации", 
+          description: result.error || result.message || "Не удалось синхронизировать заказы",
+          variant: "destructive" 
+        });
+      }
+    } catch {
+      toast({ title: "Ошибка синхронизации", variant: "destructive" });
+    } finally {
+      setIsSyncingOrders(false);
     }
   };
 
@@ -269,19 +298,34 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
                       Проверить подключение
                     </Button>
                     {settings?.enabled && (
-                      <Button 
-                        variant="outline" 
-                        onClick={syncCustomers}
-                        disabled={isSyncingCustomers}
-                        data-testid="button-sync-customers"
-                      >
-                        {isSyncingCustomers ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Users className="h-4 w-4 mr-2" />
-                        )}
-                        Синхр. клиентов
-                      </Button>
+                      <>
+                        <Button 
+                          variant="outline" 
+                          onClick={syncOrders}
+                          disabled={isSyncingOrders}
+                          data-testid="button-sync-orders"
+                        >
+                          {isSyncingOrders ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <ShoppingBag className="h-4 w-4 mr-2" />
+                          )}
+                          Синхр. заказов
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={syncCustomers}
+                          disabled={isSyncingCustomers}
+                          data-testid="button-sync-customers"
+                        >
+                          {isSyncingCustomers ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <Users className="h-4 w-4 mr-2" />
+                          )}
+                          Синхр. клиентов
+                        </Button>
+                      </>
                     )}
                   </>
                 )}
