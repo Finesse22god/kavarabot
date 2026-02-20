@@ -1,9 +1,10 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 import { useTelegram } from "./hooks/use-telegram";
 import Home from "./pages/home";
 import Quiz from "./pages/quiz";
@@ -63,6 +64,8 @@ function Router() {
 function App() {
   const [location, navigate] = useLocation();
   const { isInTelegram, webApp, hapticFeedback } = useTelegram();
+  const { toast } = useToast();
+  const bonusActivatedRef = useRef(false);
   const isAdminPage = location.startsWith('/admin');
   const isHomePage = location === '/';
 
@@ -121,13 +124,53 @@ function App() {
         case 'privacy':
           navigate('/privacy-policy');
           break;
+        case 'bonus500':
+          if (!bonusActivatedRef.current) {
+            bonusActivatedRef.current = true;
+            const telegramId = webApp?.initDataUnsafe?.user?.id;
+            if (telegramId) {
+              fetch('/api/loyalty/activate-package-bonus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId: String(telegramId) })
+              })
+                .then(r => r.json())
+                .then(result => {
+                  if (result.success) {
+                    hapticFeedback.notification('success');
+                    toast({
+                      title: "🎉 Бонус активирован!",
+                      description: result.message,
+                    });
+                  } else if (result.alreadyActivated) {
+                    hapticFeedback.notification('warning');
+                    toast({
+                      title: "Бонус уже активирован",
+                      description: result.message,
+                    });
+                  } else {
+                    toast({
+                      title: "Ошибка",
+                      description: result.message,
+                      variant: "destructive",
+                    });
+                  }
+                })
+                .catch(() => {
+                  toast({
+                    title: "Ошибка",
+                    description: "Не удалось активировать бонус",
+                    variant: "destructive",
+                  });
+                });
+            }
+          }
+          break;
         default:
-          // If it's a referral code (ref_xxx), stay on home page
-          // Other parameters are ignored
           break;
       }
     }
-  }, [webApp, location, navigate]);
+  }, [webApp, location, navigate, toast, hapticFeedback]);
 
   // In production, show TelegramRequired page if not in Telegram (except for admin pages)
   if (!import.meta.env.DEV && !isInTelegram && !isAdminPage) {

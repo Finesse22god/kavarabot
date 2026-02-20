@@ -56,6 +56,9 @@ export class User {
   @Column({ type: "varchar", nullable: true })
   preferredSize?: string;
 
+  @Column({ type: "boolean", default: false })
+  packageBonusActivated!: boolean;
+
   @OneToMany(() => QuizResponse, (response) => response.user)
   quizResponses!: QuizResponse[];
 

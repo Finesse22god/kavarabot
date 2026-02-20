@@ -330,15 +330,24 @@ export function mapKavaraStatusToRetailCRM(kavaraStatus: string): string {
 }
 
 export function mapKavaraUserToRetailCRM(user: any): RetailCRMCustomer {
+  const firstName = user.firstName || (user.username ? `@${user.username}` : `TG_${user.telegramId}`);
+  const lastName = user.lastName || '';
+
+  const commentParts: string[] = [];
+  if (user.username) commentParts.push(`Telegram: @${user.username}`);
+  commentParts.push(`Telegram ID: ${user.telegramId}`);
+  if (user.loyaltyPoints) commentParts.push(`Баллы лояльности: ${user.loyaltyPoints}`);
+
   return {
     externalId: `tg_${user.telegramId}`,
-    firstName: user.firstName,
-    lastName: user.lastName,
+    firstName,
+    lastName,
+    patronymic: user.username ? `@${user.username}` : undefined,
     phones: user.phone ? [{ number: user.phone }] : undefined,
     customFields: {
-      telegram_id: user.telegramId,
-      telegram_username: user.username,
-      loyalty_points: user.loyaltyPoints,
+      telegram_id: String(user.telegramId),
+      telegram_username: user.username ? `@${user.username}` : '',
+      loyalty_points: user.loyaltyPoints || 0,
     },
   };
 }

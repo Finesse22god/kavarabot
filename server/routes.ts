@@ -2327,6 +2327,50 @@ router.post("/api/loyalty/transactions", async (req, res) => {
   }
 });
 
+router.post("/api/loyalty/activate-package-bonus", async (req, res) => {
+  try {
+    const { telegramId } = req.body;
+    if (!telegramId) {
+      return res.status(400).json({ success: false, message: "Telegram ID обязателен" });
+    }
+
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const user = await userRepo.findOne({ where: { telegramId: String(telegramId) } });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Пользователь не найден" });
+    }
+
+    if (user.packageBonusActivated) {
+      return res.json({ success: false, alreadyActivated: true, message: "Вы уже активировали бонус из упаковки!" });
+    }
+
+    const bonusPoints = 500;
+    user.packageBonusActivated = true;
+    user.loyaltyPoints = (user.loyaltyPoints || 0) + bonusPoints;
+    await userRepo.save(user);
+
+    await storage.createLoyaltyTransaction({
+      userId: user.id,
+      type: 'earn',
+      points: bonusPoints,
+      description: 'Бонус за сканирование QR-кода из упаковки',
+    });
+
+    console.log(`[PackageBonus] Activated for user ${user.telegramId} (@${user.username}), +${bonusPoints} points`);
+
+    res.json({ 
+      success: true, 
+      message: `Вам начислено ${bonusPoints} бонусных баллов!`,
+      points: bonusPoints,
+      totalPoints: user.loyaltyPoints
+    });
+  } catch (error) {
+    console.error("Error activating package bonus:", error);
+    res.status(500).json({ success: false, message: "Ошибка при активации бонуса" });
+  }
+});
+
 router.post("/api/loyalty/:userId/generate-referral-code", async (req, res) => {
   try {
     const { userId } = req.params;

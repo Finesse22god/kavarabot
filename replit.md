@@ -43,7 +43,8 @@ The user interface is optimized for Telegram WebApp compatibility, featuring sim
 - **Order Data Enhancement**: `telegramUsername` field added to orders schema.
 - **Analytics**: Improved revenue calculation (paid orders only) and accurate date filters.
 - **Profile Loyalty & Promo Code Display**: Enhanced user profile with loyalty stats, available points, total earned/spent, referral count, and owned promo code details with usage statistics.
-- **RetailCRM Integration**: Optional integration with RetailCRM for order synchronization. Configurable via admin panel with API URL, key, and site code. Orders are automatically synced on creation and status updated on payment. Non-blocking implementation ensures order flow is never disrupted by RetailCRM issues.
+- **RetailCRM Integration**: Optional integration with RetailCRM for order and customer synchronization. Configurable via admin panel with API URL, key, and site code. Orders are automatically synced on creation and status updated on payment. Bulk customer sync via admin button sends Telegram username (@), Telegram ID, and loyalty points. Non-blocking implementation ensures order flow is never disrupted by RetailCRM issues.
+- **Package Bonus System**: QR code in product packages links to `https://t.me/<bot>?startapp=bonus500`. When scanned, the Telegram Mini App opens and automatically credits 500 loyalty points to the user (one-time per user). Tracked via `packageBonusActivated` field in User entity. Repeat scans show "already activated" message.
 
 ## External Dependencies
 
