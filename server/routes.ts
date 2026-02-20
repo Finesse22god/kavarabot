@@ -3374,13 +3374,42 @@ router.post("/api/admin/retailcrm/test", verifyAdminToken, async (req, res) => {
   }
 });
 
+// Ensure RetailCRM is configured, re-init from DB if needed
+async function ensureRetailCRMConfigured(): Promise<boolean> {
+  if (retailCRM.isConfigured()) return true;
+  
+  try {
+    const repo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await repo.findOne({ where: {} });
+    if (settings?.enabled && settings.apiUrl && settings.apiKey) {
+      retailCRM.configure({
+        apiUrl: settings.apiUrl,
+        apiKey: settings.apiKey,
+        siteCode: settings.siteCode || undefined,
+      });
+      console.log("[RetailCRM] Re-initialized from DB settings");
+      return true;
+    }
+  } catch (error) {
+    console.error("[RetailCRM] Failed to re-initialize:", error);
+  }
+  return false;
+}
+
 // Sync order to RetailCRM
 async function syncOrderToRetailCRM(order: any) {
   try {
     const repo = AppDataSource.getRepository(RetailCRMSettings);
     const settings = await repo.findOne({ where: {} });
     
-    if (!settings?.enabled || !retailCRM.isConfigured()) {
+    if (!settings?.enabled) {
+      console.log("[RetailCRM] Integration disabled, skipping order sync");
+      return;
+    }
+    
+    const configured = await ensureRetailCRMConfigured();
+    if (!configured) {
+      console.log("[RetailCRM] Not configured, skipping order sync");
       return;
     }
     
@@ -3390,41 +3419,71 @@ async function syncOrderToRetailCRM(order: any) {
     if (user) {
       const retailCustomer = mapKavaraUserToRetailCRM(user);
       await retailCRM.createOrUpdateCustomer(retailCustomer);
-      settings.syncedCustomersCount++;
+      settings.syncedCustomersCount = (settings.syncedCustomersCount || 0) + 1;
     }
     
     let items: any[] = [];
     
-    if (order.cartItems && Array.isArray(order.cartItems)) {
-      items = order.cartItems.map((item: any) => ({
-        name: item.name || item.productName || "Товар",
-        price: item.price || 0,
-        quantity: item.quantity || 1,
-        size: item.size || item.selectedSize,
-      }));
-    } else if (order.box) {
-      items = [{
-        name: order.box.name,
-        price: order.box.price,
-        quantity: 1,
-      }];
-    } else if (order.product) {
-      items = [{
-        name: order.product.name,
-        price: order.product.price,
-        quantity: 1,
-        size: order.selectedSize,
-      }];
+    // cartItems is stored as JSON string in DB — parse it
+    if (order.cartItems) {
+      try {
+        const parsed = typeof order.cartItems === 'string' ? JSON.parse(order.cartItems) : order.cartItems;
+        if (Array.isArray(parsed)) {
+          items = parsed.map((item: any) => ({
+            name: item.name || item.productName || "Товар",
+            price: item.price || 0,
+            quantity: item.quantity || 1,
+            size: item.size || item.selectedSize,
+          }));
+        }
+      } catch (parseError) {
+        console.error("[RetailCRM] Failed to parse cartItems:", parseError);
+      }
+    }
+    
+    // If no cart items, load box or product from DB via storage
+    if (items.length === 0 && order.boxId) {
+      try {
+        const box = await storage.getBox(order.boxId);
+        if (box) {
+          items = [{
+            name: box.name,
+            price: box.price,
+            quantity: 1,
+          }];
+        }
+      } catch (e) {
+        console.error("[RetailCRM] Failed to load box:", e);
+      }
+    }
+    
+    if (items.length === 0 && order.productId) {
+      try {
+        const product = await storage.getProduct(order.productId);
+        if (product) {
+          items = [{
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            size: order.selectedSize,
+          }];
+        }
+      } catch (e) {
+        console.error("[RetailCRM] Failed to load product:", e);
+      }
     }
     
     const retailOrder = mapKavaraOrderToRetailCRM(order, user, items);
-    await retailCRM.createOrder(retailOrder);
+    const result = await retailCRM.createOrder(retailOrder);
     
-    settings.syncedOrdersCount++;
-    settings.lastSyncAt = new Date();
-    await repo.save(settings);
-    
-    console.log(`[RetailCRM] Order ${order.orderNumber} synced successfully`);
+    if (result?.success) {
+      settings.syncedOrdersCount = (settings.syncedOrdersCount || 0) + 1;
+      settings.lastSyncAt = new Date();
+      await repo.save(settings);
+      console.log(`[RetailCRM] Order ${order.orderNumber} synced successfully`);
+    } else {
+      console.error(`[RetailCRM] Order ${order.orderNumber} sync returned:`, result);
+    }
   } catch (error) {
     console.error("[RetailCRM] Failed to sync order:", error);
   }
@@ -3436,9 +3495,10 @@ async function updateOrderStatusInRetailCRM(orderNumber: string, status: string)
     const repo = AppDataSource.getRepository(RetailCRMSettings);
     const settings = await repo.findOne({ where: {} });
     
-    if (!settings?.enabled || !retailCRM.isConfigured()) {
-      return;
-    }
+    if (!settings?.enabled) return;
+    
+    const configured = await ensureRetailCRMConfigured();
+    if (!configured) return;
     
     const retailStatus = status === "paid" ? "complete" : status === "cancelled" ? "cancel-other" : "new";
     await retailCRM.updateOrderStatus(orderNumber, retailStatus);
@@ -3455,8 +3515,13 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
     const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
     const settings = await settingsRepo.findOne({ where: {} });
     
-    if (!settings?.enabled || !retailCRM.isConfigured()) {
+    if (!settings?.enabled) {
       return res.status(400).json({ error: "RetailCRM не настроен" });
+    }
+    
+    const configured = await ensureRetailCRMConfigured();
+    if (!configured) {
+      return res.status(400).json({ error: "RetailCRM не настроен - проверьте API ключ и URL" });
     }
     
     const orderRepo = AppDataSource.getRepository(OrderEntity);
