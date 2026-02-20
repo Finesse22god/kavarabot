@@ -329,22 +329,16 @@ export function mapKavaraOrderToRetailCRM(
   user: any,
   items: any[]
 ): RetailCRMOrder {
-  const nameParts = (order.customerName || '').trim().split(/\s+/);
-  const firstName = nameParts[0] || user?.firstName || "Покупатель";
-  const lastName = nameParts.slice(1).join(" ") || user?.lastName || "";
-
   const retailOrder: RetailCRMOrder = {
     externalId: order.orderNumber,
     number: order.orderNumber,
-    firstName,
-    lastName,
-    phone: order.customerPhone || undefined,
-    email: order.customerEmail || undefined,
     status: mapKavaraStatusToRetailCRM(order.status),
     customer: user?.telegramId ? { externalId: `tg_${user.telegramId}` } : undefined,
     customerComment: [
       user?.username ? `Telegram: @${user.username}` : '',
       order.deliveryAddress ? `Адрес: ${order.deliveryAddress}` : '',
+      order.customerPhone ? `Тел: ${order.customerPhone}` : '',
+      order.customerEmail ? `Email: ${order.customerEmail}` : '',
     ].filter(Boolean).join('. ') || undefined,
     items: items.map((item) => ({
       productName: item.name || "Товар",
@@ -353,6 +347,24 @@ export function mapKavaraOrderToRetailCRM(
       properties: item.size ? [{ name: "Размер", value: item.size }] : [],
     })),
   };
+
+  if (!retailOrder.customer) {
+    const nameParts = (order.customerName || '').trim().split(/\s+/);
+    retailOrder.firstName = nameParts[0] || user?.firstName || "Покупатель";
+    retailOrder.lastName = nameParts.slice(1).join(" ") || user?.lastName || "";
+    retailOrder.phone = order.customerPhone || undefined;
+    retailOrder.email = order.customerEmail || undefined;
+  }
+
+  if (order.totalPrice) {
+    const isPaid = ["paid", "completed", "shipped", "delivered"].includes(order.status);
+    retailOrder.payments = [
+      {
+        status: isPaid ? "paid" : "not-paid",
+        amount: order.totalPrice,
+      },
+    ];
+  }
 
   return retailOrder;
 }

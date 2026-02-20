@@ -3473,16 +3473,16 @@ async function syncOrderToRetailCRM(order: any) {
     
     let items: any[] = [];
     
-    // cartItems is stored as JSON string in DB — parse it
     if (order.cartItems) {
       try {
         const parsed = typeof order.cartItems === 'string' ? JSON.parse(order.cartItems) : order.cartItems;
         if (Array.isArray(parsed)) {
           items = parsed.map((item: any) => ({
-            name: item.name || item.productName || "Товар",
-            price: item.price || 0,
+            name: item.product?.name || item.box?.name || item.name || item.productName || "Товар",
+            price: item.product?.price || item.box?.price || item.price || 0,
             quantity: item.quantity || 1,
-            size: item.size || item.selectedSize,
+            size: item.selectedSize || item.size,
+            article: item.product?.externalId || undefined,
           }));
         }
       } catch (parseError) {
