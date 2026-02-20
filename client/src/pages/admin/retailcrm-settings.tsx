@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users, ShoppingBag, RefreshCw } from "lucide-react";
+import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users, ShoppingBag, RefreshCw, Gift } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -45,6 +45,10 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
   const [isSyncingCustomers, setIsSyncingCustomers] = useState(false);
   const [isSyncingOrders, setIsSyncingOrders] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
+  const [isAwardingPoints, setIsAwardingPoints] = useState(false);
+  const [awardUsername, setAwardUsername] = useState('');
+  const [awardPoints, setAwardPoints] = useState('');
+  const [awardDescription, setAwardDescription] = useState('');
 
   const { data: settings, isLoading } = useQuery<RetailCRMSettings>({
     queryKey: ['/api/admin/retailcrm/settings'],
@@ -204,6 +208,45 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
       toast({ title: "Ошибка пересчёта", variant: "destructive" });
     } finally {
       setIsRecalculating(false);
+    }
+  };
+
+  const awardPointsToUser = async () => {
+    if (!awardUsername.trim() || !awardPoints.trim()) {
+      toast({ title: "Заполните username и баллы", variant: "destructive" });
+      return;
+    }
+    setIsAwardingPoints(true);
+    try {
+      const response = await fetch('/api/admin/award-points', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          username: awardUsername.trim(),
+          points: awardPoints.trim(),
+          description: awardDescription.trim() || undefined
+        })
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast({ title: "Баллы начислены", description: result.message });
+        setAwardUsername('');
+        setAwardPoints('');
+        setAwardDescription('');
+      } else {
+        toast({ 
+          title: "Ошибка", 
+          description: result.message || "Не удалось начислить баллы",
+          variant: "destructive" 
+        });
+      }
+    } catch {
+      toast({ title: "Ошибка начисления", variant: "destructive" });
+    } finally {
+      setIsAwardingPoints(false);
     }
   };
 
@@ -452,6 +495,62 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
           <p className="text-amber-600">
             Интеграция не блокирует работу магазина — если RetailCRM недоступен, заказы все равно создаются.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Gift className="h-5 w-5 text-purple-600" />
+            <div>
+              <CardTitle>Начисление баллов</CardTitle>
+              <CardDescription>Начислить или списать баллы лояльности по username</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="award-username">Username</Label>
+              <Input
+                id="award-username"
+                placeholder="@username или username"
+                value={awardUsername}
+                onChange={(e) => setAwardUsername(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="award-points">Баллы</Label>
+              <Input
+                id="award-points"
+                type="number"
+                placeholder="500 (или -100 для списания)"
+                value={awardPoints}
+                onChange={(e) => setAwardPoints(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="award-description">Причина (необязательно)</Label>
+              <Input
+                id="award-description"
+                placeholder="Бонус за покупку"
+                value={awardDescription}
+                onChange={(e) => setAwardDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <Button 
+            onClick={awardPointsToUser}
+            disabled={isAwardingPoints || !awardUsername.trim() || !awardPoints.trim()}
+            className="w-full"
+          >
+            {isAwardingPoints ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Gift className="h-4 w-4 mr-2" />
+            )}
+            Начислить баллы
+          </Button>
         </CardContent>
       </Card>
 

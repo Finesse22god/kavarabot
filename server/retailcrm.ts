@@ -14,6 +14,7 @@ interface RetailCRMCustomer {
   email?: string;
   phones?: Array<{ number: string }>;
   customFields?: Record<string, any>;
+  customerComment?: string;
 }
 
 interface RetailCRMOrderItem {
@@ -388,12 +389,26 @@ export function mapKavaraUserToRetailCRM(user: any, orderData?: any): RetailCRMC
   const phone = user.phone || orderData?.customerPhone;
   const email = orderData?.customerEmail;
 
+  const loyaltyInfo = [];
+  if (user.loyaltyPoints !== undefined && user.loyaltyPoints !== null) {
+    loyaltyInfo.push(`Баллы: ${user.loyaltyPoints}`);
+  }
+  if (user.referralCode) {
+    loyaltyInfo.push(`Промокод: ${user.referralCode}`);
+  }
+
+  const commentParts = [];
+  if (user.username) commentParts.push(`Telegram: @${user.username}`);
+  if (user.telegramId) commentParts.push(`TG ID: ${user.telegramId}`);
+  if (loyaltyInfo.length > 0) commentParts.push(loyaltyInfo.join(', '));
+
   const customer: RetailCRMCustomer = {
     externalId: `tg_${user.telegramId}`,
     firstName,
     lastName,
     phones: phone ? [{ number: phone }] : undefined,
     email: email || undefined,
+    customerComment: commentParts.length > 0 ? commentParts.join('. ') : undefined,
   };
 
   if (user.username) {

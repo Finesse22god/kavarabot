@@ -570,8 +570,8 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
           // Also save the payment ID to the order
           await storage.updateOrderPaymentId(order.id, paymentId);
           
-          // Update status in RetailCRM (async, non-blocking)
-          updateOrderStatusInRetailCRMSafe(order.orderNumber, "paid");
+          // Sync paid order to RetailCRM (orders only go to CRM after payment)
+          syncOrderToRetailCRMSafe(order);
           
           // Award promo code owner points ONLY after successful payment
           if (order.promoCodeId && order.userId) {
@@ -1031,8 +1031,9 @@ router.post("/api/orders", async (req, res) => {
       return createdOrder;
     });
 
-    // Sync order to RetailCRM (async, don't wait for result)
-    syncOrderToRetailCRMSafe(order);
+    // Sync customer to RetailCRM on order creation (async, non-blocking)
+    // Orders are only synced to CRM after payment confirmation (in YooKassa webhook)
+    syncCustomerToRetailCRMSafe(order);
 
     res.status(201).json(order);
   } catch (error) {
@@ -1041,14 +1042,35 @@ router.post("/api/orders", async (req, res) => {
   }
 });
 
-// Safe wrapper for RetailCRM sync (doesn't block order creation)
-// Note: These functions are defined at the end of the file after syncOrderToRetailCRM
+// Safe wrapper for customer-only sync on order creation (order synced later after payment)
+async function syncCustomerToRetailCRMSafe(order: any) {
+  setTimeout(async () => {
+    try {
+      const repo = AppDataSource.getRepository(RetailCRMSettings);
+      const settings = await repo.findOne({ where: {} });
+      if (!settings?.enabled) return;
+      const configured = await ensureRetailCRMConfigured();
+      if (!configured) return;
+      const userRepo = AppDataSource.getRepository(UserEntity);
+      const user = order.userId ? await userRepo.findOne({ where: { id: order.userId } }) : null;
+      if (user) {
+        const retailCustomer = mapKavaraUserToRetailCRM(user, order);
+        await retailCRM.createOrUpdateCustomer(retailCustomer);
+        console.log(`[RetailCRM] Customer synced for order ${order.orderNumber}`);
+      }
+    } catch (error) {
+      console.error("[RetailCRM] Customer sync failed (non-blocking):", error);
+    }
+  }, 100);
+}
+
+// Safe wrapper for full order sync (called after payment)
 async function syncOrderToRetailCRMSafe(order: any) {
   setTimeout(async () => {
     try {
       await syncOrderToRetailCRM(order);
     } catch (error) {
-      console.error("[RetailCRM] Sync failed (non-blocking):", error);
+      console.error("[RetailCRM] Order sync failed (non-blocking):", error);
     }
   }, 100);
 }
@@ -1277,6 +1299,59 @@ router.post("/api/admin/recalculate-loyalty", verifyAdminToken, async (req, res)
   } catch (error) {
     console.error("Error recalculating loyalty:", error);
     res.status(500).json({ success: false, message: "Ошибка пересчёта баллов" });
+  }
+});
+
+router.post("/api/admin/award-points", verifyAdminToken, async (req, res) => {
+  try {
+    const { username, points, description } = req.body;
+    
+    if (!username || !points) {
+      return res.status(400).json({ success: false, message: "Укажите username и количество баллов" });
+    }
+    
+    const cleanUsername = username.replace(/^@/, '').trim();
+    const pointsNum = parseInt(points);
+    
+    if (isNaN(pointsNum) || pointsNum === 0) {
+      return res.status(400).json({ success: false, message: "Некорректное количество баллов" });
+    }
+    
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const loyaltyRepo = AppDataSource.getRepository(LoyaltyTransactionEntity);
+    
+    const user = await userRepo.findOne({ where: { username: cleanUsername } });
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: `Пользователь @${cleanUsername} не найден` });
+    }
+    
+    const newBalance = (user.loyaltyPoints || 0) + pointsNum;
+    if (newBalance < 0) {
+      return res.status(400).json({ success: false, message: `Недостаточно баллов. Текущий баланс: ${user.loyaltyPoints || 0}` });
+    }
+    
+    user.loyaltyPoints = newBalance;
+    await userRepo.save(user);
+    
+    const transaction = loyaltyRepo.create({
+      userId: user.id,
+      type: pointsNum > 0 ? 'earn' : 'spend',
+      points: pointsNum,
+      description: description || `Начислено администратором: ${pointsNum > 0 ? '+' : ''}${pointsNum} баллов`,
+    });
+    await loyaltyRepo.save(transaction);
+    
+    console.log(`[Admin] Awarded ${pointsNum} points to @${cleanUsername} (balance: ${user.loyaltyPoints})`);
+    
+    res.json({ 
+      success: true, 
+      message: `${pointsNum > 0 ? 'Начислено' : 'Списано'} ${Math.abs(pointsNum)} баллов пользователю @${cleanUsername}. Баланс: ${user.loyaltyPoints}`,
+      user: { username: user.username, loyaltyPoints: user.loyaltyPoints }
+    });
+  } catch (error: any) {
+    console.error("Error awarding points:", error);
+    res.status(500).json({ success: false, message: `Ошибка: ${error.message}` });
   }
 });
 
@@ -3577,7 +3652,9 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
     }
     
     const orderRepo = AppDataSource.getRepository(OrderEntity);
+    const paidStatuses = ["paid", "completed", "shipped", "delivered"];
     const orders = await orderRepo.find({
+      where: paidStatuses.map(s => ({ status: s })),
       relations: ["user", "box", "product"],
       order: { createdAt: "DESC" },
       take: 100,
@@ -3585,6 +3662,7 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
     
     let synced = 0;
     let failed = 0;
+    let skipped = 0;
     
     const errorMessages: string[] = [];
     for (const order of orders) {
@@ -3606,7 +3684,7 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
       success: true, 
       synced, 
       failed,
-      message: `Синхронизировано ${synced} заказов` + (failed > 0 ? `, ошибок: ${failed}` : ""),
+      message: `Синхронизировано ${synced} оплаченных заказов` + (failed > 0 ? `, ошибок: ${failed}` : ""),
       errors: errorMessages.length > 0 ? errorMessages.slice(0, 5) : undefined
     });
   } catch (error: any) {
