@@ -3358,7 +3358,8 @@ router.post("/api/admin/retailcrm/sync-customers", verifyAdminToken, async (req,
     const users = await userRepo.find();
     
     let synced = 0;
-    let errors = 0;
+    let errorCount = 0;
+    const errorMessages: string[] = [];
     
     for (const user of users) {
       try {
@@ -3369,28 +3370,31 @@ router.post("/api/admin/retailcrm/sync-customers", verifyAdminToken, async (req,
         const retailCustomer = mapKavaraUserToRetailCRM(user, lastOrder);
         await retailCRM.createOrUpdateCustomer(retailCustomer);
         synced++;
-      } catch (error) {
-        console.error(`[RetailCRM] Failed to sync user ${user.telegramId}:`, error);
-        errors++;
+      } catch (error: any) {
+        console.error(`[RetailCRM] Failed to sync user ${user.telegramId}:`, error.message);
+        errorCount++;
+        if (errorMessages.length < 5) {
+          errorMessages.push(`TG ${user.telegramId}: ${error.message}`);
+        }
       }
     }
     
-    // Update stats
     settings.syncedCustomersCount = synced;
     settings.lastSyncAt = new Date();
     await settingsRepo.save(settings);
     
-    console.log(`[RetailCRM] Customers sync complete: ${synced} synced, ${errors} errors`);
+    console.log(`[RetailCRM] Customers sync complete: ${synced} synced, ${errorCount} errors`);
     
     res.json({ 
       success: true, 
-      message: `Синхронизировано: ${synced} клиентов${errors > 0 ? `, ошибок: ${errors}` : ''}`,
+      message: `Синхронизировано: ${synced} клиентов${errorCount > 0 ? `, ошибок: ${errorCount}` : ''}`,
       synced,
-      errors
+      errors: errorCount,
+      errorMessages: errorMessages.length > 0 ? errorMessages : undefined
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error syncing customers to RetailCRM:", error);
-    res.status(500).json({ success: false, message: "Ошибка синхронизации клиентов" });
+    res.status(500).json({ success: false, message: `Ошибка синхронизации: ${error.message || 'неизвестная ошибка'}` });
   }
 });
 
@@ -3527,10 +3531,13 @@ async function syncOrderToRetailCRM(order: any) {
       await repo.save(settings);
       console.log(`[RetailCRM] Order ${order.orderNumber} synced successfully`);
     } else {
-      console.error(`[RetailCRM] Order ${order.orderNumber} sync returned:`, result);
+      const errorMsg = result?.errorMsg || JSON.stringify(result?.errors) || 'Unknown error';
+      console.error(`[RetailCRM] Order ${order.orderNumber} sync failed:`, errorMsg);
+      throw new Error(errorMsg);
     }
-  } catch (error) {
-    console.error("[RetailCRM] Failed to sync order:", error);
+  } catch (error: any) {
+    console.error("[RetailCRM] Failed to sync order:", error.message);
+    throw error;
   }
 }
 
@@ -3579,12 +3586,15 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
     let synced = 0;
     let failed = 0;
     
+    const errorMessages: string[] = [];
     for (const order of orders) {
       try {
         await syncOrderToRetailCRM(order);
         synced++;
-      } catch (e) {
+      } catch (e: any) {
         failed++;
+        const msg = `Заказ ${order.orderNumber}: ${e.message || 'неизвестная ошибка'}`;
+        errorMessages.push(msg);
         console.error(`Failed to sync order ${order.orderNumber}:`, e);
       }
     }
@@ -3596,11 +3606,12 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
       success: true, 
       synced, 
       failed,
-      message: `Синхронизировано ${synced} заказов` + (failed > 0 ? `, ошибок: ${failed}` : "")
+      message: `Синхронизировано ${synced} заказов` + (failed > 0 ? `, ошибок: ${failed}` : ""),
+      errors: errorMessages.length > 0 ? errorMessages.slice(0, 5) : undefined
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error syncing orders:", error);
-    res.status(500).json({ error: "Sync failed" });
+    res.status(500).json({ success: false, message: `Ошибка синхронизации: ${error.message || 'неизвестная ошибка'}` });
   }
 });
 

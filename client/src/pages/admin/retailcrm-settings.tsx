@@ -134,7 +134,8 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
       });
       const result = await response.json();
       if (response.ok && result.success) {
-        toast({ title: "Синхронизация завершена", description: result.message });
+        const desc = result.message + (result.errorMessages?.length ? `\n${result.errorMessages.join('\n')}` : '');
+        toast({ title: "Синхронизация завершена", description: desc });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/retailcrm/settings'] });
       } else {
         toast({ 
@@ -162,12 +163,13 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
       });
       const result = await response.json();
       if (response.ok && result.success) {
-        toast({ title: "Синхронизация завершена", description: result.message });
+        const desc = result.message + (result.errors?.length ? `\n${result.errors.join('\n')}` : '');
+        toast({ title: "Синхронизация завершена", description: desc });
         queryClient.invalidateQueries({ queryKey: ['/api/admin/retailcrm/settings'] });
       } else {
         toast({ 
           title: "Ошибка синхронизации", 
-          description: result.error || result.message || "Не удалось синхронизировать заказы",
+          description: result.message || "Не удалось синхронизировать заказы",
           variant: "destructive" 
         });
       }

@@ -17,7 +17,7 @@ interface RetailCRMCustomer {
 }
 
 interface RetailCRMOrderItem {
-  offer?: { externalId?: string; name?: string };
+  offer?: { externalId?: string; name?: string; article?: string };
   productName?: string;
   initialPrice: number;
   quantity: number;
@@ -70,7 +70,6 @@ class RetailCRMService {
       throw new Error("RetailCRM not configured");
     }
 
-    // Clean up URL - remove trailing slash if present
     const baseUrl = this.config.apiUrl.replace(/\/+$/, '');
     const url = `${baseUrl}/api/v5/${endpoint}`;
     console.log(`[RetailCRM] Request: ${method} ${url}`);
@@ -81,7 +80,6 @@ class RetailCRMService {
 
     if (method === "GET") {
       const params = new URLSearchParams();
-      // Add API key as query parameter (RetailCRM requirement)
       params.append("apiKey", this.config.apiKey);
       if (data) {
         for (const [key, value] of Object.entries(data)) {
@@ -100,7 +98,6 @@ class RetailCRMService {
         const text = await response.text();
         console.log(`[RetailCRM] Response status: ${response.status}`);
         
-        // Check if response is HTML (error page)
         if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
           console.error(`[RetailCRM] Received HTML instead of JSON. Check API URL.`);
           throw new Error('Неверный API URL или API недоступен');
@@ -108,17 +105,16 @@ class RetailCRMService {
         
         const result = JSON.parse(text);
         if (!response.ok || !result.success) {
-          console.error(`[RetailCRM] Error:`, result);
+          console.error(`[RetailCRM] Error response:`, JSON.stringify(result));
         }
         return result;
       } catch (error: any) {
-        console.error(`[RetailCRM] Request failed:`, error);
+        console.error(`[RetailCRM] Request failed:`, error.message);
         throw error;
       }
     } else {
       headers["Content-Type"] = "application/x-www-form-urlencoded";
       const formData = new URLSearchParams();
-      // Add API key as form parameter (RetailCRM requirement)
       formData.append("apiKey", this.config.apiKey);
       if (data) {
         for (const [key, value] of Object.entries(data)) {
@@ -135,11 +131,18 @@ class RetailCRMService {
       options.body = formData;
 
       try {
+        console.log(`[RetailCRM] POST data keys: ${Object.keys(data || {}).join(', ')}`);
+        if (data?.customer) {
+          console.log(`[RetailCRM] Customer data: ${JSON.stringify(data.customer)}`);
+        }
+        if (data?.order) {
+          console.log(`[RetailCRM] Order data: ${JSON.stringify(data.order)}`);
+        }
+        
         const response = await fetch(url, options);
         const text = await response.text();
-        console.log(`[RetailCRM] Response status: ${response.status}`);
+        console.log(`[RetailCRM] Response status: ${response.status}, body: ${text.substring(0, 500)}`);
         
-        // Check if response is HTML (error page)
         if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
           console.error(`[RetailCRM] Received HTML instead of JSON. Check API URL.`);
           throw new Error('Неверный API URL или API недоступен');
@@ -147,11 +150,14 @@ class RetailCRMService {
         
         const result = JSON.parse(text);
         if (!response.ok || !result.success) {
-          console.error(`[RetailCRM] Error:`, result);
+          console.error(`[RetailCRM] Error response:`, JSON.stringify(result));
+          if (result.errors) {
+            console.error(`[RetailCRM] Errors detail:`, JSON.stringify(result.errors));
+          }
         }
         return result;
       } catch (error: any) {
-        console.error(`[RetailCRM] Request failed:`, error);
+        console.error(`[RetailCRM] Request failed:`, error.message);
         throw error;
       }
     }
@@ -182,9 +188,9 @@ class RetailCRMService {
         console.log(`[RetailCRM] Customer created: ${customer.externalId}`);
         return result;
       }
-    } catch (error) {
-      console.error(`[RetailCRM] Failed to sync customer:`, error);
-      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] Failed to sync customer ${customer.externalId}:`, error.message);
+      throw error;
     }
   }
 
@@ -195,16 +201,32 @@ class RetailCRMService {
     }
 
     try {
-      const result = await this.request("POST", "orders/create", {
-        order,
+      const existingResponse = await this.request("GET", "orders", {
+        "filter[externalId]": order.externalId,
       });
-      if (result.success) {
-        console.log(`[RetailCRM] Order created: ${order.externalId}`);
+
+      if (existingResponse.success && existingResponse.orders?.length > 0) {
+        console.log(`[RetailCRM] Order ${order.externalId} already exists, updating...`);
+        const result = await this.request("POST", `orders/${order.externalId}/edit`, {
+          order,
+          by: "externalId",
+        });
+        if (result.success) {
+          console.log(`[RetailCRM] Order updated: ${order.externalId}`);
+        }
+        return result;
+      } else {
+        const result = await this.request("POST", "orders/create", {
+          order,
+        });
+        if (result.success) {
+          console.log(`[RetailCRM] Order created: ${order.externalId}`);
+        }
+        return result;
       }
-      return result;
-    } catch (error) {
-      console.error(`[RetailCRM] Failed to create order:`, error);
-      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] Failed to create/update order ${order.externalId}:`, error.message);
+      throw error;
     }
   }
 
@@ -242,13 +264,42 @@ class RetailCRMService {
     }
   }
 
+  async getOrderTypes(): Promise<any> {
+    if (!this.isConfigured()) return null;
+    try {
+      return await this.request("GET", "reference/order-types");
+    } catch (error) {
+      console.error(`[RetailCRM] Failed to get order types:`, error);
+      return null;
+    }
+  }
+
+  async getDeliveryTypes(): Promise<any> {
+    if (!this.isConfigured()) return null;
+    try {
+      return await this.request("GET", "reference/delivery-types");
+    } catch (error) {
+      console.error(`[RetailCRM] Failed to get delivery types:`, error);
+      return null;
+    }
+  }
+
+  async getPaymentTypes(): Promise<any> {
+    if (!this.isConfigured()) return null;
+    try {
+      return await this.request("GET", "reference/payment-types");
+    } catch (error) {
+      console.error(`[RetailCRM] Failed to get payment types:`, error);
+      return null;
+    }
+  }
+
   async testConnection(): Promise<{ success: boolean; message: string }> {
     if (!this.isConfigured()) {
       return { success: false, message: "RetailCRM не настроен" };
     }
 
     try {
-      // Use reference/sites endpoint for connection test - always available and lightweight
       const result = await this.request("GET", "reference/sites");
       if (result.success) {
         const siteCount = Object.keys(result.sites || {}).length;
@@ -279,7 +330,7 @@ export function mapKavaraOrderToRetailCRM(
   items: any[]
 ): RetailCRMOrder {
   const nameParts = (order.customerName || '').trim().split(/\s+/);
-  const firstName = nameParts[0] || user?.firstName || "";
+  const firstName = nameParts[0] || user?.firstName || "Покупатель";
   const lastName = nameParts.slice(1).join(" ") || user?.lastName || "";
 
   const retailOrder: RetailCRMOrder = {
@@ -287,36 +338,21 @@ export function mapKavaraOrderToRetailCRM(
     number: order.orderNumber,
     firstName,
     lastName,
-    phone: order.customerPhone,
-    email: order.customerEmail,
+    phone: order.customerPhone || undefined,
+    email: order.customerEmail || undefined,
     status: mapKavaraStatusToRetailCRM(order.status),
-    orderType: "telegram-bot",
-    orderMethod: "telegram",
     customer: user?.telegramId ? { externalId: `tg_${user.telegramId}` } : undefined,
+    customerComment: [
+      user?.username ? `Telegram: @${user.username}` : '',
+      order.deliveryAddress ? `Адрес: ${order.deliveryAddress}` : '',
+    ].filter(Boolean).join('. ') || undefined,
     items: items.map((item) => ({
-      productName: item.name,
-      initialPrice: item.price,
+      productName: item.name || "Товар",
+      initialPrice: item.price || 0,
       quantity: item.quantity || 1,
       properties: item.size ? [{ name: "Размер", value: item.size }] : [],
     })),
-    delivery: {
-      code: order.deliveryMethod === "courier" ? "courier" : order.deliveryMethod === "cdek" ? "cdek" : "self-delivery",
-    },
-    customFields: {
-      telegram_id: user?.telegramId ? String(user.telegramId) : undefined,
-      telegram_username: user?.username ? `@${user.username}` : undefined,
-    },
   };
-
-  if (order.totalPrice) {
-    retailOrder.payments = [
-      {
-        type: order.paymentMethod === "card" ? "bank-card" : "cash",
-        status: order.status === "paid" || order.status === "completed" || order.status === "shipped" || order.status === "delivered" ? "paid" : "not-paid",
-        amount: order.totalPrice,
-      },
-    ];
-  }
 
   return retailOrder;
 }
@@ -327,7 +363,7 @@ export function mapKavaraStatusToRetailCRM(kavaraStatus: string): string {
     paid: "complete",
     completed: "complete",
     cancelled: "cancel-other",
-    shipped: "send-to-delivery",
+    shipped: "assembling",
     delivered: "complete",
   };
   return statusMap[kavaraStatus] || "new";
@@ -340,17 +376,17 @@ export function mapKavaraUserToRetailCRM(user: any, orderData?: any): RetailCRMC
   const phone = user.phone || orderData?.customerPhone;
   const email = orderData?.customerEmail;
 
-  return {
+  const customer: RetailCRMCustomer = {
     externalId: `tg_${user.telegramId}`,
     firstName,
     lastName,
-    patronymic: user.username ? `@${user.username}` : undefined,
-    email: email || undefined,
     phones: phone ? [{ number: phone }] : undefined,
-    customFields: {
-      telegram_id: String(user.telegramId),
-      telegram_username: user.username ? `@${user.username}` : '',
-      loyalty_points: user.loyaltyPoints || 0,
-    },
+    email: email || undefined,
   };
+
+  if (user.username) {
+    customer.patronymic = `@${user.username}`;
+  }
+
+  return customer;
 }
