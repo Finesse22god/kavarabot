@@ -4,7 +4,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { useTelegram } from "./hooks/use-telegram";
 import Home from "./pages/home";
 import Quiz from "./pages/quiz";
@@ -64,8 +65,8 @@ function Router() {
 function App() {
   const [location, navigate] = useLocation();
   const { isInTelegram, webApp, hapticFeedback } = useTelegram();
-  const { toast } = useToast();
   const bonusActivatedRef = useRef(false);
+  const [bonusModal, setBonusModal] = useState<{ open: boolean; title: string; message: string; success: boolean }>({ open: false, title: '', message: '', success: false });
   const isAdminPage = location.startsWith('/admin');
   const isHomePage = location === '/';
 
@@ -138,30 +139,16 @@ function App() {
                 .then(result => {
                   if (result.success) {
                     hapticFeedback.notification('success');
-                    toast({
-                      title: "🎉 Бонус активирован!",
-                      description: result.message,
-                    });
+                    setBonusModal({ open: true, title: 'Бонус активирован!', message: result.message, success: true });
                   } else if (result.alreadyActivated) {
                     hapticFeedback.notification('warning');
-                    toast({
-                      title: "Бонус уже активирован",
-                      description: result.message,
-                    });
+                    setBonusModal({ open: true, title: 'Бонус уже активирован', message: result.message, success: false });
                   } else {
-                    toast({
-                      title: "Ошибка",
-                      description: result.message,
-                      variant: "destructive",
-                    });
+                    setBonusModal({ open: true, title: 'Ошибка', message: result.message, success: false });
                   }
                 })
                 .catch(() => {
-                  toast({
-                    title: "Ошибка",
-                    description: "Не удалось активировать бонус",
-                    variant: "destructive",
-                  });
+                  setBonusModal({ open: true, title: 'Ошибка', message: 'Не удалось активировать бонус', success: false });
                 });
             }
           }
@@ -170,7 +157,7 @@ function App() {
           break;
       }
     }
-  }, [webApp, location, navigate, toast, hapticFeedback]);
+  }, [webApp, location, navigate, hapticFeedback]);
 
   // In production, show TelegramRequired page if not in Telegram (except for admin pages)
   if (!import.meta.env.DEV && !isInTelegram && !isAdminPage) {
@@ -190,6 +177,21 @@ function App() {
           <Toaster />
           <Router />
           {!isAdminPage && <BottomNav />}
+          <Dialog open={bonusModal.open} onOpenChange={(open) => setBonusModal(prev => ({ ...prev, open }))}>
+            <DialogContent className="max-w-[320px] rounded-2xl text-center p-8">
+              <div className="flex flex-col items-center gap-4">
+                <div className="text-6xl">{bonusModal.success ? '🎉' : '⚠️'}</div>
+                <h2 className="text-xl font-bold">{bonusModal.title}</h2>
+                <p className="text-gray-600">{bonusModal.message}</p>
+                <Button 
+                  className="w-full mt-2" 
+                  onClick={() => setBonusModal(prev => ({ ...prev, open: false }))}
+                >
+                  Отлично
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </TooltipProvider>
     </QueryClientProvider>

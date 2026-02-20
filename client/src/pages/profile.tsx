@@ -570,6 +570,19 @@ export default function Profile() {
                 </div>
               </div>
 
+              {loyaltyStats && (
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h3 className="font-semibold mb-4 flex items-center">
+                    <span className="text-2xl mr-2">🎁</span>
+                    Баллы лояльности
+                  </h3>
+                  <div className="bg-white border-2 border-black p-4 rounded-lg text-center">
+                    <p className="text-sm text-gray-600 mb-1">Доступно баллов</p>
+                    <p className="text-3xl font-bold text-black">{loyaltyStats.totalPoints}</p>
+                  </div>
+                </div>
+              )}
+
               {/* Добавить на главный экран */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <Button 
@@ -687,36 +700,6 @@ export default function Profile() {
                 )}
               </div>
 
-              {/* Loyalty Points Section */}
-              {loyaltyStats && (
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h3 className="font-semibold mb-4 flex items-center">
-                    <span className="text-2xl mr-2">🎁</span>
-                    Баллы лояльности
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white border-2 border-black p-4 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-1">Доступно баллов</p>
-                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalPoints}</p>
-                      </div>
-                      <div className="bg-white border-2 border-black p-4 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-1">Всего заработано</p>
-                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalEarned}</p>
-                      </div>
-                      <div className="bg-white border-2 border-black p-4 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-1">Использовано</p>
-                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalSpent}</p>
-                      </div>
-                      <div className="bg-white border-2 border-black p-4 rounded-lg">
-                        <p className="text-sm text-gray-600 mb-1">Рефералов</p>
-                        <p className="text-2xl font-bold text-black">{loyaltyStats.totalReferrals}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Owner Promo Code Section */}
               {ownerPromoData && ownerPromoData.promoCode && (

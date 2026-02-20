@@ -188,19 +188,13 @@ export default function Order() {
         // Оформление из корзины - создаем один общий заказ на всю сумму
         const cartOrderData = JSON.parse(currentOrder);
         
-        // Используем цену из корзины (уже включает промокод, но не включает баллы)
-        // cartOrderData.totalPrice уже содержит цену после промокода (priceAfterPromo)
         const priceAfterPromo = cartOrderData.totalPrice;
         
-        // Применяем скидку от баллов
-        const finalPrice = Math.max(0, priceAfterPromo - loyaltyPointsUsed);
-        
-        // Используем первый товар как основу заказа, но с общей суммой корзины
         const firstItem = cartOrderData.cartItems[0];
         const combinedOrderData = {
           userId: dbUser?.id || "",
           ...(firstItem.itemType === "product" ? { productId: firstItem.product?.id } : { boxId: firstItem.box?.id }),
-          quantity: 1, // Один "комбинированный" заказ
+          quantity: 1,
           selectedSize: firstItem.selectedSize,
           customerName: formData.customerName,
           customerPhone: formData.customerPhone,
@@ -208,7 +202,7 @@ export default function Order() {
           telegramUsername: telegramUser?.username || dbUser?.username || "",
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
-          totalPrice: Math.round(finalPrice), // Общая сумма всех товаров корзины
+          totalPrice: Math.round(priceAfterPromo),
           loyaltyPointsUsed: loyaltyPointsUsed,
           cartItems: JSON.stringify(cartOrderData.cartItems), // Сохраняем полный состав корзины
         };
@@ -253,7 +247,7 @@ export default function Order() {
           telegramUsername: telegramUser?.username || dbUser?.username || "",
           deliveryMethod: formData.deliveryMethod,
           paymentMethod: formData.paymentMethod,
-          totalPrice: calculateTotalPrice(),
+          totalPrice: getOriginalPrice(),
           loyaltyPointsUsed: loyaltyPointsUsed,
         };
 
