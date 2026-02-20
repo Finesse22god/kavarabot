@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Settings, Save, TestTube, CheckCircle, AlertCircle, Loader2, Users, ShoppingBag, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -44,6 +44,7 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
   const [isTesting, setIsTesting] = useState(false);
   const [isSyncingCustomers, setIsSyncingCustomers] = useState(false);
   const [isSyncingOrders, setIsSyncingOrders] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
 
   const { data: settings, isLoading } = useQuery<RetailCRMSettings>({
     queryKey: ['/api/admin/retailcrm/settings'],
@@ -174,6 +175,33 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
       toast({ title: "Ошибка синхронизации", variant: "destructive" });
     } finally {
       setIsSyncingOrders(false);
+    }
+  };
+
+  const recalculateLoyalty = async () => {
+    setIsRecalculating(true);
+    try {
+      const response = await fetch('/api/admin/recalculate-loyalty', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast({ title: "Пересчёт завершён", description: result.message });
+      } else {
+        toast({ 
+          title: "Ошибка пересчёта", 
+          description: result.message || "Не удалось пересчитать баллы",
+          variant: "destructive" 
+        });
+      }
+    } catch {
+      toast({ title: "Ошибка пересчёта", variant: "destructive" });
+    } finally {
+      setIsRecalculating(false);
     }
   };
 
@@ -422,6 +450,38 @@ export function RetailCRMSettings({ adminToken, onBack }: RetailCRMSettingsProps
           <p className="text-amber-600">
             Интеграция не блокирует работу магазина — если RetailCRM недоступен, заказы все равно создаются.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <RefreshCw className="h-5 w-5 text-orange-600" />
+            <div>
+              <CardTitle>Пересчёт баллов лояльности</CardTitle>
+              <CardDescription>Пересчитать баланс баллов у всех клиентов на основе реальных транзакций</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Пересчёт суммирует все начисления и списания из истории транзакций и устанавливает актуальный баланс. 
+            Уже потраченные баллы не вернутся — учитываются только реальные операции.
+          </p>
+          <Button 
+            variant="outline"
+            onClick={recalculateLoyalty}
+            disabled={isRecalculating}
+            className="w-full"
+            data-testid="button-recalculate-loyalty"
+          >
+            {isRecalculating ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            Пересчитать баллы
+          </Button>
         </CardContent>
       </Card>
     </div>

@@ -1240,6 +1240,46 @@ router.get("/api/admin/users/:id/loyalty", verifyAdminToken, async (req, res) =>
   }
 });
 
+router.post("/api/admin/recalculate-loyalty", verifyAdminToken, async (req, res) => {
+  try {
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const loyaltyRepo = AppDataSource.getRepository(LoyaltyTransactionEntity);
+    
+    const users = await userRepo.find();
+    let updated = 0;
+    let errors = 0;
+    
+    for (const user of users) {
+      try {
+        const transactions = await loyaltyRepo.find({ where: { userId: user.id } });
+        const realBalance = transactions.reduce((sum, t) => sum + t.points, 0);
+        
+        if (user.loyaltyPoints !== realBalance) {
+          const oldPoints = user.loyaltyPoints || 0;
+          user.loyaltyPoints = Math.max(0, realBalance);
+          await userRepo.save(user);
+          updated++;
+          console.log(`[Loyalty Recalc] ${user.username || user.telegramId}: ${oldPoints} → ${user.loyaltyPoints} (транзакции: ${realBalance})`);
+        }
+      } catch (e) {
+        errors++;
+        console.error(`[Loyalty Recalc] Error for user ${user.telegramId}:`, e);
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Пересчитано: ${updated} из ${users.length} пользователей обновлено` + (errors > 0 ? `, ошибок: ${errors}` : ""),
+      total: users.length,
+      updated,
+      errors
+    });
+  } catch (error) {
+    console.error("Error recalculating loyalty:", error);
+    res.status(500).json({ success: false, message: "Ошибка пересчёта баллов" });
+  }
+});
+
 router.get("/api/admin/boxes", verifyAdminToken, async (req, res) => {
   try {
     const boxes = await storage.getAllBoxes();
