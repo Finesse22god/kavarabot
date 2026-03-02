@@ -218,14 +218,47 @@ class RetailCRMService {
     }
   }
 
+  async getLoyaltyAccountByExternalId(externalId: string): Promise<any | null> {
+    if (!this.isConfigured()) return null;
+    try {
+      // First try filtering directly by customer externalId
+      const directResponse = await this.request("GET", "loyalty/accounts", {
+        "filter[customer][externalId]": externalId,
+        "limit": 1,
+      });
+      if (directResponse.success && directResponse.loyaltyAccounts?.length > 0) {
+        console.log(`[RetailCRM] Found loyalty account for ${externalId} (direct)`);
+        return directResponse.loyaltyAccounts[0];
+      }
+
+      // Fallback: find customer first, then find loyalty account by customerId
+      const customer = await this.getCustomerByExternalId(externalId);
+      if (!customer?.id) return null;
+
+      const response = await this.request("GET", "loyalty/accounts", {
+        "filter[customerId]": customer.id,
+        "limit": 1,
+      });
+      if (response.success && response.loyaltyAccounts?.length > 0) {
+        console.log(`[RetailCRM] Found loyalty account for ${externalId} (by customerId ${customer.id})`);
+        return response.loyaltyAccounts[0];
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getLoyaltyAccountByExternalId error:`, error.message);
+      return null;
+    }
+  }
+
   async getCustomerPoints(externalId: string): Promise<number | null> {
     if (!this.isConfigured()) return null;
     try {
-      const customer = await this.getCustomerByExternalId(externalId);
-      if (!customer) return null;
-      const points = customer.customFields?.bonus_balance;
-      if (points !== undefined && points !== null) {
-        return Number(points);
+      const account = await this.getLoyaltyAccountByExternalId(externalId);
+      if (!account) return null;
+      const balance = account.bonus?.active ?? account.bonus?.total ?? account.bonusBalance ?? null;
+      if (balance !== null && balance !== undefined) {
+        console.log(`[RetailCRM] Balance for ${externalId}: ${balance}`);
+        return Number(balance);
       }
       return null;
     } catch (error: any) {
@@ -234,19 +267,64 @@ class RetailCRMService {
     }
   }
 
-  async updateCustomerPoints(externalId: string, newBalance: number): Promise<any> {
+  async creditPoints(loyaltyAccountId: number | string, amount: number, comment?: string): Promise<any> {
     if (!this.isConfigured()) return null;
     try {
-      const result = await this.request("POST", `customers/${externalId}/edit`, {
-        customer: {
-          customFields: { bonus_balance: Math.max(0, newBalance) }
-        },
-        by: "externalId",
+      const activatedAt = new Date().toISOString().split('T')[0];
+      const result = await this.request("POST", `loyalty/account/${loyaltyAccountId}/bonus/credit`, {
+        "bonusCredit[amount]": Math.max(0, amount),
+        "bonusCredit[activatedAt]": activatedAt,
+        "bonusCredit[comment]": comment || "Начислено через Telegram Mini App",
       });
       if (result.success) {
-        console.log(`[RetailCRM] Updated points for ${externalId}: ${newBalance}`);
+        console.log(`[RetailCRM] Credited ${amount} points to account ${loyaltyAccountId}`);
       }
       return result;
+    } catch (error: any) {
+      console.error(`[RetailCRM] creditPoints error:`, error.message);
+      return null;
+    }
+  }
+
+  async chargePoints(loyaltyAccountId: number | string, amount: number, comment?: string): Promise<any> {
+    if (!this.isConfigured()) return null;
+    try {
+      const result = await this.request("POST", `loyalty/account/${loyaltyAccountId}/bonus/charge`, {
+        "bonusCharge[amount]": Math.max(0, amount),
+        "bonusCharge[comment]": comment || "Списано через Telegram Mini App",
+      });
+      if (result.success) {
+        console.log(`[RetailCRM] Charged ${amount} points from account ${loyaltyAccountId}`);
+      }
+      return result;
+    } catch (error: any) {
+      console.error(`[RetailCRM] chargePoints error:`, error.message);
+      return null;
+    }
+  }
+
+  async updateCustomerPoints(externalId: string, newBalance: number, comment?: string): Promise<any> {
+    if (!this.isConfigured()) return null;
+    try {
+      const account = await this.getLoyaltyAccountByExternalId(externalId);
+      if (!account) {
+        console.log(`[RetailCRM] No loyalty account found for ${externalId}, skipping points update`);
+        return null;
+      }
+
+      const currentBalance = Number(account.bonus?.active ?? account.bonus?.total ?? account.bonusBalance ?? 0);
+      const delta = newBalance - currentBalance;
+
+      if (delta === 0) {
+        console.log(`[RetailCRM] Points unchanged for ${externalId}: ${currentBalance}`);
+        return { success: true, unchanged: true };
+      }
+
+      if (delta > 0) {
+        return await this.creditPoints(account.id, delta, comment || "Начислено через Telegram Mini App");
+      } else {
+        return await this.chargePoints(account.id, Math.abs(delta), comment || "Списано через Telegram Mini App");
+      }
     } catch (error: any) {
       console.error(`[RetailCRM] updateCustomerPoints error:`, error.message);
       return null;
