@@ -370,16 +370,16 @@ class RetailCRMService {
           site: siteCode,
         };
 
-        const editId = existingCustomer.externalId || customer.externalId;
-        const byField = existingCustomer.externalId ? 'externalId' : 'id';
-
+        // Always use internal CRM id for edit URL to avoid confusion
+        // and set our externalId in the body (CRM will attach it)
+        const editId = existingCustomer.id;
         const result = await this.request("POST", `customers/${editId}/edit`, {
           customer: updateData,
-          by: byField,
+          by: "id",
           site: siteCode,
         });
-        console.log(`[RetailCRM] Customer updated (found by ${foundBy}): ${editId}`);
-        return { result, crmCustomerId: String(existingCustomer.id || editId) };
+        console.log(`[RetailCRM] Customer updated (found by ${foundBy}, id: ${editId})`);
+        return { result, crmCustomerId: String(existingCustomer.id) };
       } else {
         const result = await this.request("POST", "customers/create", {
           customer: { ...customer, site: siteCode },
