@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Phone, Mail, MapPin, Package, ShoppingCart, Link, LinkOff, CheckCircle } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, MapPin, Package, ShoppingCart, Link2, Link2Off, CheckCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -131,7 +131,7 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Link className="h-5 w-5" />
+                <Link2 className="h-5 w-5" />
                 Привязка к RetailCRM
               </CardTitle>
             </CardHeader>
@@ -144,7 +144,7 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
                   </>
                 ) : (
                   <>
-                    <LinkOff className="h-4 w-4 text-gray-400" />
+                    <Link2Off className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-500">Не привязан</span>
                   </>
                 )}
@@ -162,7 +162,7 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
                   onClick={() => resetCrmMutation.mutate()}
                   disabled={resetCrmMutation.isPending}
                 >
-                  <LinkOff className="h-4 w-4 mr-2" />
+                  <Link2Off className="h-4 w-4 mr-2" />
                   {resetCrmMutation.isPending ? "Сброс..." : "Сбросить привязку"}
                 </Button>
               )}
