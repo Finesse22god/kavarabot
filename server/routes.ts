@@ -1293,6 +1293,24 @@ router.get("/api/admin/users/:id/loyalty", verifyAdminToken, async (req, res) =>
   }
 });
 
+router.post("/api/admin/users/:telegramId/reset-crm-link", verifyAdminToken, async (req, res) => {
+  try {
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const user = await userRepo.findOne({ where: { telegramId: String(req.params.telegramId) } });
+    if (!user) return res.status(404).json({ success: false, message: "Пользователь не найден" });
+
+    user.crmLinked = false;
+    user.crmCustomerId = undefined as any;
+    await userRepo.save(user);
+
+    console.log(`[Admin] Reset CRM link for user ${req.params.telegramId}`);
+    res.json({ success: true, message: "Привязка к CRM сброшена" });
+  } catch (error) {
+    console.error("Error resetting CRM link:", error);
+    res.status(500).json({ success: false, message: "Ошибка при сбросе привязки" });
+  }
+});
+
 router.post("/api/admin/recalculate-loyalty", verifyAdminToken, async (req, res) => {
   try {
     const userRepo = AppDataSource.getRepository(UserEntity);

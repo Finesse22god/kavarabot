@@ -1,8 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, User, Phone, Mail, MapPin, Package, Calendar, ShoppingCart } from "lucide-react";
+import { ArrowLeft, User, Phone, Mail, MapPin, Package, ShoppingCart, Link, LinkOff, CheckCircle } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface User {
   id: string;
@@ -12,6 +14,10 @@ interface User {
   telegramId: string;
   createdAt: string;
   referralCode?: string;
+  phone?: string;
+  email?: string;
+  crmLinked?: boolean;
+  crmCustomerId?: string;
 }
 
 interface UserProfileProps {
@@ -20,16 +26,27 @@ interface UserProfileProps {
 }
 
 export default function UserProfile({ user, onBack }: UserProfileProps) {
-  // Fetch user orders
+  const { toast } = useToast();
+
   const { data: userOrders } = useQuery({
     queryKey: [`/api/admin/users/${user.id}/orders`],
     retry: false,
   });
 
-  // Fetch user loyalty stats
   const { data: loyaltyStats } = useQuery({
     queryKey: [`/api/admin/users/${user.id}/loyalty`],
     retry: false,
+  });
+
+  const resetCrmMutation = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/admin/users/${user.telegramId}/reset-crm-link`),
+    onSuccess: () => {
+      toast({ title: "Привязка к CRM сброшена" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: () => {
+      toast({ title: "Ошибка при сбросе привязки", variant: "destructive" });
+    },
   });
 
   const getStatusBadge = (status: string) => {
@@ -59,7 +76,6 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* User Info */}
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>
@@ -85,6 +101,24 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
                 <p className="text-sm text-gray-600">Дата регистрации</p>
                 <p className="font-medium">{new Date(user.createdAt).toLocaleDateString('ru-RU')}</p>
               </div>
+              {user.phone && (
+                <div>
+                  <p className="text-sm text-gray-600">Телефон</p>
+                  <div className="flex items-center gap-1">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <p className="font-medium">{user.phone}</p>
+                  </div>
+                </div>
+              )}
+              {user.email && (
+                <div>
+                  <p className="text-sm text-gray-600">Email</p>
+                  <div className="flex items-center gap-1">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <p className="font-medium">{user.email}</p>
+                  </div>
+                </div>
+              )}
               {user.referralCode && (
                 <div>
                   <p className="text-sm text-gray-600">Реферальный код</p>
@@ -94,7 +128,47 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
             </CardContent>
           </Card>
 
-          {/* Loyalty Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Link className="h-5 w-5" />
+                Привязка к RetailCRM
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center gap-2">
+                {user.crmLinked ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm text-green-700 font-medium">Аккаунт привязан</span>
+                  </>
+                ) : (
+                  <>
+                    <LinkOff className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">Не привязан</span>
+                  </>
+                )}
+              </div>
+              {user.crmCustomerId && (
+                <div>
+                  <p className="text-xs text-gray-500">CRM ID: {user.crmCustomerId}</p>
+                </div>
+              )}
+              {user.crmLinked && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => resetCrmMutation.mutate()}
+                  disabled={resetCrmMutation.isPending}
+                >
+                  <LinkOff className="h-4 w-4 mr-2" />
+                  {resetCrmMutation.isPending ? "Сброс..." : "Сбросить привязку"}
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Статистика лояльности</CardTitle>
@@ -116,7 +190,6 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
           </Card>
         </div>
 
-        {/* Orders */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
