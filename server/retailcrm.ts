@@ -221,13 +221,13 @@ class RetailCRMService {
   async getLoyaltyAccountByExternalId(externalId: string): Promise<any | null> {
     if (!this.isConfigured()) return null;
     try {
-      // First try filtering directly by customer externalId
+      // Filter by customerExternalId as per RetailCRM API v5 docs
       const directResponse = await this.request("GET", "loyalty/accounts", {
-        "filter[customer][externalId]": externalId,
+        "filter[customerExternalId]": externalId,
         "limit": 1,
       });
       if (directResponse.success && directResponse.loyaltyAccounts?.length > 0) {
-        console.log(`[RetailCRM] Found loyalty account for ${externalId} (direct)`);
+        console.log(`[RetailCRM] Found loyalty account for ${externalId} (by customerExternalId)`);
         return directResponse.loyaltyAccounts[0];
       }
 
@@ -255,7 +255,8 @@ class RetailCRMService {
     try {
       const account = await this.getLoyaltyAccountByExternalId(externalId);
       if (!account) return null;
-      const balance = account.bonus?.active ?? account.bonus?.total ?? account.bonusBalance ?? null;
+      // RetailCRM API v5: loyalty account balance is in `amount` field
+      const balance = account.amount ?? null;
       if (balance !== null && balance !== undefined) {
         console.log(`[RetailCRM] Balance for ${externalId}: ${balance}`);
         return Number(balance);
@@ -270,11 +271,13 @@ class RetailCRMService {
   async creditPoints(loyaltyAccountId: number | string, amount: number, comment?: string): Promise<any> {
     if (!this.isConfigured()) return null;
     try {
-      const activatedAt = new Date().toISOString().split('T')[0];
+      // RetailCRM API v5: POST /loyalty/account/{id}/bonus/credit
+      // Params: amount (float), activationDate (Y-m-d), expireDate (Y-m-d), comment (string)
+      const activationDate = new Date().toISOString().split('T')[0];
       const result = await this.request("POST", `loyalty/account/${loyaltyAccountId}/bonus/credit`, {
-        "bonusCredit[amount]": Math.max(0, amount),
-        "bonusCredit[activatedAt]": activatedAt,
-        "bonusCredit[comment]": comment || "Начислено через Telegram Mini App",
+        "amount": Math.max(0, amount),
+        "activationDate": activationDate,
+        "comment": comment || "Начислено через Telegram Mini App",
       });
       if (result.success) {
         console.log(`[RetailCRM] Credited ${amount} points to account ${loyaltyAccountId}`);
@@ -289,9 +292,11 @@ class RetailCRMService {
   async chargePoints(loyaltyAccountId: number | string, amount: number, comment?: string): Promise<any> {
     if (!this.isConfigured()) return null;
     try {
+      // RetailCRM API v5: POST /loyalty/account/{id}/bonus/charge
+      // Params: amount (float), comment (string)
       const result = await this.request("POST", `loyalty/account/${loyaltyAccountId}/bonus/charge`, {
-        "bonusCharge[amount]": Math.max(0, amount),
-        "bonusCharge[comment]": comment || "Списано через Telegram Mini App",
+        "amount": Math.max(0, amount),
+        "comment": comment || "Списано через Telegram Mini App",
       });
       if (result.success) {
         console.log(`[RetailCRM] Charged ${amount} points from account ${loyaltyAccountId}`);
@@ -312,7 +317,8 @@ class RetailCRMService {
         return null;
       }
 
-      const currentBalance = Number(account.bonus?.active ?? account.bonus?.total ?? account.bonusBalance ?? 0);
+      // RetailCRM API v5: balance is in `amount` field of loyalty account
+      const currentBalance = Number(account.amount ?? 0);
       const delta = newBalance - currentBalance;
 
       if (delta === 0) {
