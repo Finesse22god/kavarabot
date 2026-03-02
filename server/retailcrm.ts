@@ -80,18 +80,17 @@ class RetailCRMService {
     let options: any = { method, headers };
 
     if (method === "GET") {
-      const params = new URLSearchParams();
-      params.append("apiKey", this.config.apiKey);
+      // IMPORTANT: URLSearchParams encodes square brackets (filter[email] → filter%5Bemail%5D)
+      // RetailCRM requires literal square brackets in filter params, so build query string manually
+      const queryParts: string[] = [`apiKey=${encodeURIComponent(this.config.apiKey)}`];
       if (data) {
         for (const [key, value] of Object.entries(data)) {
-          if (typeof value === "object") {
-            params.append(key, JSON.stringify(value));
-          } else {
-            params.append(key, String(value));
-          }
+          const strValue = typeof value === "object" ? JSON.stringify(value) : String(value);
+          // Key is NOT encoded (preserves filter[xxx] brackets), value IS encoded
+          queryParts.push(`${key}=${encodeURIComponent(strValue)}`);
         }
       }
-      const fullUrl = `${url}?${params}`;
+      const fullUrl = `${url}?${queryParts.join('&')}`;
       options = { method, headers };
       
       try {
