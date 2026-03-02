@@ -55,6 +55,11 @@ interface User {
   username?: string;
   telegramId: string;
   createdAt: string;
+  phone?: string;
+  email?: string;
+  crmLinked?: boolean;
+  crmCustomerId?: string;
+  referralCode?: string;
 }
 
 

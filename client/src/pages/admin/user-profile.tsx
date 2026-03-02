@@ -154,18 +154,16 @@ export default function UserProfile({ user, onBack }: UserProfileProps) {
                   <p className="text-xs text-gray-500">CRM ID: {user.crmCustomerId}</p>
                 </div>
               )}
-              {user.crmLinked && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-red-600 border-red-200 hover:bg-red-50"
-                  onClick={() => resetCrmMutation.mutate()}
-                  disabled={resetCrmMutation.isPending}
-                >
-                  <Link2Off className="h-4 w-4 mr-2" />
-                  {resetCrmMutation.isPending ? "Сброс..." : "Сбросить привязку"}
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => resetCrmMutation.mutate()}
+                disabled={resetCrmMutation.isPending || !user.crmLinked}
+              >
+                <Link2Off className="h-4 w-4 mr-2" />
+                {resetCrmMutation.isPending ? "Сброс..." : "Сбросить привязку"}
+              </Button>
             </CardContent>
           </Card>
 
