@@ -249,17 +249,131 @@ class RetailCRMService {
     }
   }
 
-  async getCustomerPoints(externalId: string): Promise<number | null> {
+  async getLoyaltyAccountByCrmId(crmCustomerId: string): Promise<any | null> {
+    if (!this.isConfigured() || !crmCustomerId) return null;
+    try {
+      const response = await this.request("GET", "loyalty/accounts", {
+        "filter[customerId]": crmCustomerId,
+        "limit": 1,
+      });
+      if (response.success && response.loyaltyAccounts?.length > 0) {
+        console.log(`[RetailCRM] Found loyalty account by CRM ID ${crmCustomerId}`);
+        return response.loyaltyAccounts[0];
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getLoyaltyAccountByCrmId error:`, error.message);
+      return null;
+    }
+  }
+
+  async getLoyaltyAccountByEmail(email: string): Promise<any | null> {
+    if (!this.isConfigured() || !email) return null;
+    try {
+      // Get all customers matching this email (there may be duplicates)
+      const customersResp = await this.request("GET", "customers", {
+        "filter[email]": email,
+      });
+      if (!customersResp.success || !customersResp.customers?.length) return null;
+
+      // Check each customer for a loyalty account — return first one found
+      for (const customer of customersResp.customers) {
+        const loyaltyResp = await this.request("GET", "loyalty/accounts", {
+          "filter[customerId]": customer.id,
+          "limit": 1,
+        });
+        if (loyaltyResp.success && loyaltyResp.loyaltyAccounts?.length > 0) {
+          console.log(`[RetailCRM] Found loyalty account by email ${email} (customerId ${customer.id})`);
+          return loyaltyResp.loyaltyAccounts[0];
+        }
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getLoyaltyAccountByEmail error:`, error.message);
+      return null;
+    }
+  }
+
+  async getLoyaltyAccountByPhone(phone: string): Promise<any | null> {
+    if (!this.isConfigured() || !phone) return null;
+    try {
+      const normalizedPhone = phone.replace(/\D/g, '');
+      // Get all customers matching this phone (there may be duplicates)
+      const customersResp = await this.request("GET", "customers", {
+        "filter[phone]": normalizedPhone,
+      });
+      if (!customersResp.success || !customersResp.customers?.length) return null;
+
+      // Check each customer for a loyalty account — return first one found
+      for (const customer of customersResp.customers) {
+        const loyaltyResp = await this.request("GET", "loyalty/accounts", {
+          "filter[customerId]": customer.id,
+          "limit": 1,
+        });
+        if (loyaltyResp.success && loyaltyResp.loyaltyAccounts?.length > 0) {
+          console.log(`[RetailCRM] Found loyalty account by phone (customerId ${customer.id})`);
+          return loyaltyResp.loyaltyAccounts[0];
+        }
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getLoyaltyAccountByPhone error:`, error.message);
+      return null;
+    }
+  }
+
+  async getCustomerPoints(
+    externalId: string,
+    opts?: { crmCustomerId?: string; email?: string; phone?: string }
+  ): Promise<number | null> {
     if (!this.isConfigured()) return null;
     try {
-      const account = await this.getLoyaltyAccountByExternalId(externalId);
-      if (!account) return null;
-      // RetailCRM API v5: loyalty account balance is in `amount` field
-      const balance = account.amount ?? null;
-      if (balance !== null && balance !== undefined) {
-        console.log(`[RetailCRM] Balance for ${externalId}: ${balance}`);
-        return Number(balance);
+      // 1. Try by saved CRM customer ID (fastest, most direct)
+      if (opts?.crmCustomerId) {
+        const account = await this.getLoyaltyAccountByCrmId(opts.crmCustomerId);
+        if (account) {
+          const balance = account.amount ?? null;
+          if (balance !== null) {
+            console.log(`[RetailCRM] Balance for ${externalId} (by crmCustomerId): ${balance}`);
+            return Number(balance);
+          }
+        }
       }
+
+      // 2. Try by externalId (tg_xxx)
+      const accountByExtId = await this.getLoyaltyAccountByExternalId(externalId);
+      if (accountByExtId) {
+        const balance = accountByExtId.amount ?? null;
+        if (balance !== null) {
+          console.log(`[RetailCRM] Balance for ${externalId} (by externalId): ${balance}`);
+          return Number(balance);
+        }
+      }
+
+      // 3. Try by email — finds original customer even if duplicate exists
+      if (opts?.email) {
+        const accountByEmail = await this.getLoyaltyAccountByEmail(opts.email);
+        if (accountByEmail) {
+          const balance = accountByEmail.amount ?? null;
+          if (balance !== null) {
+            console.log(`[RetailCRM] Balance for ${externalId} (by email ${opts.email}): ${balance}`);
+            return Number(balance);
+          }
+        }
+      }
+
+      // 4. Try by phone
+      if (opts?.phone) {
+        const accountByPhone = await this.getLoyaltyAccountByPhone(opts.phone);
+        if (accountByPhone) {
+          const balance = accountByPhone.amount ?? null;
+          if (balance !== null) {
+            console.log(`[RetailCRM] Balance for ${externalId} (by phone): ${balance}`);
+            return Number(balance);
+          }
+        }
+      }
+
       return null;
     } catch (error: any) {
       console.error(`[RetailCRM] getCustomerPoints error:`, error.message);
@@ -307,10 +421,30 @@ class RetailCRMService {
     }
   }
 
-  async updateCustomerPoints(externalId: string, newBalance: number, comment?: string): Promise<any> {
+  async updateCustomerPoints(
+    externalId: string,
+    newBalance: number,
+    comment?: string,
+    opts?: { crmCustomerId?: string; email?: string; phone?: string }
+  ): Promise<any> {
     if (!this.isConfigured()) return null;
     try {
-      const account = await this.getLoyaltyAccountByExternalId(externalId);
+      // Try to find loyalty account via multiple strategies
+      let account: any = null;
+
+      if (opts?.crmCustomerId) {
+        account = await this.getLoyaltyAccountByCrmId(opts.crmCustomerId);
+      }
+      if (!account) {
+        account = await this.getLoyaltyAccountByExternalId(externalId);
+      }
+      if (!account && opts?.email) {
+        account = await this.getLoyaltyAccountByEmail(opts.email);
+      }
+      if (!account && opts?.phone) {
+        account = await this.getLoyaltyAccountByPhone(opts.phone);
+      }
+
       if (!account) {
         console.log(`[RetailCRM] No loyalty account found for ${externalId}, skipping points update`);
         return null;
@@ -364,14 +498,23 @@ class RetailCRMService {
       const siteCode = this.config?.siteCode || 'kavarabrand2';
 
       if (existingCustomer) {
+        const editId = existingCustomer.id;
+
+        // When found by email/phone: do NOT set externalId to avoid conflicts
+        // with another record that may already have our tg_ externalId.
+        // When found by our own externalId: safe to update fully.
         const updateData: any = {
-          ...customer,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          phones: customer.phones,
+          email: customer.email,
+          customerComment: customer.customerComment,
           site: siteCode,
         };
+        if (foundBy === 'externalId') {
+          updateData.externalId = customer.externalId;
+        }
 
-        // Always use internal CRM id for edit URL to avoid confusion
-        // and set our externalId in the body (CRM will attach it)
-        const editId = existingCustomer.id;
         const result = await this.request("POST", `customers/${editId}/edit`, {
           customer: updateData,
           by: "id",

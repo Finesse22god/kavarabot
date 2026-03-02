@@ -1403,7 +1403,11 @@ router.post("/api/admin/award-points", verifyAdminToken, async (req, res) => {
         if (settings?.enabled) {
           const configured = await ensureRetailCRMConfigured();
           if (configured && savedUser.telegramId) {
-            await retailCRM.updateCustomerPoints(`tg_${savedUser.telegramId}`, savedBalance);
+            await retailCRM.updateCustomerPoints(`tg_${savedUser.telegramId}`, savedBalance, undefined, {
+              crmCustomerId: savedUser.crmCustomerId || undefined,
+              email: savedUser.email || undefined,
+              phone: savedUser.phone || undefined,
+            });
             console.log(`[Admin] Synced ${savedBalance} points to CRM for @${cleanUsername}`);
           }
         }
@@ -2551,7 +2555,11 @@ router.post("/api/loyalty/activate-package-bonus", async (req, res) => {
           const configured = await ensureRetailCRMConfigured();
           if (configured) {
             const externalId = `tg_${user.telegramId}`;
-            await retailCRM.updateCustomerPoints(externalId, user.loyaltyPoints);
+            await retailCRM.updateCustomerPoints(externalId, user.loyaltyPoints, undefined, {
+              crmCustomerId: user.crmCustomerId || undefined,
+              email: user.email || undefined,
+              phone: user.phone || undefined,
+            });
             console.log(`[PackageBonus] Synced ${user.loyaltyPoints} points to CRM for ${externalId}`);
           }
         }
@@ -2594,7 +2602,11 @@ router.get("/api/users/:telegramId/loyalty", async (req, res) => {
         const configured = await ensureRetailCRMConfigured();
         if (configured) {
           const externalId = `tg_${user.telegramId}`;
-          const crmPoints = await retailCRM.getCustomerPoints(externalId);
+          const crmPoints = await retailCRM.getCustomerPoints(externalId, {
+            crmCustomerId: user.crmCustomerId || undefined,
+            email: user.email || undefined,
+            phone: user.phone || undefined,
+          });
           if (crmPoints !== null) {
             points = crmPoints;
             source = 'crm';
