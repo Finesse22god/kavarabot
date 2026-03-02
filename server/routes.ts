@@ -1031,6 +1031,33 @@ router.post("/api/orders", async (req, res) => {
       return createdOrder;
     });
 
+    // Save phone/email from order to user profile if not already set (T002)
+    if (order.userId) {
+      setTimeout(async () => {
+        try {
+          const userRepo = AppDataSource.getRepository(UserEntity);
+          const userToUpdate = await userRepo.findOne({ where: { id: order.userId } });
+          if (userToUpdate) {
+            let changed = false;
+            if (!userToUpdate.phone && order.customerPhone) {
+              userToUpdate.phone = order.customerPhone;
+              changed = true;
+            }
+            if (!userToUpdate.email && order.customerEmail) {
+              userToUpdate.email = order.customerEmail;
+              changed = true;
+            }
+            if (changed) {
+              await userRepo.save(userToUpdate);
+              console.log(`[Profile] Saved phone/email from order ${order.orderNumber} to user ${userToUpdate.telegramId}`);
+            }
+          }
+        } catch (err) {
+          console.error("[Profile] Failed to save phone/email from order:", err);
+        }
+      }, 200);
+    }
+
     // Sync customer to RetailCRM on order creation (async, non-blocking)
     // Orders are only synced to CRM after payment confirmation (in YooKassa webhook)
     syncCustomerToRetailCRMSafe(order);
@@ -1055,7 +1082,11 @@ async function syncCustomerToRetailCRMSafe(order: any) {
       const user = order.userId ? await userRepo.findOne({ where: { id: order.userId } }) : null;
       if (user) {
         const retailCustomer = mapKavaraUserToRetailCRM(user, order);
-        await retailCRM.createOrUpdateCustomer(retailCustomer);
+        const { result, crmCustomerId } = await retailCRM.createOrUpdateCustomer(retailCustomer);
+        if (crmCustomerId && !user.crmLinked) {
+          user.crmCustomerId = crmCustomerId;
+          await userRepo.save(user);
+        }
         console.log(`[RetailCRM] Customer synced for order ${order.orderNumber}`);
       }
     } catch (error) {
@@ -1343,6 +1374,25 @@ router.post("/api/admin/award-points", verifyAdminToken, async (req, res) => {
     await loyaltyRepo.save(transaction);
     
     console.log(`[Admin] Awarded ${pointsNum} points to @${cleanUsername} (balance: ${user.loyaltyPoints})`);
+
+    // Sync updated balance to RetailCRM (non-blocking)
+    const savedUser = user;
+    const savedBalance = user.loyaltyPoints;
+    setTimeout(async () => {
+      try {
+        const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
+        const settings = await settingsRepo.findOne({ where: {} });
+        if (settings?.enabled) {
+          const configured = await ensureRetailCRMConfigured();
+          if (configured && savedUser.telegramId) {
+            await retailCRM.updateCustomerPoints(`tg_${savedUser.telegramId}`, savedBalance);
+            console.log(`[Admin] Synced ${savedBalance} points to CRM for @${cleanUsername}`);
+          }
+        }
+      } catch (err) {
+        console.error("[Admin] CRM points sync failed (non-blocking):", err);
+      }
+    }, 200);
     
     res.json({ 
       success: true, 
@@ -2474,6 +2524,24 @@ router.post("/api/loyalty/activate-package-bonus", async (req, res) => {
 
     console.log(`[PackageBonus] Activated for user ${user.telegramId} (@${user.username}), +${bonusPoints} points`);
 
+    // Sync updated points to RetailCRM (non-blocking)
+    setTimeout(async () => {
+      try {
+        const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
+        const settings = await settingsRepo.findOne({ where: {} });
+        if (settings?.enabled) {
+          const configured = await ensureRetailCRMConfigured();
+          if (configured) {
+            const externalId = `tg_${user.telegramId}`;
+            await retailCRM.updateCustomerPoints(externalId, user.loyaltyPoints);
+            console.log(`[PackageBonus] Synced ${user.loyaltyPoints} points to CRM for ${externalId}`);
+          }
+        }
+      } catch (err) {
+        console.error("[PackageBonus] CRM sync failed (non-blocking):", err);
+      }
+    }, 200);
+
     res.json({ 
       success: true, 
       message: `Вам начислено ${bonusPoints} бонусных баллов!`,
@@ -2483,6 +2551,110 @@ router.post("/api/loyalty/activate-package-bonus", async (req, res) => {
   } catch (error) {
     console.error("Error activating package bonus:", error);
     res.status(500).json({ success: false, message: "Ошибка при активации бонуса" });
+  }
+});
+
+// GET loyalty balance - fetches from CRM if configured, fallback to local DB
+router.get("/api/users/:telegramId/loyalty", async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const user = await userRepo.findOne({ where: { telegramId: String(telegramId) } });
+
+    if (!user) {
+      return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    let points = user.loyaltyPoints || 0;
+    let source = 'local';
+
+    // Try to get from CRM if configured
+    try {
+      const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
+      const settings = await settingsRepo.findOne({ where: {} });
+      if (settings?.enabled) {
+        const configured = await ensureRetailCRMConfigured();
+        if (configured) {
+          const externalId = `tg_${user.telegramId}`;
+          const crmPoints = await retailCRM.getCustomerPoints(externalId);
+          if (crmPoints !== null) {
+            points = crmPoints;
+            source = 'crm';
+            // Keep local DB in sync
+            if (user.loyaltyPoints !== crmPoints) {
+              user.loyaltyPoints = crmPoints;
+              await userRepo.save(user);
+            }
+          }
+        }
+      }
+    } catch (crmErr) {
+      console.error("[Loyalty] CRM fetch failed, using local:", crmErr);
+    }
+
+    res.json({ 
+      points, 
+      source,
+      crmLinked: user.crmLinked || false,
+      phone: user.phone || null,
+      email: user.email || null,
+    });
+  } catch (error) {
+    console.error("Error fetching loyalty:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// POST link CRM account - find/create customer in CRM by email+phone, attach externalId
+router.post("/api/users/:telegramId/link-crm", async (req, res) => {
+  try {
+    const { telegramId } = req.params;
+    const { phone, email } = req.body;
+
+    if (!email && !phone) {
+      return res.status(400).json({ success: false, message: "Необходимо указать email или номер телефона" });
+    }
+
+    const userRepo = AppDataSource.getRepository(UserEntity);
+    const user = await userRepo.findOne({ where: { telegramId: String(telegramId) } });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Пользователь не найден" });
+    }
+
+    // Save phone/email to profile
+    if (phone) user.phone = phone;
+    if (email) user.email = email;
+
+    // Try CRM linking if configured
+    const settingsRepo = AppDataSource.getRepository(RetailCRMSettings);
+    const settings = await settingsRepo.findOne({ where: {} });
+    
+    if (settings?.enabled) {
+      const configured = await ensureRetailCRMConfigured();
+      if (configured) {
+        const retailCustomer = mapKavaraUserToRetailCRM(user);
+        const { result, crmCustomerId } = await retailCRM.createOrUpdateCustomer(retailCustomer);
+        if (result?.success !== false) {
+          user.crmLinked = true;
+          if (crmCustomerId) user.crmCustomerId = crmCustomerId;
+          console.log(`[LinkCRM] Linked user ${telegramId} to CRM. crmId: ${crmCustomerId}`);
+        }
+      }
+    }
+
+    await userRepo.save(user);
+
+    res.json({ 
+      success: true, 
+      message: "Аккаунт успешно привязан",
+      crmLinked: user.crmLinked,
+      phone: user.phone,
+      email: user.email,
+    });
+  } catch (error) {
+    console.error("Error linking CRM account:", error);
+    res.status(500).json({ success: false, message: "Ошибка при привязке аккаунта" });
   }
 });
 
@@ -3443,7 +3615,11 @@ router.post("/api/admin/retailcrm/sync-customers", verifyAdminToken, async (req,
           order: { createdAt: "DESC" }
         });
         const retailCustomer = mapKavaraUserToRetailCRM(user, lastOrder);
-        await retailCRM.createOrUpdateCustomer(retailCustomer);
+        const { result, crmCustomerId } = await retailCRM.createOrUpdateCustomer(retailCustomer);
+        if (crmCustomerId && !user.crmLinked) {
+          user.crmCustomerId = crmCustomerId;
+          await userRepo.save(user);
+        }
         synced++;
       } catch (error: any) {
         console.error(`[RetailCRM] Failed to sync user ${user.telegramId}:`, error.message);

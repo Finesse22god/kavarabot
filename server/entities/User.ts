@@ -56,6 +56,18 @@ export class User {
   @Column({ type: "varchar", nullable: true })
   preferredSize?: string;
 
+  @Column({ type: "varchar", nullable: true })
+  phone?: string;
+
+  @Column({ type: "varchar", nullable: true })
+  email?: string;
+
+  @Column({ type: "boolean", default: false })
+  crmLinked!: boolean;
+
+  @Column({ type: "varchar", nullable: true })
+  crmCustomerId?: string;
+
   @Column({ type: "boolean", default: false })
   packageBonusActivated!: boolean;
 

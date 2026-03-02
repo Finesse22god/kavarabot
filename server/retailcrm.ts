@@ -164,30 +164,146 @@ class RetailCRMService {
     }
   }
 
-  async createOrUpdateCustomer(customer: RetailCRMCustomer): Promise<any> {
+  async getCustomerByEmail(email: string): Promise<any | null> {
+    if (!this.isConfigured() || !email) return null;
+    try {
+      const response = await this.request("GET", "customers", {
+        "filter[email]": email,
+        "limit": 1,
+      });
+      if (response.success && response.customers?.length > 0) {
+        console.log(`[RetailCRM] Found customer by email: ${email}`);
+        return response.customers[0];
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getCustomerByEmail error:`, error.message);
+      return null;
+    }
+  }
+
+  async getCustomerByPhone(phone: string): Promise<any | null> {
+    if (!this.isConfigured() || !phone) return null;
+    try {
+      const normalizedPhone = phone.replace(/\D/g, '');
+      const response = await this.request("GET", "customers", {
+        "filter[phone]": normalizedPhone,
+        "limit": 1,
+      });
+      if (response.success && response.customers?.length > 0) {
+        console.log(`[RetailCRM] Found customer by phone: ${phone}`);
+        return response.customers[0];
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getCustomerByPhone error:`, error.message);
+      return null;
+    }
+  }
+
+  async getCustomerByExternalId(externalId: string): Promise<any | null> {
+    if (!this.isConfigured() || !externalId) return null;
+    try {
+      const response = await this.request("GET", "customers", {
+        "filter[externalId]": externalId,
+        "limit": 1,
+      });
+      if (response.success && response.customers?.length > 0) {
+        return response.customers[0];
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getCustomerByExternalId error:`, error.message);
+      return null;
+    }
+  }
+
+  async getCustomerPoints(externalId: string): Promise<number | null> {
+    if (!this.isConfigured()) return null;
+    try {
+      const customer = await this.getCustomerByExternalId(externalId);
+      if (!customer) return null;
+      const points = customer.customFields?.bonus_balance;
+      if (points !== undefined && points !== null) {
+        return Number(points);
+      }
+      return null;
+    } catch (error: any) {
+      console.error(`[RetailCRM] getCustomerPoints error:`, error.message);
+      return null;
+    }
+  }
+
+  async updateCustomerPoints(externalId: string, newBalance: number): Promise<any> {
+    if (!this.isConfigured()) return null;
+    try {
+      const result = await this.request("POST", `customers/${externalId}/edit`, {
+        customer: {
+          customFields: { bonus_balance: Math.max(0, newBalance) }
+        },
+        by: "externalId",
+      });
+      if (result.success) {
+        console.log(`[RetailCRM] Updated points for ${externalId}: ${newBalance}`);
+      }
+      return result;
+    } catch (error: any) {
+      console.error(`[RetailCRM] updateCustomerPoints error:`, error.message);
+      return null;
+    }
+  }
+
+  async createOrUpdateCustomer(customer: RetailCRMCustomer): Promise<{ result: any; crmCustomerId?: string }> {
     if (!this.isConfigured()) {
       console.log("[RetailCRM] Not configured, skipping customer sync");
-      return null;
+      return { result: null };
     }
 
     try {
-      const existingResponse = await this.request("GET", "customers", {
-        "filter[externalId]": customer.externalId,
-      });
+      let existingCustomer: any = null;
+      let foundBy: string | null = null;
 
-      if (existingResponse.success && existingResponse.customers?.length > 0) {
-        const result = await this.request("POST", `customers/${customer.externalId}/edit`, {
-          customer,
-          by: "externalId",
+      if (customer.email) {
+        existingCustomer = await this.getCustomerByEmail(customer.email);
+        if (existingCustomer) foundBy = 'email';
+      }
+
+      if (!existingCustomer && customer.phones?.[0]?.number) {
+        existingCustomer = await this.getCustomerByPhone(customer.phones[0].number);
+        if (existingCustomer) foundBy = 'phone';
+      }
+
+      if (!existingCustomer) {
+        existingCustomer = await this.getCustomerByExternalId(customer.externalId);
+        if (existingCustomer) foundBy = 'externalId';
+      }
+
+      const siteCode = this.config?.siteCode || 'kavarabrand2';
+
+      if (existingCustomer) {
+        const updateData: any = {
+          ...customer,
+          site: siteCode,
+        };
+
+        const editId = existingCustomer.externalId || customer.externalId;
+        const byField = existingCustomer.externalId ? 'externalId' : 'id';
+
+        const result = await this.request("POST", `customers/${editId}/edit`, {
+          customer: updateData,
+          by: byField,
+          site: siteCode,
         });
-        console.log(`[RetailCRM] Customer updated: ${customer.externalId}`);
-        return result;
+        console.log(`[RetailCRM] Customer updated (found by ${foundBy}): ${editId}`);
+        return { result, crmCustomerId: String(existingCustomer.id || editId) };
       } else {
         const result = await this.request("POST", "customers/create", {
-          customer,
+          customer: { ...customer, site: siteCode },
+          site: siteCode,
         });
         console.log(`[RetailCRM] Customer created: ${customer.externalId}`);
-        return result;
+        const crmId = result.id ? String(result.id) : customer.externalId;
+        return { result, crmCustomerId: crmId };
       }
     } catch (error: any) {
       console.error(`[RetailCRM] Failed to sync customer ${customer.externalId}:`, error.message);
@@ -387,7 +503,7 @@ export function mapKavaraUserToRetailCRM(user: any, orderData?: any): RetailCRMC
   const lastName = user.lastName || (orderData?.customerName?.split(/\s+/).slice(1).join(" ")) || '';
 
   const phone = user.phone || orderData?.customerPhone;
-  const email = orderData?.customerEmail;
+  const email = user.email || orderData?.customerEmail;
 
   const loyaltyInfo = [];
   if (user.loyaltyPoints !== undefined && user.loyaltyPoints !== null) {
@@ -406,7 +522,7 @@ export function mapKavaraUserToRetailCRM(user: any, orderData?: any): RetailCRMC
     externalId: `tg_${user.telegramId}`,
     firstName,
     lastName,
-    phones: phone ? [{ number: phone }] : undefined,
+    phones: phone ? [{ number: phone.replace(/\D/g, '') }] : undefined,
     email: email || undefined,
     customerComment: commentParts.length > 0 ? commentParts.join('. ') : undefined,
   };

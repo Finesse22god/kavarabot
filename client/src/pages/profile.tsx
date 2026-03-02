@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Edit, Heart, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle } from "lucide-react";
+import { User, Edit, Heart, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle, Link, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -104,18 +104,23 @@ export default function Profile() {
     enabled: !!user?.id,
   });
 
-  // Fetch loyalty stats
-  const { data: loyaltyStats } = useQuery<{
-    totalPoints: number;
-    totalEarned: number;
-    totalSpent: number;
-    totalReferrals: number;
-    level: string;
-    nextLevelPoints: number;
+  // Fetch loyalty balance (from CRM if configured, fallback to local DB)
+  const { data: loyaltyData, isLoading: loyaltyLoading } = useQuery<{
+    points: number;
+    source: string;
+    crmLinked: boolean;
+    phone: string | null;
+    email: string | null;
   }>({
-    queryKey: [`/api/loyalty/${userData?.id}/stats`],
-    enabled: !!userData?.id
+    queryKey: [`/api/users/${user?.id?.toString()}/loyalty`],
+    enabled: !!user?.id,
   });
+
+  // Link CRM form state
+  const [linkFormOpen, setLinkFormOpen] = useState(false);
+  const [linkPhone, setLinkPhone] = useState("");
+  const [linkEmail, setLinkEmail] = useState("");
+  const [isLinkingCRM, setIsLinkingCRM] = useState(false);
 
   // Fetch user's owned promo code
   const { data: ownerPromoData } = useQuery<{
@@ -570,18 +575,138 @@ export default function Profile() {
                 </div>
               </div>
 
-              {loyaltyStats && (
-                <div className="bg-white rounded-xl shadow-lg p-6">
-                  <h3 className="font-semibold mb-4 flex items-center">
-                    <span className="text-2xl mr-2">🎁</span>
-                    Баллы лояльности
-                  </h3>
+              {/* Loyalty points block */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold mb-4 flex items-center">
+                  <span className="text-2xl mr-2">🎁</span>
+                  Баллы лояльности
+                  {loyaltyData?.source === 'crm' && (
+                    <span className="ml-2 text-xs text-green-600 font-normal">из CRM</span>
+                  )}
+                </h3>
+                {loyaltyLoading ? (
+                  <div className="flex items-center justify-center p-4">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                  </div>
+                ) : (
                   <div className="bg-white border-2 border-black p-4 rounded-lg text-center">
                     <p className="text-sm text-gray-600 mb-1">Доступно баллов</p>
-                    <p className="text-3xl font-bold text-black">{loyaltyStats.totalPoints}</p>
+                    <p className="text-3xl font-bold text-black">{loyaltyData?.points ?? 0}</p>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* CRM account linking block */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Link className="w-5 h-5" />
+                  Система лояльности
+                </h3>
+                {loyaltyData?.crmLinked ? (
+                  <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Аккаунт привязан</p>
+                      {loyaltyData.email && (
+                        <p className="text-xs text-green-500">{loyaltyData.email}</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-3">
+                      Привяжите аккаунт, чтобы баллы лояльности синхронизировались с сайтом и не создавались дубли.
+                    </p>
+                    {!linkFormOpen ? (
+                      <Button
+                        className="w-full bg-black text-white hover:bg-gray-800"
+                        onClick={() => {
+                          setLinkFormOpen(true);
+                          // Try to get phone from Telegram
+                          if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+                            try {
+                              (window.Telegram.WebApp as any).requestContact?.((success: boolean, contact: any) => {
+                                if (success && contact?.phone_number) {
+                                  setLinkPhone(contact.phone_number);
+                                }
+                              });
+                            } catch {
+                              // requestContact not available
+                            }
+                          }
+                        }}
+                      >
+                        <Link className="w-4 h-4 mr-2" />
+                        Связать аккаунт
+                      </Button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="link-email">Email *</Label>
+                          <Input
+                            id="link-email"
+                            type="email"
+                            placeholder="your@email.com"
+                            value={linkEmail}
+                            onChange={(e) => setLinkEmail(e.target.value)}
+                          />
+                          <p className="text-xs text-gray-400 mt-1">Email используется системой лояльности для поиска вашего аккаунта</p>
+                        </div>
+                        <div>
+                          <Label htmlFor="link-phone">Номер телефона</Label>
+                          <Input
+                            id="link-phone"
+                            type="tel"
+                            placeholder="+7 (999) 000-00-00"
+                            value={linkPhone}
+                            onChange={(e) => setLinkPhone(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            className="flex-1 bg-black text-white hover:bg-gray-800"
+                            disabled={isLinkingCRM || !linkEmail}
+                            onClick={async () => {
+                              if (!linkEmail) {
+                                toast({ title: "Ошибка", description: "Введите email", variant: "destructive" });
+                                return;
+                              }
+                              setIsLinkingCRM(true);
+                              try {
+                                const telegramId = user?.id?.toString();
+                                const result = await apiRequest("POST", `/api/users/${telegramId}/link-crm`, {
+                                  phone: linkPhone || undefined,
+                                  email: linkEmail,
+                                });
+                                if (result.success) {
+                                  toast({ title: "Готово!", description: "Аккаунт привязан к системе лояльности" });
+                                  queryClient.invalidateQueries({ queryKey: [`/api/users/${telegramId}/loyalty`] });
+                                  setLinkFormOpen(false);
+                                } else {
+                                  toast({ title: "Ошибка", description: result.message || "Не удалось привязать аккаунт", variant: "destructive" });
+                                }
+                              } catch (err) {
+                                toast({ title: "Ошибка", description: "Не удалось привязать аккаунт", variant: "destructive" });
+                              } finally {
+                                setIsLinkingCRM(false);
+                              }
+                            }}
+                          >
+                            {isLinkingCRM ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                            Подтвердить
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => { setLinkFormOpen(false); setLinkEmail(""); setLinkPhone(""); }}
+                          >
+                            Отмена
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
               {/* Добавить на главный экран */}
               <div className="bg-white rounded-xl shadow-lg p-6">
