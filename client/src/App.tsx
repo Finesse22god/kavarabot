@@ -105,6 +105,11 @@ function App() {
     const param = startParam || startAppParam;
     
     if (param && location === '/') {
+      // catalog_Олимпийки → /catalog?category=Олимпийки
+      if (param.startsWith('catalog_')) {
+        navigate(`/catalog?category=${encodeURIComponent(param.slice('catalog_'.length))}`);
+        return;
+      }
       // Navigate based on the parameter
       switch (param) {
         case 'catalog':

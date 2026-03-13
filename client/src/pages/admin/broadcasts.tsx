@@ -34,12 +34,19 @@ interface Broadcast {
 }
 
 const PAGE_PRESETS = [
-  { label: "Каталог", param: "catalog" },
+  { label: "Каталог (все)", param: "catalog" },
   { label: "Боксы", param: "boxes" },
   { label: "Корзина", param: "cart" },
   { label: "Профиль", param: "profile" },
   { label: "Избранное", param: "favorites" },
   { label: "Квиз", param: "quiz" },
+];
+
+const CATALOG_CATEGORIES = [
+  "Рашгарды", "Лосины", "Рубашки", "Поло", "Шорты",
+  "Футболки", "Майки", "Худи", "Брюки", "Жилеты",
+  "Олимпийки", "Джемперы", "Куртки", "Свитшоты",
+  "Сумки", "Аксессуары"
 ];
 
 function TelegramPreview({ message, imageUrl, buttons }: {
@@ -539,35 +546,61 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                    <div className="grid grid-cols-[1fr_auto] gap-2 mb-3">
                       <Input
-                        placeholder="Текст кнопки"
+                        placeholder="Текст кнопки (например: Смотреть олимпийки)"
                         value={newButton.label}
                         onChange={(e) => setNewButton({ ...newButton, label: e.target.value })}
                       />
-                      <Input
-                        placeholder="Страница"
-                        value={newButton.startAppParam}
-                        onChange={(e) => setNewButton({ ...newButton, startAppParam: e.target.value })}
-                      />
-                      <Button type="button" variant="outline" onClick={addButton}>
-                        <Plus className="w-4 h-4" />
+                      <Button type="button" variant="outline" onClick={addButton} disabled={!newButton.label || !newButton.startAppParam}>
+                        <Plus className="w-4 h-4 mr-1" />
+                        Добавить
                       </Button>
                     </div>
 
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {PAGE_PRESETS.map(preset => (
-                        <Button
-                          key={preset.param}
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-6 px-2"
-                          onClick={() => setNewButton({ ...newButton, startAppParam: preset.param })}
-                        >
-                          {preset.label}
-                        </Button>
-                      ))}
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Страница для кнопки:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {PAGE_PRESETS.map(preset => (
+                          <button
+                            key={preset.param}
+                            type="button"
+                            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                              newButton.startAppParam === preset.param
+                                ? 'bg-black text-white border-black'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-400'
+                            }`}
+                            onClick={() => setNewButton({ ...newButton, startAppParam: preset.param })}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide pt-1">Каталог с фильтром:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {CATALOG_CATEGORIES.map(cat => (
+                          <button
+                            key={cat}
+                            type="button"
+                            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                              newButton.startAppParam === `catalog_${cat}`
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-blue-400'
+                            }`}
+                            onClick={() => setNewButton({ ...newButton, startAppParam: `catalog_${cat}` })}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+
+                      {newButton.startAppParam && (
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+                          <span className="font-mono text-gray-400">param:</span>
+                          <span className="font-mono font-medium text-gray-700">{newButton.startAppParam}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

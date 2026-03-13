@@ -72,7 +72,10 @@ export default function Catalog() {
     enabled: !!telegramUser?.id
   });
   const [selectedSportType, setSelectedSportType] = useState("Все виды спорта");
-  const [selectedCategory, setSelectedCategory] = useState("Все категории");
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    const urlCategory = new URLSearchParams(window.location.search).get('category');
+    return urlCategory && CATEGORIES.includes(urlCategory) ? urlCategory : "Все категории";
+  });
   const [selectedPriceRange, setSelectedPriceRange] = useState(PRICE_RANGES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("default");
