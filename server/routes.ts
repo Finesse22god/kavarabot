@@ -104,6 +104,25 @@ router.post("/api/upload/box-image", upload.single("image"), async (req, res) =>
   }
 });
 
+// File upload endpoint for broadcast images (uploads to S3)
+router.post("/api/upload/broadcast-image", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не загружен" });
+    }
+    const fileType = await fileTypeFromBuffer(req.file.buffer);
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
+      return res.status(400).json({ error: "Недопустимый тип файла. Разрешены только изображения: JPG, PNG, WebP, GIF" });
+    }
+    const s3Url = await uploadToS3(req.file, "broadcasts");
+    res.json({ url: s3Url });
+  } catch (error) {
+    console.error("Error uploading broadcast image to S3:", error);
+    res.status(500).json({ error: "Ошибка при загрузке файла" });
+  }
+});
+
 // File upload endpoint for products (uploads to S3)
 router.post("/api/upload/product-image", productUpload.single("image"), async (req, res) => {
   try {
