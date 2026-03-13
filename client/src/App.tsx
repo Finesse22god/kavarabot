@@ -110,6 +110,11 @@ function App() {
         navigate(`/catalog?category=${encodeURIComponent(param.slice('catalog_'.length))}`);
         return;
       }
+      // product_<uuid> → /product/<uuid>
+      if (param.startsWith('product_')) {
+        navigate(`/product/${param.slice('product_'.length)}`);
+        return;
+      }
       // Navigate based on the parameter
       switch (param) {
         case 'catalog':

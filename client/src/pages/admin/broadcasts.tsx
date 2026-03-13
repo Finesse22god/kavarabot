@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   ArrowLeft, Plus, Send, Eye, Trash2, Megaphone, Users,
-  CheckCircle, XCircle, Clock, Image, Link, Upload, X, Loader2
+  CheckCircle, XCircle, Clock, Image, Link, Upload, X, Loader2, Search, Package
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -308,6 +308,22 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
   });
 
   const [newButton, setNewButton] = useState({ label: "", startAppParam: "" });
+  const [productSearch, setProductSearch] = useState("");
+
+  const { data: allProducts } = useQuery<any[]>({
+    queryKey: ["/api/catalog"],
+    queryFn: async () => {
+      const adminToken = localStorage.getItem("admin_token") || "";
+      const res = await fetch("/api/catalog", { headers: { "x-admin-token": adminToken } });
+      return res.json();
+    },
+    enabled: showForm,
+    staleTime: 60000,
+  });
+
+  const productSearchResults = allProducts?.filter(p =>
+    !productSearch || p.name.toLowerCase().includes(productSearch.toLowerCase())
+  ).slice(0, 8);
 
   const { data: broadcasts, isLoading } = useQuery<Broadcast[]>({
     queryKey: ["/api/admin/broadcasts"],
@@ -594,6 +610,51 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
                           </button>
                         ))}
                       </div>
+
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide pt-1">Конкретный товар:</p>
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-gray-400" />
+                        <Input
+                          placeholder="Поиск по названию товара..."
+                          value={productSearch}
+                          onChange={(e) => setProductSearch(e.target.value)}
+                          className="pl-8 text-sm h-8"
+                        />
+                      </div>
+                      {productSearchResults && productSearchResults.length > 0 && (
+                        <div className="max-h-48 overflow-y-auto border rounded-xl divide-y bg-white">
+                          {productSearchResults.map((product) => (
+                            <button
+                              key={product.id}
+                              type="button"
+                              className={`w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 transition-colors text-left ${
+                                newButton.startAppParam === `product_${product.id}` ? 'bg-blue-50 border-l-2 border-blue-500' : ''
+                              }`}
+                              onClick={() => {
+                                setNewButton({
+                                  label: newButton.label || product.name,
+                                  startAppParam: `product_${product.id}`
+                                });
+                              }}
+                            >
+                              {product.imageUrl ? (
+                                <img src={product.imageUrl} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                  <Package className="w-4 h-4 text-gray-400" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
+                                <p className="text-xs text-gray-400">{product.category} · {Number(product.price).toLocaleString('ru-RU')} ₽</p>
+                              </div>
+                              {newButton.startAppParam === `product_${product.id}` && (
+                                <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
                       {newButton.startAppParam && (
                         <div className="flex items-center gap-2 mt-1 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
