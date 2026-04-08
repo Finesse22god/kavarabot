@@ -150,16 +150,45 @@ interface ReplicatePrediction {
   detail?: string;
 }
 
+// Simple in-memory rate limiter for try-on (5 requests per 60s per telegramId)
+const tryonRateLimiter = new Map<string, { count: number; resetAt: number }>();
+function checkTryonRateLimit(key: string): boolean {
+  const now = Date.now();
+  const entry = tryonRateLimiter.get(key);
+  if (!entry || now > entry.resetAt) {
+    tryonRateLimiter.set(key, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= 5) return false;
+  entry.count++;
+  return true;
+}
+
 // Start virtual try-on prediction via Replicate IDM-VTON
 router.post("/api/tryon", async (req, res) => {
   try {
-    const { userPhotoUrl, garmentId, category } = req.body as {
+    const { userPhotoUrl, garmentId, category, telegramId } = req.body as {
       userPhotoUrl?: string;
       garmentId?: string;
       category?: string;
+      telegramId?: string | number;
     };
     if (!userPhotoUrl || !garmentId) {
       return res.status(400).json({ error: "Необходимо указать фото и товар" });
+    }
+
+    // Require authenticated user
+    if (!telegramId) {
+      return res.status(401).json({ error: "Требуется авторизация" });
+    }
+    const user = await storage.getUserByTelegramId(String(telegramId));
+    if (!user) {
+      return res.status(401).json({ error: "Пользователь не найден" });
+    }
+
+    // Rate limit: max 5 requests per minute per user
+    if (!checkTryonRateLimit(String(telegramId))) {
+      return res.status(429).json({ error: "Слишком много запросов. Подождите минуту." });
     }
 
     // Validate userPhotoUrl originates from our S3 upload (must be a tryon-folder upload)

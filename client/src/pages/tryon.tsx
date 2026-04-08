@@ -27,7 +27,7 @@ const EXCLUDED_CATEGORIES = ["Аксессуары", "Сумки", "Кепки",
 
 export default function TryOn() {
   const [, setLocation] = useLocation();
-  const { hapticFeedback } = useTelegram();
+  const { hapticFeedback, webApp } = useTelegram();
   const { toast } = useToast();
 
   const [step, setStep] = useState<Step>(1);
@@ -133,6 +133,7 @@ export default function TryOn() {
     timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
 
     try {
+      const telegramId = webApp?.initDataUnsafe?.user?.id;
       const res = await fetch("/api/tryon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,6 +141,7 @@ export default function TryOn() {
           userPhotoUrl,
           garmentId: selectedProduct.id,
           category,
+          telegramId,
         }),
       });
       const data = await res.json() as TryonStartResponse & { error?: string };
@@ -376,15 +378,41 @@ export default function TryOn() {
                 <Download className="w-4 h-4 mr-2" />
                 Сохранить
               </Button>
+              {"share" in navigator ? (
+                <Button
+                  className="bg-white/20 text-white hover:bg-white/30 rounded-xl py-3"
+                  onClick={async () => {
+                    try {
+                      await navigator.share({ title: "KAVARA примерка", url: resultUrl! });
+                    } catch {
+                      window.open(resultUrl!, "_blank");
+                    }
+                  }}
+                >
+                  <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                  Поделиться
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 rounded-xl py-3"
+                  onClick={reset}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Заново
+                </Button>
+              )}
+            </div>
+            {"share" in navigator && (
               <Button
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 rounded-xl py-3"
+                className="w-full border-white/20 text-white/60 hover:bg-white/10 rounded-xl py-3"
                 onClick={reset}
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                Заново
+                Примерить другое
               </Button>
-            </div>
+            )}
             {selectedProduct && (
               <Button
                 className="w-full bg-white/10 text-white hover:bg-white/20 rounded-xl py-3"
