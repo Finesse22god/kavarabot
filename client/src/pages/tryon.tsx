@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Upload, Camera, RefreshCw, Download, Shirt, CheckCircle, AlertCircle, Loader2, X } from "lucide-react";
@@ -61,12 +61,22 @@ export default function TryOn() {
     return isUpper || (!isLower && !isExcluded);
   }) ?? [];
 
+  // Cleanup polling and timer on unmount to prevent background requests
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   const handleFileSelect = useCallback(async (file: File) => {
     if (!file.type.match(/^image\/(jpeg|png|webp)/)) {
       toast({ title: "Ошибка", description: "Используйте JPG, PNG или WebP", variant: "destructive" });
       return;
     }
     setUserPhotoFile(file);
+    // Revoke any previous preview to avoid memory leaks
+    setUserPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     const preview = URL.createObjectURL(file);
     setUserPhotoPreview(preview);
     setIsUploadingPhoto(true);
@@ -150,7 +160,7 @@ export default function TryOn() {
     if (timerRef.current) clearInterval(timerRef.current);
     setStep(1);
     setUserPhotoFile(null);
-    setUserPhotoPreview(null);
+    setUserPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     setUserPhotoUrl(null);
     setSelectedProduct(null);
     setPredictionId(null);
@@ -165,11 +175,13 @@ export default function TryOn() {
     try {
       const res = await fetch(resultUrl);
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = objectUrl;
       a.download = "kavara-tryon.jpg";
       a.click();
+      // Revoke after a brief delay to allow the download to start
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch {
       window.open(resultUrl, "_blank");
     }
@@ -248,7 +260,7 @@ export default function TryOn() {
                 )}
                 <button
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center"
-                  onClick={() => { setUserPhotoFile(null); setUserPhotoPreview(null); setUserPhotoUrl(null); }}
+                  onClick={() => { setUserPhotoFile(null); setUserPhotoPreview(prev => { if (prev) URL.revokeObjectURL(prev); return null; }); setUserPhotoUrl(null); }}
                 >
                   <X className="w-4 h-4 text-white" />
                 </button>
