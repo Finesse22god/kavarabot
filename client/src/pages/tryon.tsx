@@ -21,8 +21,9 @@ interface TryonPollResponse {
   error: string | null;
 }
 
-const UPPER_BODY_CATEGORIES = ["Олимпийки", "Куртки", "Футболки", "Толстовки", "Лонгсливы", "Топы", "Жилеты", "Свитшоты", "Рубашки", "Верх"];
-const LOWER_BODY_CATEGORIES = ["Брюки", "Шорты", "Леггинсы", "Низ", "Джоггеры"];
+const UPPER_BODY_CATEGORIES = ["Олимпийки", "Куртки", "Футболки", "Толстовки", "Лонгсливы", "Топы", "Жилеты", "Свитшоты", "Рубашки", "Верх", "Майки", "Рашгарды", "Худи"];
+const LOWER_BODY_CATEGORIES = ["Брюки", "Шорты", "Леггинсы", "Лосины", "Низ", "Джоггеры"];
+const EXCLUDED_CATEGORIES = ["Аксессуары", "Сумки", "Кепки", "Перчатки", "Носки", "Очки", "Бутсы", "Кроссовки", "Обувь", "Головные", "Рюкзаки", "Бутылки", "Маски", "Подшлемники"];
 
 export default function TryOn() {
   const [, setLocation] = useLocation();
@@ -52,12 +53,12 @@ export default function TryOn() {
 
   const filteredProducts: Product[] = allProducts?.filter(p => {
     const cat = p.category ?? "";
-    if (category === "upper_body") {
-      return UPPER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase())) ||
-        !LOWER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase()));
-    } else {
-      return LOWER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase()));
-    }
+    const isExcluded = EXCLUDED_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase()));
+    if (isExcluded) return false;
+    const isLower = LOWER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase()));
+    const isUpper = UPPER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase()));
+    if (category === "lower_body") return isLower;
+    return isUpper || (!isLower && !isExcluded);
   }) ?? [];
 
   const handleFileSelect = useCallback(async (file: File) => {

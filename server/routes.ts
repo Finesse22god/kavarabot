@@ -161,6 +161,14 @@ router.post("/api/tryon", async (req, res) => {
     if (!userPhotoUrl || !garmentId) {
       return res.status(400).json({ error: "Необходимо указать фото и товар" });
     }
+
+    // Validate userPhotoUrl originates from our S3 upload (must be a tryon-folder upload)
+    const s3Endpoint = process.env.S3_ENDPOINT || "https://s3.twcstorage.ru";
+    const urlIsFromOurS3 = userPhotoUrl.startsWith(s3Endpoint) && userPhotoUrl.includes("/tryon/");
+    if (!urlIsFromOurS3) {
+      return res.status(400).json({ error: "Недопустимый источник фото" });
+    }
+
     const apiToken = process.env.REPLICATE_API_TOKEN;
     if (!apiToken) {
       return res.status(503).json({ error: "Сервис примерки не настроен (REPLICATE_API_TOKEN)" });
