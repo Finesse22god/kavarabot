@@ -98,9 +98,13 @@ export default function TryOn() {
   }, [toast]);
 
   const pollStatus = (id: string) => {
+    const telegramId = webApp?.initDataUnsafe?.user?.id;
     pollingRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/tryon/${id}`);
+        const url = telegramId
+          ? `/api/tryon/${id}?telegramId=${telegramId}`
+          : `/api/tryon/${id}`;
+        const res = await fetch(url);
         const data = await res.json() as TryonPollResponse;
         setPredictionStatus(data.status);
         if (data.status === "succeeded") {

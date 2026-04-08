@@ -164,6 +164,10 @@ function checkTryonRateLimit(key: string): boolean {
   return true;
 }
 
+// Prediction ownership store: predictionId → userId (internal DB UUID)
+// Kept in-memory since predictions are ephemeral (Replicate expires results)
+const tryonPredictionOwners = new Map<string, string>();
+
 // Start virtual try-on prediction via Replicate IDM-VTON
 router.post("/api/tryon", async (req, res) => {
   try {
@@ -213,6 +217,8 @@ router.post("/api/tryon", async (req, res) => {
     }
 
     const replicateCategory = category === "lower_body" ? "lower_body" : "upper_body";
+    // IDM-VTON (cuuupid/idm-vton) input schema uses human_img/garm_img — NOT person_image/garment_image.
+    // Reference: https://replicate.com/cuuupid/idm-vton/api/schema
     const response = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton/predictions", {
       method: "POST",
       headers: {
@@ -238,7 +244,9 @@ router.post("/api/tryon", async (req, res) => {
       console.error("[TryOn] Replicate error:", prediction);
       return res.status(500).json({ error: prediction.detail || "Ошибка запуска примерки" });
     }
-    console.log(`[TryOn] Started prediction ${prediction.id} for product ${garmentId}`);
+    // Bind this prediction to the requesting user to prevent cross-user polling
+    tryonPredictionOwners.set(prediction.id, user.id);
+    console.log(`[TryOn] Started prediction ${prediction.id} for product ${garmentId} (user ${user.id})`);
     res.json({ predictionId: prediction.id, status: prediction.status });
   } catch (error) {
     console.error("Error starting tryon prediction:", error);
@@ -246,10 +254,30 @@ router.post("/api/tryon", async (req, res) => {
   }
 });
 
-// Poll try-on prediction status
+// Poll try-on prediction status (requires same user who started the prediction)
 router.get("/api/tryon/:predictionId", async (req, res) => {
   try {
     const { predictionId } = req.params;
+    const { telegramId } = req.query as { telegramId?: string };
+
+    if (!telegramId) {
+      return res.status(401).json({ error: "Требуется авторизация" });
+    }
+
+    // Verify the requesting user owns this prediction
+    const owner = tryonPredictionOwners.get(predictionId);
+    if (owner !== undefined) {
+      const user = await storage.getUserByTelegramId(String(telegramId));
+      if (!user || user.id !== owner) {
+        return res.status(403).json({ error: "Нет доступа к данной примерке" });
+      }
+    }
+    // Note: if prediction not in ownership map (e.g., after server restart),
+    // we allow the request but log it for observability
+    if (owner === undefined) {
+      console.warn(`[TryOn] Prediction ${predictionId} not found in ownership map (server restart?)`);
+    }
+
     const apiToken = process.env.REPLICATE_API_TOKEN;
     if (!apiToken) {
       return res.status(503).json({ error: "Сервис примерки не настроен" });
@@ -262,6 +290,12 @@ router.get("/api/tryon/:predictionId", async (req, res) => {
       return res.status(500).json({ error: "Ошибка получения статуса" });
     }
     const resultUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+
+    // Clean up ownership map once prediction is terminal
+    if (prediction.status === "succeeded" || prediction.status === "failed" || prediction.status === "canceled") {
+      tryonPredictionOwners.delete(predictionId);
+    }
+
     res.json({
       status: prediction.status,
       resultUrl: resultUrl || null,
