@@ -5,9 +5,21 @@ import { ChevronLeft, Upload, Camera, RefreshCw, Download, Shirt, CheckCircle, A
 import { Button } from "@/components/ui/button";
 import { useTelegram } from "@/hooks/use-telegram";
 import { useToast } from "@/hooks/use-toast";
+import type { Product } from "@shared/types";
 
 type Step = 1 | 2 | 3;
 type TryonCategory = "upper_body" | "lower_body";
+
+interface TryonStartResponse {
+  predictionId: string;
+  status: string;
+}
+
+interface TryonPollResponse {
+  status: string;
+  resultUrl: string | null;
+  error: string | null;
+}
 
 const UPPER_BODY_CATEGORIES = ["Олимпийки", "Куртки", "Футболки", "Толстовки", "Лонгсливы", "Топы", "Жилеты", "Свитшоты", "Рубашки", "Верх"];
 const LOWER_BODY_CATEGORIES = ["Брюки", "Шорты", "Леггинсы", "Низ", "Джоггеры"];
@@ -23,7 +35,7 @@ export default function TryOn() {
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [category, setCategory] = useState<TryonCategory>("upper_body");
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [predictionId, setPredictionId] = useState<string | null>(null);
   const [predictionStatus, setPredictionStatus] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
@@ -33,13 +45,13 @@ export default function TryOn() {
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { data: allProducts } = useQuery<any[]>({
+  const { data: allProducts } = useQuery<Product[]>({
     queryKey: ["/api/catalog"],
     staleTime: 60000,
   });
 
-  const filteredProducts = allProducts?.filter(p => {
-    const cat = p.category || "";
+  const filteredProducts: Product[] = allProducts?.filter(p => {
+    const cat = p.category ?? "";
     if (category === "upper_body") {
       return UPPER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase())) ||
         !LOWER_BODY_CATEGORIES.some(c => cat.toLowerCase().includes(c.toLowerCase()));
@@ -61,11 +73,12 @@ export default function TryOn() {
       const formData = new FormData();
       formData.append("image", file);
       const res = await fetch("/api/upload/tryon-photo", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ошибка загрузки");
-      setUserPhotoUrl(data.url);
-    } catch (err: any) {
-      toast({ title: "Ошибка загрузки", description: err.message, variant: "destructive" });
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Ошибка загрузки");
+      setUserPhotoUrl(data.url ?? null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Неизвестная ошибка";
+      toast({ title: "Ошибка загрузки", description: message, variant: "destructive" });
       setUserPhotoFile(null);
       setUserPhotoPreview(null);
     } finally {
@@ -73,9 +86,34 @@ export default function TryOn() {
     }
   }, [toast]);
 
+  const pollStatus = (id: string) => {
+    pollingRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tryon/${id}`);
+        const data = await res.json() as TryonPollResponse;
+        setPredictionStatus(data.status);
+        if (data.status === "succeeded") {
+          clearInterval(pollingRef.current!);
+          clearInterval(timerRef.current!);
+          setResultUrl(data.resultUrl);
+          setIsTrying(false);
+          setStep(3);
+          hapticFeedback.notification("success");
+        } else if (data.status === "failed" || data.status === "canceled") {
+          clearInterval(pollingRef.current!);
+          clearInterval(timerRef.current!);
+          setIsTrying(false);
+          toast({ title: "Ошибка примерки", description: data.error ?? "Попробуйте ещё раз", variant: "destructive" });
+        }
+      } catch {
+        // continue polling on transient network error
+      }
+    }, 3000);
+  };
+
   const startTryOn = async () => {
     if (!userPhotoUrl || !selectedProduct) return;
-    hapticFeedback.impact('medium');
+    hapticFeedback.impact("medium");
     setIsTrying(true);
     setResultUrl(null);
     setPredictionStatus("starting");
@@ -89,46 +127,21 @@ export default function TryOn() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userPhotoUrl,
-          garmentImageUrl: selectedProduct.imageUrl,
-          garmentDescription: selectedProduct.name,
+          garmentId: selectedProduct.id,
           category,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ошибка запуска");
+      const data = await res.json() as TryonStartResponse & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? "Ошибка запуска");
       setPredictionId(data.predictionId);
       setPredictionStatus(data.status);
       pollStatus(data.predictionId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearInterval(timerRef.current!);
       setIsTrying(false);
-      toast({ title: "Ошибка", description: err.message, variant: "destructive" });
+      const message = err instanceof Error ? err.message : "Неизвестная ошибка";
+      toast({ title: "Ошибка", description: message, variant: "destructive" });
     }
-  };
-
-  const pollStatus = (id: string) => {
-    pollingRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/tryon/${id}`);
-        const data = await res.json();
-        setPredictionStatus(data.status);
-        if (data.status === "succeeded") {
-          clearInterval(pollingRef.current!);
-          clearInterval(timerRef.current!);
-          setResultUrl(data.resultUrl);
-          setIsTrying(false);
-          setStep(3);
-          hapticFeedback.notification("success");
-        } else if (data.status === "failed" || data.status === "canceled") {
-          clearInterval(pollingRef.current!);
-          clearInterval(timerRef.current!);
-          setIsTrying(false);
-          toast({ title: "Ошибка примерки", description: data.error || "Попробуйте ещё раз", variant: "destructive" });
-        }
-      } catch {
-        // continue polling
-      }
-    }, 3000);
   };
 
   const reset = () => {
@@ -167,7 +180,7 @@ export default function TryOn() {
     <div className="min-h-screen bg-black text-white flex flex-col pt-safe">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-white/10">
-        <button onClick={() => { hapticFeedback.impact('light'); setLocation("/"); }} className="p-2 -ml-2">
+        <button onClick={() => { hapticFeedback.impact("light"); setLocation("/"); }} className="p-2 -ml-2">
           <ChevronLeft className="w-6 h-6 text-white" />
         </button>
         <h1 className="text-lg font-bold tracking-widest">ПРИМЕРКА</h1>
@@ -182,7 +195,7 @@ export default function TryOn() {
       {/* Step indicators */}
       <div className="flex items-center gap-2 px-4 py-3">
         {([1, 2, 3] as Step[]).map(s => (
-          <div key={s} className={`flex items-center gap-2 ${s < 3 ? 'flex-1' : ''}`}>
+          <div key={s} className={`flex items-center gap-2 ${s < 3 ? "flex-1" : ""}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
               step > s ? "bg-white text-black border-white" :
               step === s ? "bg-white/20 text-white border-white" :
@@ -307,7 +320,7 @@ export default function TryOn() {
                     className={`relative rounded-xl overflow-hidden border-2 transition-all text-left ${
                       selectedProduct?.id === product.id ? "border-white" : "border-transparent"
                     }`}
-                    onClick={() => { hapticFeedback.impact('selection'); setSelectedProduct(product); }}
+                    onClick={() => { hapticFeedback.impact("selection"); setSelectedProduct(product); }}
                   >
                     <div className="aspect-square bg-white/5">
                       {product.imageUrl ? (
@@ -320,7 +333,7 @@ export default function TryOn() {
                     </div>
                     <div className="p-2 bg-white/5">
                       <p className="text-xs font-medium text-white truncate">{product.name}</p>
-                      <p className="text-xs text-white/50">{Number(product.price).toLocaleString('ru-RU')} ₽</p>
+                      <p className="text-xs text-white/50">{Number(product.price).toLocaleString("ru-RU")} ₽</p>
                     </div>
                     {selectedProduct?.id === product.id && (
                       <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-white flex items-center justify-center">
@@ -359,12 +372,14 @@ export default function TryOn() {
                 Заново
               </Button>
             </div>
-            <Button
-              className="w-full bg-white/10 text-white hover:bg-white/20 rounded-xl py-3"
-              onClick={() => setLocation(`/product/${selectedProduct?.id}`)}
-            >
-              Перейти к товару
-            </Button>
+            {selectedProduct && (
+              <Button
+                className="w-full bg-white/10 text-white hover:bg-white/20 rounded-xl py-3"
+                onClick={() => setLocation(`/product/${selectedProduct.id}`)}
+              >
+                Перейти к товару
+              </Button>
+            )}
           </div>
         )}
 
@@ -401,7 +416,7 @@ export default function TryOn() {
             <Button
               className="w-full bg-white text-black hover:bg-white/90 rounded-xl py-4 text-base font-bold"
               disabled={!userPhotoUrl || isUploadingPhoto}
-              onClick={() => { hapticFeedback.impact('medium'); setStep(2); }}
+              onClick={() => { hapticFeedback.impact("medium"); setStep(2); }}
             >
               {isUploadingPhoto ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Загружается...</>
@@ -424,7 +439,7 @@ export default function TryOn() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-white text-sm font-medium truncate">{selectedProduct.name}</p>
-                    <p className="text-white/50 text-xs">{Number(selectedProduct.price).toLocaleString('ru-RU')} ₽</p>
+                    <p className="text-white/50 text-xs">{Number(selectedProduct.price).toLocaleString("ru-RU")} ₽</p>
                   </div>
                   <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
                 </div>

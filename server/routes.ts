@@ -142,18 +142,40 @@ router.post("/api/upload/tryon-photo", upload.single("image"), async (req, res) 
   }
 });
 
+interface ReplicatePrediction {
+  id: string;
+  status: string;
+  output?: string | string[] | null;
+  error?: string | null;
+  detail?: string;
+}
+
 // Start virtual try-on prediction via Replicate IDM-VTON
 router.post("/api/tryon", async (req, res) => {
   try {
-    const { userPhotoUrl, garmentImageUrl, garmentDescription, category } = req.body;
-    if (!userPhotoUrl || !garmentImageUrl) {
+    const { userPhotoUrl, garmentId, category } = req.body as {
+      userPhotoUrl?: string;
+      garmentId?: string;
+      category?: string;
+    };
+    if (!userPhotoUrl || !garmentId) {
       return res.status(400).json({ error: "Необходимо указать фото и товар" });
     }
     const apiToken = process.env.REPLICATE_API_TOKEN;
     if (!apiToken) {
       return res.status(503).json({ error: "Сервис примерки не настроен (REPLICATE_API_TOKEN)" });
     }
-    const replicateCategory = category === 'lower_body' ? 'lower_body' : 'upper_body';
+
+    // Server-side garment lookup — client cannot supply arbitrary image URLs
+    const product = await storage.getProduct(garmentId);
+    if (!product) {
+      return res.status(404).json({ error: "Товар не найден" });
+    }
+    if (!product.imageUrl) {
+      return res.status(400).json({ error: "У выбранного товара нет фото для примерки" });
+    }
+
+    const replicateCategory = category === "lower_body" ? "lower_body" : "upper_body";
     const response = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton/predictions", {
       method: "POST",
       headers: {
@@ -164,8 +186,8 @@ router.post("/api/tryon", async (req, res) => {
       body: JSON.stringify({
         input: {
           human_img: userPhotoUrl,
-          garm_img: garmentImageUrl,
-          garment_des: garmentDescription || "clothing item",
+          garm_img: product.imageUrl,
+          garment_des: product.name,
           is_checked: true,
           is_checked_parsing: true,
           denoise_steps: 30,
@@ -174,14 +196,14 @@ router.post("/api/tryon", async (req, res) => {
         },
       }),
     });
-    const prediction = await response.json() as any;
+    const prediction = await response.json() as ReplicatePrediction;
     if (!response.ok) {
       console.error("[TryOn] Replicate error:", prediction);
       return res.status(500).json({ error: prediction.detail || "Ошибка запуска примерки" });
     }
-    console.log(`[TryOn] Started prediction ${prediction.id}`);
+    console.log(`[TryOn] Started prediction ${prediction.id} for product ${garmentId}`);
     res.json({ predictionId: prediction.id, status: prediction.status });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error starting tryon prediction:", error);
     res.status(500).json({ error: "Ошибка при запуске примерки" });
   }
@@ -198,7 +220,7 @@ router.get("/api/tryon/:predictionId", async (req, res) => {
     const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
       headers: { "Authorization": `Bearer ${apiToken}` },
     });
-    const prediction = await response.json() as any;
+    const prediction = await response.json() as ReplicatePrediction;
     if (!response.ok) {
       return res.status(500).json({ error: "Ошибка получения статуса" });
     }
@@ -208,7 +230,7 @@ router.get("/api/tryon/:predictionId", async (req, res) => {
       resultUrl: resultUrl || null,
       error: prediction.error || null,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error polling tryon prediction:", error);
     res.status(500).json({ error: "Ошибка проверки статуса" });
   }
