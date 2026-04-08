@@ -123,6 +123,97 @@ router.post("/api/upload/broadcast-image", upload.single("image"), async (req, r
   }
 });
 
+// File upload endpoint for try-on user photo (public S3 folder for Replicate access)
+router.post("/api/upload/tryon-photo", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не загружен" });
+    }
+    const fileType = await fileTypeFromBuffer(req.file.buffer);
+    const allowedMimeTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!fileType || !allowedMimeTypes.includes(fileType.mime)) {
+      return res.status(400).json({ error: "Недопустимый тип файла. Разрешены: JPG, PNG, WebP" });
+    }
+    const s3Url = await uploadToS3(req.file, "tryon");
+    res.json({ url: s3Url });
+  } catch (error) {
+    console.error("Error uploading tryon photo to S3:", error);
+    res.status(500).json({ error: "Ошибка при загрузке фото" });
+  }
+});
+
+// Start virtual try-on prediction via Replicate IDM-VTON
+router.post("/api/tryon", async (req, res) => {
+  try {
+    const { userPhotoUrl, garmentImageUrl, garmentDescription, category } = req.body;
+    if (!userPhotoUrl || !garmentImageUrl) {
+      return res.status(400).json({ error: "Необходимо указать фото и товар" });
+    }
+    const apiToken = process.env.REPLICATE_API_TOKEN;
+    if (!apiToken) {
+      return res.status(503).json({ error: "Сервис примерки не настроен (REPLICATE_API_TOKEN)" });
+    }
+    const replicateCategory = category === 'lower_body' ? 'lower_body' : 'upper_body';
+    const response = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiToken}`,
+        "Content-Type": "application/json",
+        "Prefer": "respond-async",
+      },
+      body: JSON.stringify({
+        input: {
+          human_img: userPhotoUrl,
+          garm_img: garmentImageUrl,
+          garment_des: garmentDescription || "clothing item",
+          is_checked: true,
+          is_checked_parsing: true,
+          denoise_steps: 30,
+          seed: 42,
+          category: replicateCategory,
+        },
+      }),
+    });
+    const prediction = await response.json() as any;
+    if (!response.ok) {
+      console.error("[TryOn] Replicate error:", prediction);
+      return res.status(500).json({ error: prediction.detail || "Ошибка запуска примерки" });
+    }
+    console.log(`[TryOn] Started prediction ${prediction.id}`);
+    res.json({ predictionId: prediction.id, status: prediction.status });
+  } catch (error: any) {
+    console.error("Error starting tryon prediction:", error);
+    res.status(500).json({ error: "Ошибка при запуске примерки" });
+  }
+});
+
+// Poll try-on prediction status
+router.get("/api/tryon/:predictionId", async (req, res) => {
+  try {
+    const { predictionId } = req.params;
+    const apiToken = process.env.REPLICATE_API_TOKEN;
+    if (!apiToken) {
+      return res.status(503).json({ error: "Сервис примерки не настроен" });
+    }
+    const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+      headers: { "Authorization": `Bearer ${apiToken}` },
+    });
+    const prediction = await response.json() as any;
+    if (!response.ok) {
+      return res.status(500).json({ error: "Ошибка получения статуса" });
+    }
+    const resultUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;
+    res.json({
+      status: prediction.status,
+      resultUrl: resultUrl || null,
+      error: prediction.error || null,
+    });
+  } catch (error: any) {
+    console.error("Error polling tryon prediction:", error);
+    res.status(500).json({ error: "Ошибка проверки статуса" });
+  }
+});
+
 // File upload endpoint for products (uploads to S3)
 router.post("/api/upload/product-image", productUpload.single("image"), async (req, res) => {
   try {

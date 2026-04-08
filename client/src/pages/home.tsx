@@ -36,6 +36,11 @@ export default function Home() {
     }, 300);
   };
 
+  const handleTryOn = () => {
+    hapticFeedback.impact('medium');
+    setLocation('/tryon');
+  };
+
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -110,7 +115,7 @@ export default function Home() {
         </div>
 
         {/* Main Actions - Centered */}
-        <div className="flex justify-center w-full px-4">
+        <div className="flex flex-col items-center gap-3 w-full px-4">
           <div className="relative border border-white/80 rounded-full h-[50px] flex items-center w-full max-w-[240px] md:max-w-[340px] overflow-hidden">
             {/* Ripple animation from center */}
             {selectedSection && (
@@ -155,6 +160,18 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* Try-On Button */}
+          <button
+            onClick={handleTryOn}
+            className="border border-white/40 rounded-full h-[38px] flex items-center justify-center gap-2 px-6 max-w-[240px] md:max-w-[340px] w-full hover:border-white/80 transition-colors"
+            data-testid="button-tryon"
+          >
+            <svg className="w-3.5 h-3.5 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>
+            </svg>
+            <span className="font-medium tracking-wider text-white/80 text-[12px]">ПРИМЕРКА</span>
+          </button>
         </div>
       </div>
     </div>

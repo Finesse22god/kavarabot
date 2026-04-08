@@ -31,6 +31,7 @@ import Catalog from "./pages/catalog";
 import BoxDetail from "./pages/box-detail";
 import ProductDetail from "./pages/product-detail";
 import PrivacyPolicy from "./pages/privacy-policy";
+import TryOn from "./pages/tryon";
 
 function Router() {
   return (
@@ -53,6 +54,7 @@ function Router() {
       <Route path="/profile" component={Profile} />
       <Route path="/info" component={Info} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/tryon" component={TryOn} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/create-box" component={AdminCreateBox} />
@@ -69,6 +71,7 @@ function App() {
   const [bonusModal, setBonusModal] = useState<{ open: boolean; title: string; message: string; success: boolean }>({ open: false, title: '', message: '', success: false });
   const isAdminPage = location.startsWith('/admin');
   const isHomePage = location === '/';
+  const isTryOnPage = location === '/tryon';
 
   const handleBackButton = useCallback(() => {
     hapticFeedback.impact('light');
@@ -186,7 +189,7 @@ function App() {
         <div className={isAdminPage ? "w-full min-h-screen bg-gray-50 font-inter" : "telegram-app font-inter"}>
           <Toaster />
           <Router />
-          {!isAdminPage && <BottomNav />}
+          {!isAdminPage && !isTryOnPage && <BottomNav />}
           <Dialog open={bonusModal.open} onOpenChange={(open) => setBonusModal(prev => ({ ...prev, open }))}>
             <DialogContent className="max-w-[320px] rounded-2xl text-center p-8">
               <div className="flex flex-col items-center gap-4">
