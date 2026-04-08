@@ -264,18 +264,16 @@ router.get("/api/tryon/:predictionId", async (req, res) => {
       return res.status(401).json({ error: "Требуется авторизация" });
     }
 
-    // Verify the requesting user owns this prediction
+    // Verify the requesting user owns this prediction (fail closed)
     const owner = tryonPredictionOwners.get(predictionId);
-    if (owner !== undefined) {
-      const user = await storage.getUserByTelegramId(String(telegramId));
-      if (!user || user.id !== owner) {
-        return res.status(403).json({ error: "Нет доступа к данной примерке" });
-      }
-    }
-    // Note: if prediction not in ownership map (e.g., after server restart),
-    // we allow the request but log it for observability
     if (owner === undefined) {
-      console.warn(`[TryOn] Prediction ${predictionId} not found in ownership map (server restart?)`);
+      // Ownership unknown — prediction may have expired or server restarted.
+      // Fail closed to prevent cross-user result leakage.
+      return res.status(403).json({ error: "Примерка не найдена или истекла" });
+    }
+    const user = await storage.getUserByTelegramId(String(telegramId));
+    if (!user || user.id !== owner) {
+      return res.status(403).json({ error: "Нет доступа к данной примерке" });
     }
 
     const apiToken = process.env.REPLICATE_API_TOKEN;

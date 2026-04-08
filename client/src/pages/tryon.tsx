@@ -339,7 +339,7 @@ export default function TryOn() {
                     className={`relative rounded-xl overflow-hidden border-2 transition-all text-left ${
                       selectedProduct?.id === product.id ? "border-white" : "border-transparent"
                     }`}
-                    onClick={() => { hapticFeedback.impact("selection"); setSelectedProduct(product); }}
+                    onClick={() => { hapticFeedback.selection(); setSelectedProduct(product); }}
                   >
                     <div className="aspect-square bg-white/5">
                       {product.imageUrl ? (
