@@ -384,17 +384,16 @@ export default function TryOn() {
 
         {/* STEP 3: Result */}
         {step === 3 && resultUrl && (
-          <div className="space-y-4 mt-2">
+          <div className="space-y-4 mt-2 pb-4">
             <div>
               <h2 className="text-base font-semibold mb-1">Результат примерки</h2>
               <p className="text-white/50 text-sm">{selectedProduct?.name}</p>
             </div>
-            <div className="w-full rounded-2xl overflow-hidden bg-white/5">
+            <div className="w-full rounded-2xl overflow-hidden bg-white/5 flex justify-center">
               <img
                 src={resultUrl}
                 alt="Результат примерки"
-                className="w-full h-auto object-contain"
-                style={{ maxHeight: "70vh" }}
+                style={{ display: "block", width: "auto", maxWidth: "100%", maxHeight: "65vh", objectFit: "contain" }}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -421,8 +420,7 @@ export default function TryOn() {
                 </Button>
               ) : (
                 <Button
-                  variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 rounded-xl py-3"
+                  className="bg-white/15 text-white hover:bg-white/25 rounded-xl py-3"
                   onClick={reset}
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
@@ -430,16 +428,13 @@ export default function TryOn() {
                 </Button>
               )}
             </div>
-            {"share" in navigator && (
-              <Button
-                variant="outline"
-                className="w-full border-white/20 text-white/60 hover:bg-white/10 rounded-xl py-3"
-                onClick={reset}
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Примерить другое
-              </Button>
-            )}
+            <Button
+              className="w-full bg-white/10 text-white hover:bg-white/20 rounded-xl py-3"
+              onClick={reset}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Примерить другое
+            </Button>
             {selectedProduct && (
               <Button
                 className="w-full bg-white/10 text-white hover:bg-white/20 rounded-xl py-3"
