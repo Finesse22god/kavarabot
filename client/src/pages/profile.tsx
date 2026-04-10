@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User, Edit, Heart, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle, Link, Loader2 } from "lucide-react";
+import { User, Edit, Heart, Package, Clock, CheckCircle, Truck, RefreshCw, MessageCircle, Link, Loader2, Shirt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,6 +52,21 @@ export default function Profile() {
   const { data: userData } = useQuery<{id: string; telegramId: string; firstName?: string; lastName?: string}>({
     queryKey: [`/api/users/telegram/${user?.id?.toString()}`],
     enabled: !!user?.id,
+  });
+
+  // Fetch tryon history
+  const { data: tryonHistory, isLoading: isTryonHistoryLoading } = useQuery<Array<{
+    id: string;
+    createdAt: string;
+    productId?: string;
+    productName?: string;
+    productImageUrl?: string;
+    resultUrl?: string;
+    category: string;
+  }>>({
+    queryKey: [`/api/users/${user?.id?.toString()}/tryon-history`],
+    enabled: !!user?.id,
+    staleTime: 60000,
   });
 
   // Update formData when userData changes
@@ -509,10 +524,11 @@ export default function Profile() {
 
       <div className="p-4">
         <Tabs defaultValue={tabFromUrl} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 text-xs">
+          <TabsList className="grid w-full grid-cols-4 text-xs">
             <TabsTrigger value="personal">Данные</TabsTrigger>
             <TabsTrigger value="orders">Заказы</TabsTrigger>
             <TabsTrigger value="favorites">Избранное</TabsTrigger>
+            <TabsTrigger value="tryon">Примерки</TabsTrigger>
           </TabsList>
           
           <TabsContent value="personal" className="mt-4 pb-24">
@@ -1013,6 +1029,78 @@ export default function Profile() {
                   </div>
                 )}
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tryon" className="mt-4 pb-24">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-sm">История примерок</h3>
+                <button
+                  className="text-xs text-gray-400"
+                  onClick={() => setLocation("/tryon")}
+                >
+                  + Новая примерка
+                </button>
+              </div>
+
+              {isTryonHistoryLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              ) : !tryonHistory || tryonHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                    <Shirt className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="font-medium text-gray-600 mb-1">Примерок пока нет</p>
+                  <p className="text-sm text-gray-400 mb-4">Примерьте одежду с помощью AI</p>
+                  <Button
+                    size="sm"
+                    onClick={() => setLocation("/tryon")}
+                  >
+                    Попробовать
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {tryonHistory.map(item => (
+                    <div key={item.id} className="rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+                      <div className="aspect-[3/4] bg-gray-50 relative">
+                        {item.resultUrl ? (
+                          <img
+                            src={item.resultUrl}
+                            alt={item.productName ?? "Примерка"}
+                            className="w-full h-full object-contain"
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          />
+                        ) : item.productImageUrl ? (
+                          <img
+                            src={item.productImageUrl}
+                            alt={item.productName ?? ""}
+                            className="w-full h-full object-cover opacity-40"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Shirt className="w-10 h-10 text-gray-300" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 left-2">
+                          <span className="text-xs bg-black/60 text-white px-1.5 py-0.5 rounded">
+                            {item.category === "lower_body" ? "Низ" : "Верх"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-medium truncate">{item.productName ?? "Товар удалён"}</p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(item.createdAt).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

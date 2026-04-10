@@ -24,13 +24,14 @@ import { Broadcast } from "./entities/Broadcast";
 import { ReminderSettings } from "./entities/ReminderSettings";
 import { SentReminder } from "./entities/SentReminder";
 import { RetailCRMSettings } from "./entities/RetailCRMSettings";
+import { TryonHistory } from "./entities/TryonHistory";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
   url: process.env.DATABASE_URL,
   synchronize: true, // Only for development
   logging: true, // Enable logging for debugging
-  entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, PromoCodeUsage, Favorite, Cart, Product, BoxProduct, Broadcast, ReminderSettings, SentReminder, RetailCRMSettings],
+  entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, PromoCodeUsage, Favorite, Cart, Product, BoxProduct, Broadcast, ReminderSettings, SentReminder, RetailCRMSettings, TryonHistory],
   ssl:
     process.env.NODE_ENV === "production"
       ? { rejectUnauthorized: false }

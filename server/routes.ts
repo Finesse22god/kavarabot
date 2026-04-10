@@ -23,6 +23,7 @@ import { PromoCode as PromoCodeEntity } from "./entities/PromoCode";
 import { PromoCodeUsage as PromoCodeUsageEntity } from "./entities/PromoCodeUsage";
 import { Trainer as TrainerEntity } from "./entities/Trainer";
 import { InventoryHistory } from "./entities/InventoryHistory";
+import { TryonHistory } from "./entities/TryonHistory";
 import { Cart as CartEntity } from "./entities/Cart";
 import { adjustInventory } from "./inventory-helpers";
 import type {
@@ -321,6 +322,63 @@ router.get("/api/tryon/:predictionId", async (req, res) => {
   } catch (error) {
     console.error("Error polling tryon prediction:", error);
     res.status(500).json({ error: "Ошибка проверки статуса" });
+  }
+});
+
+// Save try-on result to history
+router.post("/api/tryon-history", async (req, res) => {
+  try {
+    const { telegramId, predictionId, productId, productName, productImageUrl, resultUrl, category } = req.body as {
+      telegramId?: string | number;
+      predictionId?: string;
+      productId?: string;
+      productName?: string;
+      productImageUrl?: string;
+      resultUrl?: string;
+      category?: string;
+    };
+    if (!telegramId || !predictionId || !resultUrl) {
+      return res.status(400).json({ error: "Недостаточно данных" });
+    }
+    const user = await storage.getUserByTelegramId(String(telegramId));
+    if (!user) return res.status(401).json({ error: "Пользователь не найден" });
+
+    const repo = AppDataSource.getRepository(TryonHistory);
+    const existing = await repo.findOne({ where: { predictionId } });
+    if (existing) return res.json(existing);
+
+    const entry = repo.create({
+      userId: user.id,
+      predictionId,
+      productId,
+      productName,
+      productImageUrl,
+      resultUrl,
+      category: category || "upper_body",
+    });
+    await repo.save(entry);
+    res.json(entry);
+  } catch (error) {
+    console.error("Error saving tryon history:", error);
+    res.status(500).json({ error: "Ошибка сохранения истории" });
+  }
+});
+
+// Get try-on history for user
+router.get("/api/users/:telegramId/tryon-history", async (req, res) => {
+  try {
+    const user = await storage.getUserByTelegramId(req.params.telegramId);
+    if (!user) return res.status(404).json({ error: "Пользователь не найден" });
+    const repo = AppDataSource.getRepository(TryonHistory);
+    const history = await repo.find({
+      where: { userId: user.id },
+      order: { createdAt: "DESC" },
+      take: 20,
+    });
+    res.json(history);
+  } catch (error) {
+    console.error("Error fetching tryon history:", error);
+    res.status(500).json({ error: "Ошибка получения истории" });
   }
 });
 

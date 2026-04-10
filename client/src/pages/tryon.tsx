@@ -114,6 +114,22 @@ export default function TryOn() {
           setIsTrying(false);
           setStep(3);
           hapticFeedback.notification("success");
+          // Save to history
+          if (data.resultUrl && telegramId) {
+            fetch("/api/tryon-history", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                telegramId,
+                predictionId: id,
+                productId: selectedProduct?.id,
+                productName: selectedProduct?.name,
+                productImageUrl: selectedProduct?.imageUrl,
+                resultUrl: data.resultUrl,
+                category,
+              }),
+            }).catch(() => { /* non-blocking */ });
+          }
         } else if (data.status === "failed" || data.status === "canceled") {
           clearInterval(pollingRef.current!);
           clearInterval(timerRef.current!);
@@ -230,7 +246,7 @@ export default function TryOn() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-28">
 
         {/* STEP 1: Upload photo */}
         {step === 1 && (
@@ -373,7 +389,14 @@ export default function TryOn() {
               <h2 className="text-base font-semibold mb-1">Результат примерки</h2>
               <p className="text-white/50 text-sm">{selectedProduct?.name}</p>
             </div>
-            <img src={resultUrl} alt="Результат примерки" className="w-full rounded-2xl" />
+            <div className="w-full rounded-2xl overflow-hidden bg-white/5">
+              <img
+                src={resultUrl}
+                alt="Результат примерки"
+                className="w-full h-auto object-contain"
+                style={{ maxHeight: "70vh" }}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <Button
                 className="bg-white text-black hover:bg-white/90 rounded-xl py-3"
@@ -454,9 +477,9 @@ export default function TryOn() {
         )}
       </div>
 
-      {/* Bottom action button */}
+      {/* Bottom action button — fixed so user doesn't need to scroll */}
       {!isTrying && (
-        <div className="px-4 pt-3 pb-4 bg-black border-t border-white/10" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
+        <div className="fixed bottom-0 left-0 right-0 px-4 pt-3 pb-4 bg-black border-t border-white/10" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
           {step === 1 && (
             <Button
               className="w-full bg-white text-black hover:bg-white/90 rounded-xl py-4 text-base font-bold"
