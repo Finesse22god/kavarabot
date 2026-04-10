@@ -230,7 +230,7 @@ export default function TryOn() {
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pb-32">
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
 
         {/* STEP 1: Upload photo */}
         {step === 1 && (
@@ -456,7 +456,7 @@ export default function TryOn() {
 
       {/* Bottom action button */}
       {!isTrying && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-black/95 border-t border-white/10 pb-safe">
+        <div className="px-4 pt-3 pb-4 bg-black border-t border-white/10" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
           {step === 1 && (
             <Button
               className="w-full bg-white text-black hover:bg-white/90 rounded-xl py-4 text-base font-bold"

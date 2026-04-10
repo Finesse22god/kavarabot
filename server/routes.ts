@@ -217,9 +217,27 @@ router.post("/api/tryon", async (req, res) => {
     }
 
     const replicateCategory = category === "lower_body" ? "lower_body" : "upper_body";
-    // IDM-VTON (cuuupid/idm-vton) input schema uses human_img/garm_img — NOT person_image/garment_image.
-    // Reference: https://replicate.com/cuuupid/idm-vton/api/schema
-    const response = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton/predictions", {
+
+    // IDM-VTON (cuuupid/idm-vton) input schema uses human_img/garm_img.
+    // Community models on Replicate require the versioned endpoint (/v1/predictions + version hash).
+    // The model-based endpoint (/v1/models/{owner}/{name}/predictions) only works for official deployments.
+    // Fetch the latest version dynamically so we don't hardcode a stale hash.
+    const modelRes = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton", {
+      headers: { "Authorization": `Bearer ${apiToken}` },
+    });
+    if (!modelRes.ok) {
+      const modelErr = await modelRes.json().catch(() => ({})) as { detail?: string };
+      console.error("[TryOn] Failed to fetch model info:", modelErr);
+      return res.status(503).json({ error: "Не удалось получить версию модели примерки" });
+    }
+    const modelInfo = await modelRes.json() as { latest_version?: { id: string } };
+    const versionId = modelInfo.latest_version?.id;
+    if (!versionId) {
+      console.error("[TryOn] No latest_version in model info:", modelInfo);
+      return res.status(503).json({ error: "Версия модели примерки недоступна" });
+    }
+
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
@@ -227,6 +245,7 @@ router.post("/api/tryon", async (req, res) => {
         "Prefer": "respond-async",
       },
       body: JSON.stringify({
+        version: versionId,
         input: {
           human_img: userPhotoUrl,
           garm_img: product.imageUrl,
