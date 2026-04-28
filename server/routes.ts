@@ -217,28 +217,17 @@ router.post("/api/tryon", async (req, res) => {
       return res.status(400).json({ error: "У выбранного товара нет фото для примерки" });
     }
 
-    const replicateCategory = category === "lower_body" ? "lower_body" : "upper_body";
+    // Google Nano Banana (gemini-2.5-flash-image) — official Replicate model.
+    // Official models can be invoked via the model endpoint without a version hash.
+    // Inputs: `prompt` (text) + `image_input` (array of image URLs).
+    // First image = person photo, second = garment reference.
+    const garmentSlot = category === "lower_body" ? "lower body / pants / trousers" : "upper body / top / shirt";
+    const prompt = `Take the person from the first image and dress them in the ${garmentSlot} garment shown in the second image (${product.name}). ` +
+      `Replace ONLY the existing ${garmentSlot} clothing with this new garment, keeping the person's face, hair, body proportions, pose, skin tone, and the entire background completely unchanged. ` +
+      `The new garment must match the exact color, texture, pattern, fabric, fit, and details of the reference garment. ` +
+      `Result must be photorealistic, with natural lighting, shadows, and fabric draping that fits the body realistically.`;
 
-    // IDM-VTON (cuuupid/idm-vton) input schema uses human_img/garm_img.
-    // Community models on Replicate require the versioned endpoint (/v1/predictions + version hash).
-    // The model-based endpoint (/v1/models/{owner}/{name}/predictions) only works for official deployments.
-    // Fetch the latest version dynamically so we don't hardcode a stale hash.
-    const modelRes = await fetch("https://api.replicate.com/v1/models/cuuupid/idm-vton", {
-      headers: { "Authorization": `Bearer ${apiToken}` },
-    });
-    if (!modelRes.ok) {
-      const modelErr = await modelRes.json().catch(() => ({})) as { detail?: string };
-      console.error("[TryOn] Failed to fetch model info:", modelErr);
-      return res.status(503).json({ error: "Не удалось получить версию модели примерки" });
-    }
-    const modelInfo = await modelRes.json() as { latest_version?: { id: string } };
-    const versionId = modelInfo.latest_version?.id;
-    if (!versionId) {
-      console.error("[TryOn] No latest_version in model info:", modelInfo);
-      return res.status(503).json({ error: "Версия модели примерки недоступна" });
-    }
-
-    const response = await fetch("https://api.replicate.com/v1/predictions", {
+    const response = await fetch("https://api.replicate.com/v1/models/google/nano-banana/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
@@ -246,16 +235,10 @@ router.post("/api/tryon", async (req, res) => {
         "Prefer": "respond-async",
       },
       body: JSON.stringify({
-        version: versionId,
         input: {
-          human_img: userPhotoUrl,
-          garm_img: product.imageUrl,
-          garment_des: product.name,
-          is_checked: true,
-          is_checked_parsing: true,
-          denoise_steps: 30,
-          seed: 42,
-          category: replicateCategory,
+          prompt,
+          image_input: [userPhotoUrl, product.imageUrl],
+          output_format: "jpg",
         },
       }),
     });
