@@ -1537,6 +1537,136 @@ router.get("/api/admin/orders", verifyAdminToken, async (req, res) => {
   }
 });
 
+// One-time helper: re-send Telegram payment notifications for given order numbers
+// Usage: POST /api/admin/resend-payment-notifications  body: { orderNumbers: ["KB123456","KB123457"] }
+router.post("/api/admin/resend-payment-notifications", verifyAdminToken, async (req, res) => {
+  try {
+    const { orderNumbers } = req.body as { orderNumbers?: string[] };
+    if (!Array.isArray(orderNumbers) || orderNumbers.length === 0) {
+      return res.status(400).json({ error: "orderNumbers (string[]) is required" });
+    }
+
+    const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
+    const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID;
+    const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    if (!BOT_TOKEN) {
+      return res.status(500).json({ error: "TELEGRAM_BOT_TOKEN is not set" });
+    }
+
+    const results: any[] = [];
+
+    for (const orderNumber of orderNumbers) {
+      try {
+        const order = await storage.getOrderByNumber(orderNumber);
+        if (!order) {
+          results.push({ orderNumber, ok: false, reason: "not found" });
+          continue;
+        }
+
+        let telegramUsername = '';
+        if (order.userId) {
+          try {
+            const user = await storage.getUser(order.userId);
+            if (user?.username) telegramUsername = `@${user.username}`;
+          } catch {}
+        }
+
+        let fullOrder: any = order;
+        try {
+          fullOrder = await AppDataSource.getRepository(OrderEntity).findOne({
+            where: { id: order.id },
+            relations: ['box', 'product']
+          }) || order;
+        } catch {}
+
+        let itemsList = '\n🛍️ <b>Товары:</b>\n';
+        try {
+          if (fullOrder?.cartItems) {
+            try {
+              const cartItems = JSON.parse(fullOrder.cartItems);
+              for (const item of cartItems) {
+                const itemName = item.itemType === 'product'
+                  ? (item.product?.name || item.name || 'Товар')
+                  : item.itemType === 'box'
+                  ? (item.box?.name || item.name || 'Бокс')
+                  : (item.name || 'Товар');
+                itemsList += `• ${itemName}`;
+                if (item.selectedSize) {
+                  try {
+                    const sizeData = typeof item.selectedSize === 'string'
+                      ? JSON.parse(item.selectedSize)
+                      : item.selectedSize;
+                    if (sizeData && typeof sizeData === 'object' && (sizeData.top || sizeData.bottom)) {
+                      itemsList += ` (Верх: ${sizeData.top || '-'}, Низ: ${sizeData.bottom || '-'})`;
+                    } else {
+                      itemsList += ` (Размер: ${item.selectedSize})`;
+                    }
+                  } catch {
+                    itemsList += ` (Размер: ${item.selectedSize})`;
+                  }
+                }
+                if (item.quantity && item.quantity > 1) itemsList += ` x${item.quantity}`;
+                itemsList += '\n';
+              }
+            } catch {
+              itemsList += '• Детали товаров недоступны\n';
+            }
+          } else if (fullOrder?.boxId && fullOrder.box) {
+            itemsList += `• ${fullOrder.box.name}`;
+            if (fullOrder.selectedSize) itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+            itemsList += '\n';
+          } else if (fullOrder?.productId && fullOrder.product) {
+            itemsList += `• ${fullOrder.product.name}`;
+            if (fullOrder.selectedSize) itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+            itemsList += '\n';
+          } else {
+            itemsList += '• Детали товаров недоступны\n';
+          }
+        } catch {
+          itemsList += '• Детали товаров недоступны\n';
+        }
+
+        const message = `💰 <b>Новая оплата через ЮKassa!</b> <i>(повтор)</i>
+
+📦 <b>Заказ №:</b> ${order.orderNumber}
+👤 <b>Клиент:</b> ${order.customerName}
+${telegramUsername ? `👨‍💻 <b>Telegram:</b> ${telegramUsername}\n` : ''}📱 <b>Телефон:</b> ${order.customerPhone}
+${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${itemsList}
+🚚 <b>Доставка:</b> ${order.deliveryMethod}
+💳 <b>Оплата:</b> ${order.paymentMethod}
+💰 <b>Сумма:</b> ${order.totalPrice}₽
+${order.paymentId ? `\n💳 <b>ID платежа:</b> ${order.paymentId}\n` : ''}
+📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString('ru-RU')}`;
+
+        const sendTo = async (chatId: string) => {
+          const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+          });
+          if (!r.ok) {
+            const body = await r.text().catch(() => '');
+            return { ok: false, status: r.status, body };
+          }
+          return { ok: true };
+        };
+
+        const adminResult = ADMIN_CHAT_ID ? await sendTo(ADMIN_CHAT_ID) : { ok: false, reason: 'no admin chat' };
+        const channelResult = ORDERS_CHANNEL_ID ? await sendTo(ORDERS_CHANNEL_ID) : null;
+
+        results.push({ orderNumber, ok: true, adminResult, channelResult });
+      } catch (err: any) {
+        results.push({ orderNumber, ok: false, reason: err?.message || String(err) });
+      }
+    }
+
+    res.json({ results });
+  } catch (error) {
+    console.error("Error in resend-payment-notifications:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.delete("/api/admin/orders/:id", verifyAdminToken, async (req, res) => {
   try {
     const { id } = req.params;
