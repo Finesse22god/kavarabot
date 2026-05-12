@@ -827,12 +827,167 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
         
         if (order) {
           console.log(`Order ${order.orderNumber} marked as paid via YooKassa webhook`);
-          
+
+          // === SEND TELEGRAM NOTIFICATION FIRST (isolated, must not be blocked by anything below) ===
+          try {
+            // Get user data to include telegram username
+            let telegramUsername = '';
+            if (order.userId) {
+              try {
+                const user = await storage.getUser(order.userId);
+                if (user?.username) {
+                  telegramUsername = `@${user.username}`;
+                }
+              } catch (e) {
+                console.error('Failed to fetch user for notification:', e);
+              }
+            }
+
+            // Build items list with sizes (best-effort, never throws)
+            let itemsList = '\n🛍️ <b>Товары:</b>\n';
+            try {
+              let fullOrder: any = null;
+              try {
+                fullOrder = await AppDataSource.getRepository(OrderEntity).findOne({
+                  where: { id: order.id },
+                  relations: ['box', 'product']
+                });
+              } catch (e) {
+                console.error('Failed to load full order with relations:', e);
+                fullOrder = order;
+              }
+
+              if (fullOrder?.cartItems) {
+                try {
+                  const cartItems = JSON.parse(fullOrder.cartItems);
+                  for (const item of cartItems) {
+                    const itemName = item.itemType === 'product'
+                      ? (item.product?.name || item.name || 'Товар')
+                      : item.itemType === 'box'
+                      ? (item.box?.name || item.name || 'Бокс')
+                      : (item.name || 'Товар');
+                    itemsList += `• ${itemName}`;
+                    if (item.selectedSize) {
+                      try {
+                        const sizeData = typeof item.selectedSize === 'string'
+                          ? JSON.parse(item.selectedSize)
+                          : item.selectedSize;
+                        if (sizeData && typeof sizeData === 'object' && (sizeData.top || sizeData.bottom)) {
+                          itemsList += ` (Верх: ${sizeData.top || '-'}, Низ: ${sizeData.bottom || '-'})`;
+                        } else {
+                          itemsList += ` (Размер: ${item.selectedSize})`;
+                        }
+                      } catch {
+                        itemsList += ` (Размер: ${item.selectedSize})`;
+                      }
+                    }
+                    if (item.quantity && item.quantity > 1) {
+                      itemsList += ` x${item.quantity}`;
+                    }
+                    itemsList += '\n';
+                  }
+                } catch {
+                  itemsList += '• Детали товаров недоступны\n';
+                }
+              } else if (fullOrder?.boxId && fullOrder.box) {
+                itemsList += `• ${fullOrder.box.name}`;
+                if (fullOrder.selectedSize) itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+                itemsList += '\n';
+              } else if (fullOrder?.productId && fullOrder.product) {
+                itemsList += `• ${fullOrder.product.name}`;
+                if (fullOrder.selectedSize) itemsList += ` (Размер: ${fullOrder.selectedSize})`;
+                itemsList += '\n';
+              } else {
+                itemsList += '• Детали товаров недоступны\n';
+              }
+            } catch (e) {
+              console.error('Failed to build items list:', e);
+              itemsList += '• Детали товаров недоступны\n';
+            }
+
+            const adminNotification = `💰 <b>Новая оплата через ЮKassa!</b>
+
+📦 <b>Заказ №:</b> ${order.orderNumber}
+👤 <b>Клиент:</b> ${order.customerName}
+${telegramUsername ? `👨‍💻 <b>Telegram:</b> ${telegramUsername}\n` : ''}📱 <b>Телефон:</b> ${order.customerPhone}
+${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${itemsList}
+🚚 <b>Доставка:</b> ${order.deliveryMethod}
+💳 <b>Оплата:</b> ${order.paymentMethod}
+💰 <b>Сумма:</b> ${order.totalPrice}₽
+
+💳 <b>ID платежа:</b> ${paymentId}
+
+📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString('ru-RU')}`;
+
+            const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
+            const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID;
+            const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
+            if (!BOT_TOKEN) {
+              console.error('❌ TELEGRAM_BOT_TOKEN is not set — cannot send payment notification');
+            } else {
+              if (ADMIN_CHAT_ID) {
+                try {
+                  const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: ADMIN_CHAT_ID,
+                      text: adminNotification,
+                      parse_mode: 'HTML'
+                    })
+                  });
+                  if (!resp.ok) {
+                    const errBody = await resp.text().catch(() => '');
+                    console.error(`❌ Telegram admin notify failed: ${resp.status} ${errBody}`);
+                  } else {
+                    console.log('✅ Payment notification sent to admin chat');
+                  }
+                } catch (error) {
+                  console.error('❌ Failed to send payment notification to admin:', error);
+                }
+              }
+
+              if (ORDERS_CHANNEL_ID) {
+                try {
+                  const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      chat_id: ORDERS_CHANNEL_ID,
+                      text: adminNotification,
+                      parse_mode: 'HTML'
+                    })
+                  });
+                  if (!resp.ok) {
+                    const errBody = await resp.text().catch(() => '');
+                    console.error(`❌ Telegram channel notify failed: ${resp.status} ${errBody}`);
+                  } else {
+                    console.log('✅ Payment notification sent to orders channel');
+                  }
+                } catch (error) {
+                  console.error('❌ Failed to send payment notification to channel:', error);
+                }
+              }
+            }
+          } catch (notifyErr) {
+            console.error('❌ Unexpected error while sending payment notification:', notifyErr);
+          }
+          // === END notification block ===
+
           // Also save the payment ID to the order
-          await storage.updateOrderPaymentId(order.id, paymentId);
-          
+          try {
+            await storage.updateOrderPaymentId(order.id, paymentId);
+          } catch (e) {
+            console.error('Failed to update payment ID:', e);
+          }
+
           // Sync paid order to RetailCRM (orders only go to CRM after payment)
-          syncOrderToRetailCRMSafe(order);
+          try {
+            syncOrderToRetailCRMSafe(order);
+          } catch (e) {
+            console.error('RetailCRM safe sync threw synchronously:', e);
+          }
           
           // Award promo code owner points ONLY after successful payment
           if (order.promoCodeId && order.userId) {
@@ -912,133 +1067,6 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
               } else {
                 console.error(`Error awarding promo code owner points for order ${order.orderNumber}:`, error);
               }
-            }
-          }
-          
-          // Load full order with relations to get product/box details
-          const fullOrder = await AppDataSource.getRepository(OrderEntity).findOne({
-            where: { id: order.id },
-            relations: ['box', 'product']
-          });
-          
-          // Get user data to include telegram username
-          let telegramUsername = '';
-          if (order.userId) {
-            const user = await storage.getUser(order.userId);
-            if (user?.username) {
-              telegramUsername = `@${user.username}`;
-            }
-          }
-          
-          // Build items list with sizes
-          let itemsList = '\n🛍️ <b>Товары:</b>\n';
-          
-          // Check cartItems FIRST - cart orders have multiple items
-          if (fullOrder?.cartItems) {
-            // Cart order with multiple items
-            try {
-              const cartItems = JSON.parse(fullOrder.cartItems);
-              for (const item of cartItems) {
-                // Get item name from nested product/box object or direct name
-                const itemName = item.itemType === 'product' 
-                  ? (item.product?.name || item.name || 'Товар')
-                  : item.itemType === 'box'
-                  ? (item.box?.name || item.name || 'Бокс')
-                  : (item.name || 'Товар');
-                
-                itemsList += `• ${itemName}`;
-                
-                // Handle size - can be string or object for boxes
-                if (item.selectedSize) {
-                  try {
-                    const sizeData = typeof item.selectedSize === 'string' 
-                      ? JSON.parse(item.selectedSize) 
-                      : item.selectedSize;
-                    if (sizeData && typeof sizeData === 'object' && (sizeData.top || sizeData.bottom)) {
-                      itemsList += ` (Верх: ${sizeData.top || '-'}, Низ: ${sizeData.bottom || '-'})`;
-                    } else {
-                      itemsList += ` (Размер: ${item.selectedSize})`;
-                    }
-                  } catch {
-                    itemsList += ` (Размер: ${item.selectedSize})`;
-                  }
-                }
-                
-                if (item.quantity && item.quantity > 1) {
-                  itemsList += ` x${item.quantity}`;
-                }
-                itemsList += '\n';
-              }
-            } catch (e) {
-              itemsList += '• Детали товаров недоступны\n';
-            }
-          } else if (fullOrder?.boxId && fullOrder.box) {
-            // Single box order (no cart)
-            itemsList += `• ${fullOrder.box.name}`;
-            if (fullOrder.selectedSize) {
-              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
-            }
-            itemsList += '\n';
-          } else if (fullOrder?.productId && fullOrder.product) {
-            // Single product order (no cart)
-            itemsList += `• ${fullOrder.product.name}`;
-            if (fullOrder.selectedSize) {
-              itemsList += ` (Размер: ${fullOrder.selectedSize})`;
-            }
-            itemsList += '\n';
-          }
-          
-          // Build comprehensive admin notification with all order details
-          const adminNotification = `💰 <b>Новая оплата через ЮKassa!</b>
-
-📦 <b>Заказ №:</b> ${order.orderNumber}
-👤 <b>Клиент:</b> ${order.customerName}
-${telegramUsername ? `👨‍💻 <b>Telegram:</b> ${telegramUsername}\n` : ''}📱 <b>Телефон:</b> ${order.customerPhone}
-${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${itemsList}
-🚚 <b>Доставка:</b> ${order.deliveryMethod}
-💳 <b>Оплата:</b> ${order.paymentMethod}
-💰 <b>Сумма:</b> ${order.totalPrice}₽
-
-💳 <b>ID платежа:</b> ${paymentId}
-
-📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString('ru-RU')}`;
-
-          const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
-          const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID;
-
-          // Send notification to admin chat with HTML formatting
-          if (ADMIN_CHAT_ID) {
-            try {
-              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  chat_id: ADMIN_CHAT_ID,
-                  text: adminNotification,
-                  parse_mode: 'HTML'
-                })
-              });
-              console.log('Payment notification sent to admin chat');
-            } catch (error) {
-              console.error('Failed to send payment notification to admin:', error);
-            }
-          }
-
-          // Send notification to orders channel if configured
-          if (ORDERS_CHANNEL_ID) {
-            try {
-              await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  chat_id: ORDERS_CHANNEL_ID,
-                  text: adminNotification,
-                  parse_mode: 'HTML'
-                })
-              });
-              console.log('Payment notification sent to orders channel');
-            } catch (error) {
-              console.error('Failed to send payment notification to channel:', error);
             }
           }
         }
