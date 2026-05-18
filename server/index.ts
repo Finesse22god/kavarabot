@@ -8,6 +8,7 @@ import { register1CRoutes } from "./routes-1c";
 import { initializeDatabase } from './database.js';
 import { setupTelegramBotWithApp } from './telegram.js';
 import { migrateImagesToS3 } from './migrate-images-to-s3.js';
+import { resendMissedNotificationsOnBoot } from './boot-resend-notifications.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -229,6 +230,7 @@ async function createServer() {
 
     server.listen(port, '0.0.0.0', () => {
       console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
+      setTimeout(() => { resendMissedNotificationsOnBoot().catch(console.error); }, 5000);
     });
     
     return;
@@ -237,6 +239,7 @@ async function createServer() {
   // Production: use standard Express listen
   app.listen(port, '0.0.0.0', () => {
     console.log(`🚀 KAVARA server running on port ${port} (${isProduction ? 'production' : 'development'})`);
+    setTimeout(() => { resendMissedNotificationsOnBoot().catch(console.error); }, 5000);
   });
 }
 
