@@ -2092,6 +2092,19 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
     const notFound: string[] = [];
     const updatesByProduct = new Map<string, Record<string, number>>();
 
+    // Канонизируем размеры: XXL→2XL, XXXL→3XL и т.п. Без пробелов, верхний регистр.
+    const canonSize = (raw: string): string => {
+      let s = String(raw || '').trim().toUpperCase().replace(/\s+/g, '');
+      // XS, S, M, L — оставляем как есть
+      // XXL/XXXL/XXXXL → 2XL/3XL/4XL
+      const m = s.match(/^(X{2,5})L$/);
+      if (m) s = `${m[1].length}XL`;
+      // На всякий случай: "2 XL" уже выше склеили; "L2"/"2L" не трогаем
+      return s;
+    };
+
+    const updatesByProductSizes = new Map<string, Set<string>>();
+
     for (const update of inventoryUpdates) {
       // 1) Сначала пытаемся по артикулу (надёжнее — имена повторяются).
       let product = update.article
@@ -2111,25 +2124,51 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
       if (product) {
         matchedRows++;
         if (!updatesByProduct.has(product.id)) {
-          updatesByProduct.set(product.id, { ...(product.inventory || {}) });
+          // Канонизируем существующий inventory: объединяем дубли вроде "XXL" и "2XL".
+          const existing: Record<string, number> = {};
+          for (const [k, v] of Object.entries(product.inventory || {})) {
+            const ck = canonSize(k);
+            existing[ck] = (existing[ck] || 0) + (Number(v) || 0);
+          }
+          updatesByProduct.set(product.id, existing);
+          updatesByProductSizes.set(product.id, new Set((product.sizes || []).map(canonSize)));
         }
-        updatesByProduct.get(product.id)![update.size] = update.quantity;
+        const canon = canonSize(update.size);
+        updatesByProduct.get(product.id)![canon] = update.quantity;
+        updatesByProductSizes.get(product.id)!.add(canon);
       } else {
         const label = update.article || update.productName;
         if (label && !notFound.includes(label)) notFound.push(label);
       }
     }
 
+    // Сортировка размеров для удобства отображения
+    const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'];
+    const sortSizes = (sizes: string[]) => {
+      return [...sizes].sort((a, b) => {
+        const ia = sizeOrder.indexOf(a);
+        const ib = sizeOrder.indexOf(b);
+        if (ia === -1 && ib === -1) return a.localeCompare(b);
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+    };
+
     for (const [productId, inventory] of updatesByProduct) {
-      await storage.updateProduct(productId, { inventory });
+      const sizes = sortSizes(Array.from(updatesByProductSizes.get(productId) || []));
+      await storage.updateProduct(productId, { inventory, sizes });
       updated++;
     }
 
-    console.log(`[ImportInventory] строк прочитано: ${inventoryUpdates.length}, совпало: ${matchedRows}, товаров обновлено: ${updated}, не найдено: ${notFound.length}`);
+    const summary = `Импорт остатков: прочитано ${inventoryUpdates.length} строк, совпало ${matchedRows}, обновлено ${updated} товаров, не найдено ${notFound.length}`;
+    console.log(`[ImportInventory] ${summary}`);
+    if (notFound.length) console.log(`[ImportInventory] не найдены: ${notFound.slice(0, 20).join(', ')}`);
 
     res.json({
       success: true,
       message: `Обновлено ${updated} товаров (${matchedRows} строк из ${inventoryUpdates.length})`,
+      summary,
       updated,
       matchedRows,
       totalRows: inventoryUpdates.length,

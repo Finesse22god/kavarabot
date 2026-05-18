@@ -56,15 +56,22 @@ export default function InventoryManagement({ onBack }: { onBack: () => void }) 
       if (response.ok) {
         queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
         queryClient.invalidateQueries({ queryKey: ["/api/admin/boxes"] });
+        const matched = result.matchedRows ?? result.updated;
         toast({
-          title: "Остатки импортированы",
-          description: `Обновлено ${result.updated} товаров из ${result.totalRows} строк`,
+          title: "✅ Остатки импортированы",
+          description:
+            `Прочитано строк: ${result.totalRows ?? '?'}\n` +
+            `Сопоставлено с товарами: ${matched}\n` +
+            `Обновлено товаров: ${result.updated}` +
+            (result.notFound?.length ? `\nНе найдено: ${result.notFound.length}` : ''),
+          duration: 8000,
         });
         if (result.notFound?.length > 0) {
           toast({
-            title: "Не найдены товары",
-            description: result.notFound.slice(0, 5).join(', '),
+            title: `Не найдены товары (${result.notFound.length})`,
+            description: result.notFound.slice(0, 10).join(', '),
             variant: "destructive",
+            duration: 10000,
           });
         }
       } else {
