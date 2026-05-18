@@ -2022,20 +2022,20 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
       return res.status(400).json({ error: "Файл не загружен" });
     }
 
-    const { sheetName, productColumn, sizeColumn, quantityColumn } = req.body;
-    const productCol = productColumn || 'C';
-    const sizeCol = sizeColumn || 'F';
-    const qtyCol = quantityColumn || 'G';
+    const { sheetName, productColumn, articleColumn, sizeColumn, quantityColumn } = req.body;
+    // По умолчанию: A=название, C=артикул, D=размер, E=остаток
+    const productCol = productColumn || 'A';
+    const articleCol = articleColumn || 'C';
+    const sizeCol = sizeColumn || 'D';
+    const qtyCol = quantityColumn || 'E';
 
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
-    
-    // Найти лист по имени или использовать первый
+
     let sheet;
     if (sheetName && workbook.SheetNames.includes(sheetName)) {
       sheet = workbook.Sheets[sheetName];
     } else {
-      // Попробуем найти лист с "остатк" в названии
-      const foundSheet = workbook.SheetNames.find(name => 
+      const foundSheet = workbook.SheetNames.find(name =>
         name.toLowerCase().includes('остатк') || name.toLowerCase().includes('актуальн')
       );
       sheet = workbook.Sheets[foundSheet || workbook.SheetNames[0]];
@@ -2045,66 +2045,95 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
       return res.status(400).json({ error: "Лист не найден" });
     }
 
-    // Парсим данные из Excel
     const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
-    const inventoryUpdates: { productName: string; size: string; quantity: number }[] = [];
+    const inventoryUpdates: { productName: string; article: string; size: string; quantity: number }[] = [];
 
-    for (let row = range.s.r + 1; row <= range.e.r; row++) {
-      const productCell = sheet[`${productCol}${row + 1}`];
-      const sizeCell = sheet[`${sizeCol}${row + 1}`];
-      const qtyCell = sheet[`${qtyCol}${row + 1}`];
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      const excelRow = row + 1; // XLSX cell addresses 1-based
+      const productCell = sheet[`${productCol}${excelRow}`];
+      const articleCell = sheet[`${articleCol}${excelRow}`];
+      const sizeCell = sheet[`${sizeCol}${excelRow}`];
+      const qtyCell = sheet[`${qtyCol}${excelRow}`];
 
-      if (productCell && sizeCell && qtyCell) {
-        const productName = String(productCell.v || '').trim();
-        const size = String(sizeCell.v || '').trim().toUpperCase();
-        const quantity = parseInt(String(qtyCell.v || '0')) || 0;
+      const size = String(sizeCell?.v ?? '').trim().toUpperCase();
+      const qtyRaw = qtyCell?.v;
+      // Остаток должен быть числом — это отсекает шапку и заголовки групп.
+      const qtyNum = typeof qtyRaw === 'number'
+        ? qtyRaw
+        : (typeof qtyRaw === 'string' && /^-?\d+(?:[.,]\d+)?$/.test(qtyRaw.trim())
+            ? parseFloat(qtyRaw.trim().replace(',', '.'))
+            : NaN);
 
-        if (productName && size && quantity >= 0) {
-          inventoryUpdates.push({ productName, size, quantity });
-        }
-      }
+      if (!size || !Number.isFinite(qtyNum) || qtyNum < 0) continue;
+      // Размер должен быть похож на размер одежды/обуви, а не на текст.
+      if (size.length > 10) continue;
+
+      const productName = String(productCell?.v ?? '').trim();
+      const article = String(articleCell?.v ?? '').trim();
+
+      if (!productName && !article) continue;
+
+      inventoryUpdates.push({
+        productName,
+        article,
+        size,
+        quantity: Math.floor(qtyNum),
+      });
     }
 
-    // Получаем все товары
     const products = await storage.getAllProducts();
-    let updated = 0;
-    let notFound: string[] = [];
+    const byArticle = new Map<string, typeof products[number]>();
+    for (const p of products) {
+      if (p.externalId) byArticle.set(String(p.externalId).trim().toLowerCase(), p);
+    }
 
-    // Группируем обновления по товарам
+    let updated = 0;
+    let matchedRows = 0;
+    const notFound: string[] = [];
     const updatesByProduct = new Map<string, Record<string, number>>();
-    
+
     for (const update of inventoryUpdates) {
-      // Ищем товар по частичному совпадению названия
-      const product = products.find(p => 
-        p.name.toLowerCase().includes(update.productName.toLowerCase()) ||
-        update.productName.toLowerCase().includes(p.name.toLowerCase())
-      );
+      // 1) Сначала пытаемся по артикулу (надёжнее — имена повторяются).
+      let product = update.article
+        ? byArticle.get(update.article.toLowerCase())
+        : undefined;
+
+      // 2) Иначе — по совпадению имени.
+      if (!product && update.productName) {
+        const nameLc = update.productName.toLowerCase();
+        product = products.find(p =>
+          p.name.toLowerCase() === nameLc ||
+          p.name.toLowerCase().includes(nameLc) ||
+          nameLc.includes(p.name.toLowerCase())
+        );
+      }
 
       if (product) {
+        matchedRows++;
         if (!updatesByProduct.has(product.id)) {
           updatesByProduct.set(product.id, { ...(product.inventory || {}) });
         }
-        const inventory = updatesByProduct.get(product.id)!;
-        inventory[update.size] = update.quantity;
+        updatesByProduct.get(product.id)![update.size] = update.quantity;
       } else {
-        if (!notFound.includes(update.productName)) {
-          notFound.push(update.productName);
-        }
+        const label = update.article || update.productName;
+        if (label && !notFound.includes(label)) notFound.push(label);
       }
     }
 
-    // Применяем обновления
     for (const [productId, inventory] of updatesByProduct) {
       await storage.updateProduct(productId, { inventory });
       updated++;
     }
 
+    console.log(`[ImportInventory] строк прочитано: ${inventoryUpdates.length}, совпало: ${matchedRows}, товаров обновлено: ${updated}, не найдено: ${notFound.length}`);
+
     res.json({
       success: true,
-      message: `Обновлено ${updated} товаров`,
+      message: `Обновлено ${updated} товаров (${matchedRows} строк из ${inventoryUpdates.length})`,
       updated,
+      matchedRows,
       totalRows: inventoryUpdates.length,
-      notFound: notFound.slice(0, 10)
+      notFound: notFound.slice(0, 20),
     });
   } catch (error) {
     console.error("Error importing inventory:", error);

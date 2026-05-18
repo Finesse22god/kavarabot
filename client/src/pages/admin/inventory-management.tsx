@@ -36,9 +36,11 @@ export default function InventoryManagement({ onBack }: { onBack: () => void }) 
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('productColumn', 'C');
-      formData.append('sizeColumn', 'F');
-      formData.append('quantityColumn', 'G');
+      // Колонки таблицы остатков: A=название, C=артикул, D=размер, E=остаток
+      formData.append('productColumn', 'A');
+      formData.append('articleColumn', 'C');
+      formData.append('sizeColumn', 'D');
+      formData.append('quantityColumn', 'E');
 
       const token = localStorage.getItem('adminToken');
       const response = await fetch('/api/admin/import-inventory', {
