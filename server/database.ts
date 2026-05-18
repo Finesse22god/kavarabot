@@ -30,7 +30,16 @@ export const AppDataSource = new DataSource({
   type: "postgres",
   url: process.env.DATABASE_URL,
   synchronize: true, // Only for development
-  logging: true, // Enable logging for debugging
+  // Logging: показываем только ошибки и медленные запросы; в проде — только ошибки.
+  // Управляется переменной TYPEORM_LOGGING (none|error|all). По умолчанию: error в проде, none в деве.
+  logging: (() => {
+    const mode = (process.env.TYPEORM_LOGGING || '').toLowerCase();
+    if (mode === 'all' || mode === 'true') return true as any;
+    if (mode === 'none' || mode === 'false') return false as any;
+    if (mode === 'error') return ['error', 'warn'] as any;
+    return process.env.NODE_ENV === 'production' ? (['error', 'warn'] as any) : (false as any);
+  })(),
+  maxQueryExecutionTime: 1000, // Логировать только запросы дольше 1 секунды
   entities: [User, QuizResponse, Box, Order, Notification, LoyaltyTransaction, Referral, Trainer, PromoCode, PromoCodeUsage, Favorite, Cart, Product, BoxProduct, Broadcast, ReminderSettings, SentReminder, RetailCRMSettings, TryonHistory],
   ssl:
     process.env.NODE_ENV === "production"

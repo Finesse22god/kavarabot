@@ -3,11 +3,12 @@ import path from 'path';
 import { storage } from './storage.js';
 import { AppDataSource } from './database.js';
 import { Order as OrderEntity } from './entities/Order.js';
+import { sendTelegramHtml } from './telegram-send.js';
 
+// Только заказы, по которым уведомление НЕ было доставлено.
+// KB2676488071 и KB8748138065 пришли — их сюда не добавляем.
 const ORDER_NUMBERS_TO_RESEND = [
   'KB2758727179',
-  'KB2676488071',
-  'KB8748138065',
 ];
 
 const MARKER_FILE = path.join(process.cwd(), '.notifications-resent.json');
@@ -128,22 +129,11 @@ ${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${ite
 ${order.paymentId ? `\n💳 <b>ID платежа:</b> ${order.paymentId}\n` : ''}
 📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString('ru-RU')}`;
 
-  const sendTo = async (chatId: string) => {
-    const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
-    });
-    if (!r.ok) {
-      const body = await r.text().catch(() => '');
-      console.error(`[BootResend] Telegram ${chatId} → ${r.status}: ${body}`);
-      return false;
-    }
-    return true;
-  };
-
-  const adminOk = await sendTo(ADMIN_CHAT_ID);
-  if (ORDERS_CHANNEL_ID) await sendTo(ORDERS_CHANNEL_ID);
+  const adminRes = await sendTelegramHtml(ADMIN_CHAT_ID, message, { label: `boot-resend ${orderNumber} admin` });
+  const adminOk = adminRes.ok;
+  if (ORDERS_CHANNEL_ID) {
+    await sendTelegramHtml(ORDERS_CHANNEL_ID, message, { label: `boot-resend ${orderNumber} channel` });
+  }
 
   if (adminOk) {
     await markSent(orderNumber);

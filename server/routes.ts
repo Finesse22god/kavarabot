@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import { AppDataSource } from "./database";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
+import { sendTelegramHtml } from "./telegram-send";
 import { parseKavaraCatalog } from "./parser";
 import {
   createPaymentIntent,
@@ -921,54 +922,14 @@ ${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${ite
 
             const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
             const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID;
-            const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-            if (!BOT_TOKEN) {
-              console.error('❌ TELEGRAM_BOT_TOKEN is not set — cannot send payment notification');
-            } else {
-              if (ADMIN_CHAT_ID) {
-                try {
-                  const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      chat_id: ADMIN_CHAT_ID,
-                      text: adminNotification,
-                      parse_mode: 'HTML'
-                    })
-                  });
-                  if (!resp.ok) {
-                    const errBody = await resp.text().catch(() => '');
-                    console.error(`❌ Telegram admin notify failed: ${resp.status} ${errBody}`);
-                  } else {
-                    console.log('✅ Payment notification sent to admin chat');
-                  }
-                } catch (error) {
-                  console.error('❌ Failed to send payment notification to admin:', error);
-                }
-              }
-
-              if (ORDERS_CHANNEL_ID) {
-                try {
-                  const resp = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      chat_id: ORDERS_CHANNEL_ID,
-                      text: adminNotification,
-                      parse_mode: 'HTML'
-                    })
-                  });
-                  if (!resp.ok) {
-                    const errBody = await resp.text().catch(() => '');
-                    console.error(`❌ Telegram channel notify failed: ${resp.status} ${errBody}`);
-                  } else {
-                    console.log('✅ Payment notification sent to orders channel');
-                  }
-                } catch (error) {
-                  console.error('❌ Failed to send payment notification to channel:', error);
-                }
-              }
+            if (ADMIN_CHAT_ID) {
+              const r = await sendTelegramHtml(ADMIN_CHAT_ID, adminNotification, { label: 'payment-admin' });
+              if (r.ok) console.log(`✅ Payment notification sent to admin chat (order ${order.orderNumber})`);
+            }
+            if (ORDERS_CHANNEL_ID) {
+              const r = await sendTelegramHtml(ORDERS_CHANNEL_ID, adminNotification, { label: 'payment-channel' });
+              if (r.ok) console.log(`✅ Payment notification sent to orders channel (order ${order.orderNumber})`);
             }
           } catch (notifyErr) {
             console.error('❌ Unexpected error while sending payment notification:', notifyErr);
