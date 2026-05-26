@@ -422,13 +422,11 @@ export default function OrderDetails({ order, onBack }: OrderDetailsProps) {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm text-gray-600">Способ доставки</p>
-              <p className="font-semibold">
-                {order.deliveryMethod === 'delivery' ? 'Доставка курьером' : 'Самовывоз'}
-              </p>
+              <p className="font-semibold">СДЭК</p>
             </div>
             {order.deliveryAddress && (
               <div>
-                <p className="text-sm text-gray-600">Адрес доставки</p>
+                <p className="text-sm text-gray-600">Адрес ПВЗ СДЭК</p>
                 <p className="font-semibold">{order.deliveryAddress}</p>
               </div>
             )}

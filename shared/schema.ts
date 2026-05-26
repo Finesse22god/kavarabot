@@ -118,6 +118,7 @@ export const orders = pgTable("orders", {
   loyaltyPointsUsed: integer("loyaltyPointsUsed").default(0).notNull(),
   selectedSize: varchar("selectedSize", { length: 50 }),
   cartItems: text("cartItems"),
+  deliveryAddress: varchar("deliveryAddress", { length: 500 }),
   createdAt: timestamp("createdAt").defaultNow(),
 });
 

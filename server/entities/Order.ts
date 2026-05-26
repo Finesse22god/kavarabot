@@ -70,6 +70,9 @@ export class Order {
   @Column({ type: "text", nullable: true })
   cartItems?: string; // JSON string of cart items for combined orders
 
+  @Column({ type: "varchar", nullable: true })
+  deliveryAddress?: string; // Full address of CDEK pickup point
+
   @ManyToOne(() => User, (user) => user.orders, { onDelete: "SET NULL" })
   @JoinColumn({ name: "userId" })
   user!: User;

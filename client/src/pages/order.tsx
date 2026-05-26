@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import LoadingOverlay from "@/components/loading-overlay";
@@ -17,7 +17,7 @@ interface OrderFormData {
   customerName: string;
   customerPhone: string;
   customerEmail: string;
-  deliveryMethod: string;
+  deliveryAddress: string;
   paymentMethod: string;
 }
 
@@ -32,7 +32,7 @@ export default function Order() {
     customerName: "",
     customerPhone: "",
     customerEmail: "",
-    deliveryMethod: "",
+    deliveryAddress: "",
     paymentMethod: "card",
   });
 
@@ -142,13 +142,22 @@ export default function Order() {
     const isValid = formData.customerName && 
                    formData.customerPhone &&
                    formData.customerEmail &&
-                   formData.deliveryMethod && 
+                   formData.deliveryAddress &&
                    formData.paymentMethod;
 
     if (!isValid) {
       toast({
         title: "Ошибка",
         description: "Заполните все обязательные поля",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.deliveryAddress.trim().length < 5) {
+      toast({
+        title: "Ошибка",
+        description: "Введите полный адрес пункта выдачи СДЭК",
         variant: "destructive",
       });
       return;
@@ -200,7 +209,8 @@ export default function Order() {
           customerPhone: formData.customerPhone,
           customerEmail: formData.customerEmail,
           telegramUsername: telegramUser?.username || dbUser?.username || "",
-          deliveryMethod: formData.deliveryMethod,
+          deliveryMethod: "cdek",
+          deliveryAddress: formData.deliveryAddress,
           paymentMethod: formData.paymentMethod,
           totalPrice: Math.round(priceAfterPromo),
           loyaltyPointsUsed: loyaltyPointsUsed,
@@ -245,7 +255,8 @@ export default function Order() {
           customerPhone: formData.customerPhone,
           customerEmail: formData.customerEmail,
           telegramUsername: telegramUser?.username || dbUser?.username || "",
-          deliveryMethod: formData.deliveryMethod,
+          deliveryMethod: "cdek",
+          deliveryAddress: formData.deliveryAddress,
           paymentMethod: formData.paymentMethod,
           totalPrice: getOriginalPrice(),
           loyaltyPointsUsed: loyaltyPointsUsed,
@@ -346,10 +357,10 @@ export default function Order() {
           <h3 className="font-semibold mb-4">Контактные данные</h3>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Имя *</Label>
+              <Label htmlFor="name">ФИО получателя *</Label>
               <Input
                 id="name"
-                placeholder="Ваше имя"
+                placeholder="Фамилия Имя Отчество"
                 value={formData.customerName}
                 onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
                 required
@@ -438,28 +449,26 @@ export default function Order() {
           </div>
         </div>
 
-        {/* Delivery Options */}
+        {/* Delivery */}
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h3 className="font-semibold mb-4">Доставка</h3>
-          <RadioGroup 
-            value={formData.deliveryMethod}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, deliveryMethod: value }))}
-          >
-            <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
-              <RadioGroupItem value="courier" id="courier" />
-              <Label htmlFor="courier" className="flex items-center space-x-2 cursor-pointer">
-                <span className="text-xl">🚚</span>
-                <span className="font-medium">Курьер по Москве</span>
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg">
-              <RadioGroupItem value="cdek" id="cdek" />
-              <Label htmlFor="cdek" className="flex items-center space-x-2 cursor-pointer">
-                <span className="text-xl">📦</span>
-                <span className="font-medium">СДЭК</span>
-              </Label>
-            </div>
-          </RadioGroup>
+          <h3 className="font-semibold mb-1">Доставка</h3>
+          <p className="text-sm text-gray-500 mb-4 flex items-center gap-1">
+            <span>📦</span> Доставка осуществляется через СДЭК
+          </p>
+          <div>
+            <Label htmlFor="deliveryAddress">Адрес пункта выдачи СДЭК *</Label>
+            <Textarea
+              id="deliveryAddress"
+              placeholder="Например: г. Москва, ул. Ленина, д. 10, ПВЗ СДЭК"
+              value={formData.deliveryAddress}
+              onChange={(e) => setFormData(prev => ({ ...prev, deliveryAddress: e.target.value }))}
+              rows={2}
+              required
+              className="mt-1 resize-none"
+              data-testid="input-delivery-address"
+            />
+            <p className="text-xs text-gray-400 mt-1">Введите полный адрес ПВЗ СДЭК, куда доставить заказ</p>
+          </div>
         </div>
 
         {/* Order Summary */}

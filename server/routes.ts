@@ -912,7 +912,7 @@ router.post("/api/yoomoney-webhook", async (req, res) => {
 👤 <b>Клиент:</b> ${order.customerName}
 ${telegramUsername ? `👨‍💻 <b>Telegram:</b> ${telegramUsername}\n` : ''}📱 <b>Телефон:</b> ${order.customerPhone}
 ${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}${itemsList}
-🚚 <b>Доставка:</b> ${order.deliveryMethod}
+🚚 <b>Доставка:</b> СДЭК${order.deliveryAddress ? `\n📍 <b>Адрес ПВЗ:</b> ${order.deliveryAddress}` : ''}
 💳 <b>Оплата:</b> ${order.paymentMethod}
 💰 <b>Сумма:</b> ${order.totalPrice}₽
 
@@ -1206,7 +1206,8 @@ router.post("/api/orders", async (req, res) => {
         customerName: finalOrderData.customerName,
         customerPhone: finalOrderData.customerPhone,
         customerEmail: finalOrderData.customerEmail,
-        deliveryMethod: finalOrderData.deliveryMethod,
+        deliveryMethod: "cdek",
+        deliveryAddress: (finalOrderData as any).deliveryAddress || null,
         paymentMethod: finalOrderData.paymentMethod,
         totalPrice: finalOrderData.totalPrice,
         selectedSize: finalOrderData.selectedSize || null,

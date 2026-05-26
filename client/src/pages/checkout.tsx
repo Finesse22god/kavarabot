@@ -257,8 +257,14 @@ export default function Checkout() {
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Доставка:</span>
-                <span>{order.deliveryMethod === 'courier' ? 'Курьер' : order.deliveryMethod === 'pickup' ? 'Самовывоз' : 'Почта'}</span>
+                <span>СДЭК</span>
               </div>
+              {(order as any).deliveryAddress && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-gray-600 shrink-0">Адрес ПВЗ:</span>
+                  <span className="text-right text-sm">{(order as any).deliveryAddress}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Получатель:</span>
                 <span>{order.customerName}</span>

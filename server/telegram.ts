@@ -402,7 +402,7 @@ export async function notifyAdminAboutNewOrder(order: any) {
 👤 <b>Клиент:</b> ${order.customerName}
 📱 <b>Телефон:</b> ${order.customerPhone}
 ${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ""}
-🚚 <b>Доставка:</b> ${order.deliveryMethod}
+🚚 <b>Доставка:</b> СДЭК${order.deliveryAddress ? `\n📍 <b>Адрес ПВЗ:</b> ${order.deliveryAddress}` : ''}
 💳 <b>Оплата:</b> ${order.paymentMethod}
 💰 <b>Сумма:</b> ${order.totalPrice}₽
 
