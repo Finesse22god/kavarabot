@@ -524,11 +524,10 @@ export default function Profile() {
 
       <div className="p-4">
         <Tabs defaultValue={tabFromUrl} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 text-xs">
+          <TabsList className="grid w-full grid-cols-3 text-xs">
             <TabsTrigger value="personal">Данные</TabsTrigger>
             <TabsTrigger value="orders">Заказы</TabsTrigger>
             <TabsTrigger value="favorites">Избранное</TabsTrigger>
-            <TabsTrigger value="tryon">Примерки</TabsTrigger>
           </TabsList>
           
           <TabsContent value="personal" className="mt-4 pb-24">
