@@ -1999,19 +1999,24 @@ router.get("/api/admin/products", verifyAdminToken, async (req, res) => {
   }
 });
 
-// Multer для Excel файлов
+// Multer для Excel файлов (только .xlsx — exceljs не поддерживает устаревший .xls формат)
 const excelUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = [
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-excel"
-    ];
-    if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.xlsx') || file.originalname.endsWith('.xls')) {
+    const isXlsx =
+      file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.originalname.toLowerCase().endsWith('.xlsx');
+    const isLegacyXls =
+      file.mimetype === "application/vnd.ms-excel" ||
+      file.originalname.toLowerCase().endsWith('.xls');
+
+    if (isXlsx) {
       cb(null, true);
+    } else if (isLegacyXls) {
+      cb(new Error("Формат .xls не поддерживается. Пожалуйста, сохраните файл в формате .xlsx (Excel 2007 и новее) и повторите загрузку."));
     } else {
-      cb(new Error("Недопустимый тип файла. Разрешены: .xlsx, .xls"));
+      cb(new Error("Недопустимый тип файла. Разрешён только .xlsx"));
     }
   },
 });
@@ -2049,13 +2054,18 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
       return res.status(400).json({ error: "Лист не найден" });
     }
 
-    const getCellValue = (ws: ExcelJS.Worksheet, col: string, row: number): unknown => {
+    const getCellValue = (ws: ExcelJS.Worksheet, col: string, row: number): string | number | boolean | Date | null | undefined => {
       const cell = ws.getCell(`${col}${row}`);
       const val = cell.value;
       if (val === null || val === undefined) return undefined;
-      if (typeof val === 'object' && 'result' in val) return (val as ExcelJS.CellFormulaValue).result;
-      if (typeof val === 'object' && 'text' in val) return (val as ExcelJS.CellRichTextValue).text;
-      return val;
+      if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean' || val instanceof Date) return val;
+      if (typeof val === 'object') {
+        if ('result' in val) return (val as ExcelJS.CellFormulaValue).result as string | number | boolean | Date | undefined;
+        if ('sharedFormula' in val) return (val as ExcelJS.CellSharedFormulaValue).result as string | number | boolean | Date | undefined;
+        if ('richText' in val) return (val as ExcelJS.CellRichTextValue).richText.map(r => r.text ?? '').join('');
+        if ('text' in val) return (val as ExcelJS.CellHyperlinkValue).text;
+      }
+      return undefined;
     };
 
     const inventoryUpdates: { productName: string; article: string; size: string; quantity: number }[] = [];
