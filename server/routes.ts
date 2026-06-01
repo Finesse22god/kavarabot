@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "path";
 import { promises as fs } from "fs";
 import { fileTypeFromFile, fileTypeFromBuffer } from "file-type";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { AppDataSource } from "./database";
 import { storage } from "./storage";
 import { notifyAdminAboutNewOrder } from "./telegram";
@@ -2030,49 +2030,56 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
     const sizeCol = sizeColumn || 'D';
     const qtyCol = quantityColumn || 'E';
 
-    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
 
-    let sheet;
-    if (sheetName && workbook.SheetNames.includes(sheetName)) {
-      sheet = workbook.Sheets[sheetName];
+    const sheetNames = workbook.worksheets.map(ws => ws.name);
+    let worksheet: ExcelJS.Worksheet | undefined;
+
+    if (sheetName && workbook.getWorksheet(sheetName)) {
+      worksheet = workbook.getWorksheet(sheetName) as ExcelJS.Worksheet;
     } else {
-      const foundSheet = workbook.SheetNames.find(name =>
+      const foundName = sheetNames.find(name =>
         name.toLowerCase().includes('остатк') || name.toLowerCase().includes('актуальн')
       );
-      sheet = workbook.Sheets[foundSheet || workbook.SheetNames[0]];
+      worksheet = workbook.getWorksheet(foundName || sheetNames[0]) as ExcelJS.Worksheet;
     }
 
-    if (!sheet) {
+    if (!worksheet) {
       return res.status(400).json({ error: "Лист не найден" });
     }
 
-    const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+    const getCellValue = (ws: ExcelJS.Worksheet, col: string, row: number): unknown => {
+      const cell = ws.getCell(`${col}${row}`);
+      const val = cell.value;
+      if (val === null || val === undefined) return undefined;
+      if (typeof val === 'object' && 'result' in val) return (val as ExcelJS.CellFormulaValue).result;
+      if (typeof val === 'object' && 'text' in val) return (val as ExcelJS.CellRichTextValue).text;
+      return val;
+    };
+
     const inventoryUpdates: { productName: string; article: string; size: string; quantity: number }[] = [];
 
-    for (let row = range.s.r; row <= range.e.r; row++) {
-      const excelRow = row + 1; // XLSX cell addresses 1-based
-      const productCell = sheet[`${productCol}${excelRow}`];
-      const articleCell = sheet[`${articleCol}${excelRow}`];
-      const sizeCell = sheet[`${sizeCol}${excelRow}`];
-      const qtyCell = sheet[`${qtyCol}${excelRow}`];
+    worksheet.eachRow({ includeEmpty: false }, (_row, rowNumber) => {
+      const sizeRaw = getCellValue(worksheet!, sizeCol, rowNumber);
+      const qtyRaw = getCellValue(worksheet!, qtyCol, rowNumber);
 
-      const size = String(sizeCell?.v ?? '').trim().toUpperCase();
-      const qtyRaw = qtyCell?.v;
+      const size = String(sizeRaw ?? '').trim().toUpperCase();
       // Остаток должен быть числом — это отсекает шапку и заголовки групп.
       const qtyNum = typeof qtyRaw === 'number'
         ? qtyRaw
-        : (typeof qtyRaw === 'string' && /^-?\d+(?:[.,]\d+)?$/.test(qtyRaw.trim())
-            ? parseFloat(qtyRaw.trim().replace(',', '.'))
+        : (typeof qtyRaw === 'string' && /^-?\d+(?:[.,]\d+)?$/.test((qtyRaw as string).trim())
+            ? parseFloat((qtyRaw as string).trim().replace(',', '.'))
             : NaN);
 
-      if (!size || !Number.isFinite(qtyNum) || qtyNum < 0) continue;
+      if (!size || !Number.isFinite(qtyNum) || qtyNum < 0) return;
       // Размер должен быть похож на размер одежды/обуви, а не на текст.
-      if (size.length > 10) continue;
+      if (size.length > 10) return;
 
-      const productName = String(productCell?.v ?? '').trim();
-      const article = String(articleCell?.v ?? '').trim();
+      const productName = String(getCellValue(worksheet!, productCol, rowNumber) ?? '').trim();
+      const article = String(getCellValue(worksheet!, articleCol, rowNumber) ?? '').trim();
 
-      if (!productName && !article) continue;
+      if (!productName && !article) return;
 
       inventoryUpdates.push({
         productName,
@@ -2080,7 +2087,7 @@ router.post("/api/admin/import-inventory", verifyAdminToken, excelUpload.single(
         size,
         quantity: Math.floor(qtyNum),
       });
-    }
+    });
 
     const products = await storage.getAllProducts();
     const byArticle = new Map<string, typeof products[number]>();
