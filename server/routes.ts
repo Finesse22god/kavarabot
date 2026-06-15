@@ -1313,6 +1313,11 @@ router.post("/api/orders", async (req, res) => {
     // Orders are only synced to CRM after payment confirmation (in YooKassa webhook)
     syncCustomerToRetailCRMSafe(order);
 
+    // Send Telegram notification about new order (async, non-blocking)
+    notifyAdminAboutNewOrder(order).catch(err =>
+      console.error('[Telegram] Failed to send new order notification:', err)
+    );
+
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);

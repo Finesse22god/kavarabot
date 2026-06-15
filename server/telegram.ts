@@ -392,7 +392,7 @@ function getBotUsername(): string {
 
 // Admin notification function
 export async function notifyAdminAboutNewOrder(order: any) {
-  const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID; // Admin chat for order notifications
+  const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
   const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID; // Channel for order notifications
 
   const message = `
