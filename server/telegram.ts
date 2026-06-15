@@ -9,20 +9,26 @@ export function setupTelegramBot() {
 
 export async function setupTelegramBotWithApp(app: express.Application) {
   // Webhook endpoint for Telegram
+  // IMPORTANT: always respond 200 — Telegram retries on any non-200
   app.post("/webhook", express.json(), async (req, res) => {
+    // Respond immediately so Telegram doesn't timeout
+    res.status(200).send("OK");
+    
     try {
       const update = req.body;
+      if (!update || typeof update !== 'object') return;
 
       if (update.message) {
-        await handleMessage(update.message);
+        await handleMessage(update.message).catch(err =>
+          console.error("[Webhook] handleMessage error:", err?.message || err)
+        );
       } else if (update.callback_query) {
-        await handleCallbackQuery(update.callback_query);
+        await handleCallbackQuery(update.callback_query).catch(err =>
+          console.error("[Webhook] handleCallbackQuery error:", err?.message || err)
+        );
       }
-
-      res.status(200).send("OK");
-    } catch (error) {
-      console.error("Webhook error:", error);
-      res.status(500).send("Error");
+    } catch (error: any) {
+      console.error("[Webhook] Unexpected error:", error?.message || error);
     }
   });
 
@@ -393,44 +399,35 @@ function getBotUsername(): string {
 // Admin notification function
 export async function notifyAdminAboutNewOrder(order: any) {
   const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || '-1002812810825';
-  const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID; // Channel for order notifications
+  const ORDERS_CHANNEL_ID = process.env.ORDERS_CHANNEL_ID;
 
-  const message = `
-🆕 <b>НОВЫЙ ЗАКАЗ!</b>
+  const message = `🆕 <b>НОВЫЙ ЗАКАЗ!</b>
 
 📦 <b>Заказ №:</b> ${order.orderNumber}
 👤 <b>Клиент:</b> ${order.customerName}
 📱 <b>Телефон:</b> ${order.customerPhone}
-${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ""}
-🚚 <b>Доставка:</b> СДЭК${order.deliveryAddress ? `\n📍 <b>Адрес ПВЗ:</b> ${order.deliveryAddress}` : ''}
+${order.customerEmail ? `📧 <b>Email:</b> ${order.customerEmail}\n` : ''}🚚 <b>Доставка:</b> СДЭК${order.deliveryAddress ? `\n📍 <b>Адрес ПВЗ:</b> ${order.deliveryAddress}` : ''}
 💳 <b>Оплата:</b> ${order.paymentMethod}
 💰 <b>Сумма:</b> ${order.totalPrice}₽
 
-📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString("ru-RU")}
-`;
+📅 <b>Дата:</b> ${new Date(order.createdAt).toLocaleString("ru-RU")}`;
 
-  // Send to admin chat if configured
-  if (ADMIN_CHAT_ID) {
-    try {
-      await sendMessage(parseInt(ADMIN_CHAT_ID), message);
-      console.log("Admin notification sent successfully");
-    } catch (error) {
-      console.error("Failed to send admin notification:", error);
-    }
+  const { sendTelegramHtml } = await import('./telegram-send.js');
+
+  const adminResult = await sendTelegramHtml(ADMIN_CHAT_ID, message, { label: 'new-order-admin' });
+  if (adminResult.ok) {
+    console.log(`[Telegram] Новый заказ ${order.orderNumber} отправлен в admin chat`);
   } else {
-    console.log("ADMIN_CHAT_ID not set, skipping admin notification");
+    console.error(`[Telegram] Ошибка отправки в admin chat: ${adminResult.status} ${adminResult.errorBody}`);
   }
 
-  // Send to orders channel if configured
   if (ORDERS_CHANNEL_ID) {
-    try {
-      await sendMessage(parseInt(ORDERS_CHANNEL_ID), message);
-      console.log("Order notification sent to channel successfully");
-    } catch (error) {
-      console.error("Failed to send order notification to channel:", error);
+    const channelResult = await sendTelegramHtml(ORDERS_CHANNEL_ID, message, { label: 'new-order-channel' });
+    if (channelResult.ok) {
+      console.log(`[Telegram] Новый заказ ${order.orderNumber} отправлен в channel`);
+    } else {
+      console.error(`[Telegram] Ошибка отправки в channel: ${channelResult.status} ${channelResult.errorBody}`);
     }
-  } else {
-    console.log("ORDERS_CHANNEL_ID not set, skipping channel notification");
   }
 }
 
