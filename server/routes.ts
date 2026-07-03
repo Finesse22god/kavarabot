@@ -4370,6 +4370,35 @@ router.post("/api/admin/retailcrm/sync-orders", verifyAdminToken, async (req, re
   }
 });
 
+// Bot status endpoint — проверка что polling запущен
+router.get('/api/bot-status', async (req, res) => {
+  try {
+    const { isPollingActive } = await import('./telegram.js');
+    const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+    const tokenSet = !!TELEGRAM_BOT_TOKEN;
+    const polling = isPollingActive();
+
+    let webhookInfo: any = null;
+    if (tokenSet) {
+      try {
+        const r = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`);
+        const d = await r.json();
+        webhookInfo = d.result || null;
+      } catch (_) {}
+    }
+
+    res.json({
+      tokenSet,
+      polling,
+      webhookUrl: webhookInfo?.url || null,
+      webhookError: webhookInfo?.last_error_message || null,
+      env: process.env.REPLIT_DEV_DOMAIN ? 'replit-dev' : 'production',
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 export { syncOrderToRetailCRM, updateOrderStatusInRetailCRM };
 
 export default router;

@@ -447,7 +447,16 @@ export async function getBotInfo() {
 // Long polling — used instead of webhook when Timeweb blocks incoming connections
 let pollingActive = false;
 
+export function isPollingActive(): boolean {
+  return pollingActive;
+}
+
 export async function startLongPolling() {
+  if (!TELEGRAM_BOT_TOKEN) {
+    console.error('[Polling] TELEGRAM_BOT_TOKEN не установлен — polling не запущен!');
+    return;
+  }
+
   if (pollingActive) {
     console.log('[Polling] Already running, skipping duplicate start');
     return;
