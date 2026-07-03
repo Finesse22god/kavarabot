@@ -107,7 +107,7 @@ router.post("/api/upload/box-image", upload.single("image"), async (req, res) =>
 });
 
 // File upload endpoint for broadcast images (uploads to S3)
-router.post("/api/upload/broadcast-image", upload.single("image"), async (req, res) => {
+router.post("/api/upload/broadcast-image", verifyAdminToken, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "Файл не загружен" });
@@ -2725,7 +2725,7 @@ async function sendBroadcastMessage(telegramId: string, broadcast: Broadcast): P
       };
       
       if (inlineKeyboard.length > 0) {
-        payload.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+        payload.reply_markup = { inline_keyboard: inlineKeyboard };
       }
       
       response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
@@ -2742,7 +2742,7 @@ async function sendBroadcastMessage(telegramId: string, broadcast: Broadcast): P
       };
       
       if (inlineKeyboard.length > 0) {
-        payload.reply_markup = JSON.stringify({ inline_keyboard: inlineKeyboard });
+        payload.reply_markup = { inline_keyboard: inlineKeyboard };
       }
       
       response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {

@@ -166,12 +166,12 @@ function ImageUploader({ value, onChange }: {
     }
     setUploading(true);
     try {
-      const adminToken = localStorage.getItem("admin_token") || "";
+      const adminToken = localStorage.getItem("adminToken") || "";
       const formData = new FormData();
       formData.append("image", file);
       const response = await fetch("/api/upload/broadcast-image", {
         method: "POST",
-        headers: { "x-admin-token": adminToken },
+        headers: { "Authorization": `Bearer ${adminToken}` },
         body: formData,
       });
       const data = await response.json();
@@ -313,8 +313,8 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
   const { data: allProducts } = useQuery<any[]>({
     queryKey: ["/api/catalog"],
     queryFn: async () => {
-      const adminToken = localStorage.getItem("admin_token") || "";
-      const res = await fetch("/api/catalog", { headers: { "x-admin-token": adminToken } });
+      const adminToken = localStorage.getItem("adminToken") || "";
+      const res = await fetch("/api/catalog", { headers: { "Authorization": `Bearer ${adminToken}` } });
       return res.json();
     },
     enabled: showForm,
