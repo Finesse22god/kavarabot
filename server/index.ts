@@ -98,67 +98,25 @@ async function createServer() {
   // Setup Telegram bot webhook (must be before catch-all routes)
   setupTelegramBotWithApp(app);
 
-  // Автоматическая настройка бота ТОЛЬКО в production (Timeweb)
-  const PRODUCTION_WEBHOOK_URL = process.env.TELEGRAM_WEBHOOK_URL || "https://finesse22god-kavarabot-e967.twc1.net/webhook";
-  
   // Определяем окружение - Replit dev или production Timeweb
   const isReplitDev = process.env.REPLIT_DEV_DOMAIN !== undefined;
-  
+
   if (isReplitDev) {
-    console.log('🔧 DEV режим (Replit) - автонастройка webhook ОТКЛЮЧЕНА');
-    console.log('ℹ️  Webhook управляется production сервером на Timeweb');
+    console.log('🔧 DEV режим (Replit) - polling/webhook ОТКЛЮЧЕНЫ');
   } else {
-    // PRODUCTION MODE - включаем автонастройку
-    console.log('🚀 PRODUCTION режим - автонастройка webhook ВКЛЮЧЕНА');
-    
+    // PRODUCTION MODE — используем long polling (Timeweb блокирует входящие соединения от Telegram)
+    console.log('🚀 PRODUCTION режим - запуск long polling');
+
     if (!process.env.TELEGRAM_BOT_TOKEN) {
       console.error('🚨 ОШИБКА: TELEGRAM_BOT_TOKEN не установлен!');
-    } else {
-      console.log('✅ TELEGRAM_BOT_TOKEN установлен');
     }
-    
-    if (!process.env.TELEGRAM_WEBHOOK_URL) {
-      console.warn('⚠️  TELEGRAM_WEBHOOK_URL не установлен, используется fallback URL');
-    } else {
-      console.log('✅ TELEGRAM_WEBHOOK_URL:', process.env.TELEGRAM_WEBHOOK_URL);
-    }
-    
-    async function checkAndRestoreWebhook() {
-      try {
-        const { getWebhookInfo, setWebhook, setMenuButton } = await import('./telegram.js');
-        const webhookInfo = await getWebhookInfo();
-        
-        const currentTime = new Date().toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-        console.log(`[${currentTime}] 🔍 Проверка webhook...`);
-        
-        if (webhookInfo.url !== PRODUCTION_WEBHOOK_URL) {
-          console.warn('⚠️  Webhook неправильный:', webhookInfo.url);
-          console.log('🔄 Восстановление на:', PRODUCTION_WEBHOOK_URL);
-          
-          await setWebhook(PRODUCTION_WEBHOOK_URL);
-          await setMenuButton();
-          
-          console.log('✅ Webhook восстановлен!');
-        } else {
-          console.log(`[${currentTime}] ✅ Webhook в порядке`);
-        }
-      } catch (error) {
-        console.error('❌ Ошибка проверки webhook:', error);
-      }
-    }
-    
-    // Первая настройка через 5 секунд после старта
+
     setTimeout(async () => {
       try {
-        const { setupWebhookAndCommands } = await import('./telegram.js');
-        await setupWebhookAndCommands();
-        
-        // Запускаем периодическую проверку каждые 5 минут
-        setInterval(checkAndRestoreWebhook, 300000);
-        
-        console.log('🛡️  Защита webhook: АКТИВНА (проверка каждые 5 минут)');
+        const { startLongPolling } = await import('./telegram.js');
+        await startLongPolling();
       } catch (error) {
-        console.error('❌ Ошибка автонастройки:', error);
+        console.error('❌ Ошибка запуска polling:', error);
       }
     }, 5000);
   }

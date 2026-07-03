@@ -443,3 +443,88 @@ export async function getBotInfo() {
     return null;
   }
 }
+
+// Long polling — used instead of webhook when Timeweb blocks incoming connections
+let pollingActive = false;
+
+export async function startLongPolling() {
+  if (pollingActive) {
+    console.log('[Polling] Already running, skipping duplicate start');
+    return;
+  }
+
+  // Remove any existing webhook so Telegram stops pushing
+  try {
+    const delResp = await fetch(`${TELEGRAM_API_URL}/deleteWebhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ drop_pending_updates: false }),
+    });
+    const delData = await delResp.json();
+    console.log('[Polling] Webhook deleted:', delData.ok ? 'OK' : delData.description);
+  } catch (e: any) {
+    console.error('[Polling] Failed to delete webhook:', e.message);
+  }
+
+  // Set bot commands and menu button (no webhook needed)
+  try {
+    await Promise.all([setMyCommands(), setMenuButton()]);
+    console.log('[Polling] Bot commands and menu button configured');
+  } catch (e: any) {
+    console.error('[Polling] Failed to set commands/menu:', e.message);
+  }
+
+  pollingActive = true;
+  console.log('[Polling] ✅ Long polling started');
+
+  let offset = 0;
+  let retryDelay = 1000;
+
+  const poll = async () => {
+    while (pollingActive) {
+      try {
+        const url = `${TELEGRAM_API_URL}/getUpdates?timeout=30&allowed_updates=message,callback_query${offset ? `&offset=${offset}` : ''}`;
+        const resp = await fetch(url, { signal: AbortSignal.timeout(40000) });
+        const data = await resp.json();
+
+        if (!data.ok) {
+          console.error('[Polling] getUpdates error:', data.description);
+          await new Promise(r => setTimeout(r, retryDelay));
+          retryDelay = Math.min(retryDelay * 2, 30000);
+          continue;
+        }
+
+        retryDelay = 1000; // reset on success
+
+        for (const update of data.result) {
+          offset = update.update_id + 1;
+          try {
+            if (update.message) {
+              await handleMessage(update.message).catch((err: any) =>
+                console.error('[Polling] handleMessage error:', err?.message || err)
+              );
+            } else if (update.callback_query) {
+              await handleCallbackQuery(update.callback_query).catch((err: any) =>
+                console.error('[Polling] handleCallbackQuery error:', err?.message || err)
+              );
+            }
+          } catch (e: any) {
+            console.error('[Polling] Update processing error:', e.message);
+          }
+        }
+      } catch (e: any) {
+        if (!pollingActive) break;
+        console.error('[Polling] Network error:', e.message);
+        await new Promise(r => setTimeout(r, retryDelay));
+        retryDelay = Math.min(retryDelay * 2, 30000);
+      }
+    }
+  };
+
+  poll().catch(e => console.error('[Polling] Fatal error:', e));
+}
+
+export function stopLongPolling() {
+  pollingActive = false;
+  console.log('[Polling] Stopped');
+}
