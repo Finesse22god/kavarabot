@@ -88,7 +88,8 @@ async function handleMessage(message: any) {
   const chatId = message.chat.id;
   const text = message.text;
 
-  if (text === "/start") {
+  // "/start" or "/start <param>" (deep link: t.me/kavaraappbot?startapp=...)
+  if (text === "/start" || text?.startsWith("/start ")) {
     const welcomeMessage = `Снова рад тебя видеть в KAVARA Brand 💪
 Заходи в приложение — смотри новинки и подбирай стиль под себя.`;
 
