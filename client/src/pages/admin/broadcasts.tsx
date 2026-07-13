@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +55,13 @@ function TelegramPreview({ message, imageUrl, buttons }: {
   buttons: BroadcastButton[];
 }) {
   const renderHtml = (text: string) => {
-    const escaped = text
+    const links: string[] = [];
+    let t = text.replace(/<a href="([^"]*)">([\s\S]*?)<\/a>/g, (_, url, label) => {
+      const idx = links.length;
+      links.push(`<a href="${url}" target="_blank" style="color:#6ab3f3;text-decoration:underline">${label}</a>`);
+      return `§LINK${idx}§`;
+    });
+    t = t
       .replace(/&/g, "&amp;")
       .replace(/<b>([\s\S]*?)<\/b>/g, "§BOLD_START§$1§BOLD_END§")
       .replace(/<i>([\s\S]*?)<\/i>/g, "§ITALIC_START§$1§ITALIC_END§")
@@ -75,7 +81,8 @@ function TelegramPreview({ message, imageUrl, buttons }: {
       .replace(/§CODE_START§/g, "<code style='background:#1e2936;padding:1px 4px;border-radius:3px;font-size:0.85em'>")
       .replace(/§CODE_END§/g, "</code>")
       .replace(/\n/g, "<br>");
-    return escaped;
+    t = t.replace(/§LINK(\d+)§/g, (_, i) => links[Number(i)]);
+    return t;
   };
 
   const isEmpty = !message && !imageUrl && buttons.length === 0;
@@ -309,6 +316,10 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
 
   const [newButton, setNewButton] = useState({ label: "", startAppParam: "" });
   const [productSearch, setProductSearch] = useState("");
+  const [linkDialog, setLinkDialog] = useState<{ open: boolean; text: string; url: string; selStart: number; selEnd: number }>({
+    open: false, text: "", url: "", selStart: 0, selEnd: 0,
+  });
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: allProducts } = useQuery<any[]>({
     queryKey: ["/api/catalog"],
@@ -510,9 +521,10 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
                     <Label htmlFor="message">Текст поста</Label>
                     <Textarea
                       id="message"
+                      ref={textareaRef}
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Текст сообщения для пользователей&#10;&#10;Поддерживается форматирование: <b>жирный</b>, <i>курсив</i>, <u>подчёркнутый</u>, <s>зачёркнутый</s>, <code>код</code>"
+                      placeholder="Текст сообщения для пользователей&#10;&#10;Поддерживается форматирование: <b>жирный</b>, <i>курсив</i>, <u>подчёркнутый</u>, <s>зачёркнутый</s>, <code>код</code>, <a href=&quot;URL&quot;>ссылка</a>"
                       rows={6}
                       className="mt-1 font-mono text-sm"
                     />
@@ -530,7 +542,7 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
                           title={title}
                           className="px-2 py-0.5 text-xs border rounded hover:bg-gray-100 font-mono"
                           onClick={() => {
-                            const el = document.getElementById("message") as HTMLTextAreaElement;
+                            const el = textareaRef.current;
                             if (!el) return;
                             const start = el.selectionStart;
                             const end = el.selectionEnd;
@@ -538,11 +550,94 @@ export default function Broadcasts({ onBack }: { onBack: () => void }) {
                             const tag = insert.split(">")[0].replace("<", "");
                             const newText = formData.message.slice(0, start) + `<${tag}>${selected}</${tag}>` + formData.message.slice(end);
                             setFormData({ ...formData, message: newText });
+                            setTimeout(() => {
+                              el.focus();
+                              const cursor = start + tag.length + 2 + selected.length;
+                              el.setSelectionRange(cursor, cursor);
+                            }, 0);
                           }}
                           dangerouslySetInnerHTML={{ __html: label }}
                         />
                       ))}
+                      <button
+                        type="button"
+                        title="Вставить гиперссылку"
+                        className="px-2 py-0.5 text-xs border rounded hover:bg-blue-50 border-blue-300 text-blue-700 font-medium flex items-center gap-1"
+                        onClick={() => {
+                          const el = textareaRef.current;
+                          if (!el) return;
+                          const start = el.selectionStart;
+                          const end = el.selectionEnd;
+                          const selected = formData.message.slice(start, end);
+                          setLinkDialog({ open: true, text: selected, url: "", selStart: start, selEnd: end });
+                        }}
+                      >
+                        <Link className="w-3 h-3" /> Ссылка
+                      </button>
                     </div>
+
+                    {linkDialog.open && (
+                      <div className="mt-2 border border-blue-200 rounded-xl bg-blue-50/60 p-3 space-y-2">
+                        <p className="text-xs font-semibold text-blue-800">Вставить гиперссылку</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-600 mb-0.5 block">Текст ссылки</label>
+                            <Input
+                              value={linkDialog.text}
+                              onChange={(e) => setLinkDialog({ ...linkDialog, text: e.target.value })}
+                              placeholder="Например: Смотреть каталог"
+                              className="text-sm h-8"
+                              autoFocus
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-600 mb-0.5 block">URL</label>
+                            <Input
+                              value={linkDialog.url}
+                              onChange={(e) => setLinkDialog({ ...linkDialog, url: e.target.value })}
+                              placeholder="https://..."
+                              className="text-sm h-8 font-mono"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={!linkDialog.text || !linkDialog.url}
+                            onClick={() => {
+                              const tag = `<a href="${linkDialog.url}">${linkDialog.text}</a>`;
+                              const newText =
+                                formData.message.slice(0, linkDialog.selStart) +
+                                tag +
+                                formData.message.slice(linkDialog.selEnd);
+                              setFormData({ ...formData, message: newText });
+                              setLinkDialog({ open: false, text: "", url: "", selStart: 0, selEnd: 0 });
+                              setTimeout(() => {
+                                const el = textareaRef.current;
+                                if (!el) return;
+                                el.focus();
+                                const cursor = linkDialog.selStart + tag.length;
+                                el.setSelectionRange(cursor, cursor);
+                              }, 0);
+                            }}
+                          >
+                            Вставить
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setLinkDialog({ open: false, text: "", url: "", selStart: 0, selEnd: 0 })}
+                          >
+                            Отмена
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-400 font-mono">
+                          Результат: {linkDialog.text && linkDialog.url ? `<a href="${linkDialog.url}">${linkDialog.text}</a>` : "—"}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="border rounded-xl p-4 bg-gray-50/50">
